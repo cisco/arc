@@ -32,7 +32,7 @@ date="$(date +%Y%m%d)"
 time="$(date +%H%M%S)"
 origin="$(git config --get remote.origin.url)"
 
-build_version="$ver\n  commit: $git_sha, build: $date.$time origin: ${origin#*://} branch: $git_branch"
+build_version="$ver\n  commit: $git_sha, build: $date.$time, origin: ${origin#*://}, branch: $git_branch"
 
 cat <<- EOF > generated_version.go
 	package main
