@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+# Parameters
+declare device=""
+declare mount_point=""
+declare fs_type=""
+declare skip_format=""
+declare -i inodes=0
+
+# Discovered
+declare aws_device=""
+declare uuid=""
+
+function parse_args() {
+  if [[ $# -lt 4 ]]; then
+    die "device mount_point fs_type expected"
+  fi
+  device="$1"
+  mount_point="$2"
+  fs_type="$3"
+  inodes=$4
+  skip_format="$5"
+}
+
+function get_aws_device() {
+  aws_device="/dev/xvd${device/\/dev\/sd/}"
+  if [[ ! -b $aws_device ]]; then
+    die "Cannot find block device $aws_device"
+  fi
+}
+
+function format_device() {
+  if [[ "$skip_format" == "skip_format" ]]; then
+    return
+  fi
+  if [[ "$fs_type" == "xfs" ]]; then
+    mkfs.xfs -n ftype=1 $aws_device
+  elif [[ "$fs_type" == "ext4" && $inodes -gt 0 ]]; then
+    mkfs.ext4 -N $inodes $aws_device
+  elif ! mkfs -t $fs_type $aws_device; then
+    die "Failed to format device $aws_device as $fs_type"
+  fi
+}
+
+function create_mount_point() {
+  if [[ -d $mount_point ]]; then
+    return
+  fi
+  if [[ -L $mount_point && -d "$(readlink -f $mount_point)" ]]; then
+    return
+  fi
+  if ! mkdir -p $mount_point; then
+    die "Failed to create mount point $mount_point"
+  fi
+}
+
+function mount_device() {
+  if ! mount $aws_device $mount_point; then
+    die "Failed to mount device $aws_device to $mount_point"
+  fi
+  count=0
+  while ! grep -q $aws_device /etc/mtab; do
+    sleep 5
+    (( count ++))
+    if [ $count -eq 12 ]; then
+      die "Failed to detect mount of $aws_device"
+    fi
+  done
+}
+
+function get_uuid() {
+  uuid=$(blkid "$aws_device" -sUUID -ovalue)
+  if [[ -n "${uuid}" ]]; then
+    return
+  fi
+  die "Failed to find the uuid of device $aws_device"
+}
+
+function umount_device() {
+  if ! umount $mount_point; then
+    die "Failed to umount $mount_point"
+  fi
+}
+
+function modify_fstab() {
+  local entry="UUID=$uuid  $mount_point  $fs_type  defaults  0 2"
+  if egrep -q "^UUID=$uuid" /etc/fstab; then
+    return
+  fi
+  echo "$entry" >> /etc/fstab
+}
+
+function mount_all() {
+  if ! mount -a; then
+    die "Failed to mount"
+  fi
+}
+
+function main() {
+  parse_args "$@"
+  get_aws_device
+  format_device
+  create_mount_point
+  mount_device
+  get_uuid
+  umount_device
+  modify_fstab
+  mount_all
+}
+
+main "$@"

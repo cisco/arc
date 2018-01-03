@@ -1,0 +1,12 @@
+[submodule "vendor/github.com/aws/aws-sdk-go"]
+	path = vendor/github.com/aws/aws-sdk-go
+	url = https://github.com/aws/aws-sdk-go.git
+[submodule "vendor/github.com/jbogarin/go-cisco-spark"]
+	path = vendor/github.com/jbogarin/go-cisco-spark
+	url = https://github.com/jbogarin/go-cisco-spark.git
+[submodule "vendor/golang.org/x/crypto"]
+	path = vendor/golang.org/x/crypto
+	url = https://go.googlesource.com/crypto
+[submodule "vendor/github.com/google/go-querystring"]
+	path = vendor/github.com/google/go-querystring
+	url = https://github.com/google/go-querystring.git

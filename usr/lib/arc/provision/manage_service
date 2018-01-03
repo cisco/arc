@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+function profile {
+	echo "$(date)[$SECONDS]: $1"
+}
+
+function manage_service() {
+	local service=$1
+	local -r action=$2
+	service=${service%.service}
+
+	if [[ ${service} == "monit" && ${action,,} == "reload" ]]; then
+		profile "Performing $action on ${service}"
+		monit reload
+		exit $?
+	fi
+
+	if [[ -z "$action" ]]; then
+		echo "Unable to find appropriate action in args [$@]. Bailing out!"
+		exit 1
+	elif [[ "${action,,}" != "start" &&
+			"${action,,}" != "stop" &&
+			"${action,,}" != "restart" ]]; then
+		echo "Invalid action [${action,,}]. Only 'start', 'stop', 'restart' or 'monit reload' allowed. Bailing out!"
+		exit 1
+	fi
+
+	profile "Performing $action on ${service}"
+
+	if [[ -x "/usr/sbin/service" ]]; then
+		/usr/sbin/service ${service} ${action}
+	elif [[ -x "/usr/sbin/systemctl" ]]; then
+		/usr/sbin/systemctl ${action} ${service}.service
+	elif [[ -x "/sbin/service" ]]; then
+		/sbin/service ${service} ${action}
+	else
+		echo "Unknown service manager (neither systemctl nor service). Bailing out."
+		exit 1
+	fi
+}
+
+function main() {
+	manage_service $@
+}
+
+set +x
+if [ "$debug" = "yes" ]; then
+	set -x
+fi
+main "$@"

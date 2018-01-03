@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Copyright (c) 2016-17 by Cisco Systems, Inc.
+# All rights reserved.
+#
+if [ "$debug" = "yes" ]; then
+  set -x
+fi
+
+declare src_path=""
+declare dest_path=""
+
+declare -r mirror_server="mirror"
+
+function die() {
+  printf "Error: %s\n" "$@" >&2
+  exit 1
+}
+
+function parse_args() {
+  if [[ "$#" -gt 3 || "$#" -lt 2 ]]; then
+    die "Expected arguments: pkg_name dst_dir [servertype]"
+  fi
+
+  local pkg_name="$1"
+  local dst_dir="$2"
+  local servertype="$3"
+
+  if [[ $servertype == "" ]]; then
+    src_path="/var/www/mirror/puppet-modules/puppet-aide"
+  else
+    src_path="/var/www/mirror/servertype/$servertype"
+  fi
+
+  pkg_type="${pkg_name:$((${#pkg_name}-3))}"
+  if [ "$pkg_type" = "deb" ]; then
+    src_path="$src_path/pool/main/$pkg_name"
+  elif [ "$pkg_type" = "rpm" ]; then
+    src_path="$src_path/$pkg_name"
+  else
+    die "Unknown package type for $pkg_name"
+  fi
+
+  if [ ! -d $dst_dir ]; then
+    die "The package destination $dst_dir is not a directory"
+  fi
+  dst_path="$dst_dir/$pkg_name"
+}
+
+function main() {
+  parse_args "$@"
+  scp -q $mirror_server:$src_path $dst_path
+}
+
+main "$@"

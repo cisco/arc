@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Copyright (c) 2016 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+declare ID="centos"
+declare VERSION_ID="6"
+if [[ -r /etc/os-release ]]; then
+  source /etc/os-release
+elif [[ -r /etc/system-release-cpe ]]; then
+  ID="$(awk -F: '{print $3}' /etc/system-release-cpe)"
+  VERSION_ID="$(awk -F: '{print $5}' /etc/system-release-cpe)"
+fi
+
+declare domains=""
+
+function die() {
+  printf "Error: %s\n" "$@"
+  exit 1
+}
+
+function parse_args() {
+  if [[ $# -lt 1 ]]; then
+    die "domain(s) expected"
+  fi
+  domains="$@"
+}
+
+function setup_dhcp() {
+  local dhcp="/etc/dhcp/dhclient.conf"
+  if [[ "$ID" == "centos" && "$VERSION_ID" == "6" ]]; then
+    dhcp="/etc/dhcp/dhclient-eth0.conf"
+  elif [[ "$ID" == "redhat" ]]; then
+    dhcp="/etc/dhcp/dhclient-eth0.conf"
+    touch "${dhcp}"
+  fi
+  if [[ ! -f $dhcp ]]; then
+    die "Cannot find dhcp config file: $dhcp"
+  fi
+
+  local d
+  local dhcp_domains=""
+  for d in $domains; do
+    if [[ -z $dhcp_domains ]]; then
+      dhcp_domains="\"$d\""
+    else
+      dhcp_domains="${dhcp_domains}, \"$d\""
+    fi
+  done
+
+  if egrep "^supersede domain-search .*" $dhcp >/dev/null 2>&1; then
+    sed -i'.orig' "s/^supersede domain-search .*/supersede domain-search ${dhcp_domains};/" $dhcp
+  else
+    echo "supersede domain-search ${dhcp_domains};" >> $dhcp
+  fi
+  if [[ "$ID" == "centos" || "$ID" == "redhat" ]]; then
+    service network restart
+  else
+    ifdown eth0 && ifup eth0
+  fi
+}
+
+function main() {
+  parse_args "$@"
+  if ! setup_dhcp; then
+    die "Failed to setup dhcp"
+  fi
+  return 0
+}
+
+main "$@"

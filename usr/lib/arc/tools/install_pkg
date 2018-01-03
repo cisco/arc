@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+set -x
+
+declare install_cmd=""
+declare upgrade_cmd=""
+declare pkg_name=""
+declare pkg_type=""
+
+function die() {
+  printf "Error: %s\n" "$@" >&2
+  exit 1
+}
+
+function parse_args() {
+  if [ "$#" -ne 1 ]; then
+    die "Expected arguments: pkg_name"
+  fi
+
+  pkg_name="$1"
+  pkg_type="${pkg_name:$((${#pkg_name}-3))}"
+
+  if [ "$pkg_type" = "deb" ]; then
+    install_cmd="dpkg -i"
+  elif [ "$pkg_type" = "rpm" ]; then
+    install_cmd="yum install -y"
+    upgrade_cmd="yum upgrade -y"
+  else
+    die "Unknown package type for $pkg_name"
+  fi
+}
+
+function upgrade() {
+  $upgrade_cmd $pkg_name
+}
+
+function install() {
+  $install_cmd $pkg_name
+}
+
+function installed() {
+  local output="$(rpm -qa $(rpm -qp --queryformat '%{NAME}' $pkg_name))"
+  if [ "$output" = "" ]; then
+    return 1
+  fi
+  return 0
+}
+
+function upgraded() {
+  local install_name=$(rpm -qp --queryformat '%{NAME}' $pkg_name)
+  local upgrade_ver=$(rpm -qp --queryformat '%{VERSION}-%{RELEASE}\n' $pkg_name | head -1)
+  local install_ver=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}\n' $install_name | head -1)
+
+  if [ "$upgrade_ver" != "$install_ver" ]; then
+    return 1
+  fi
+  return  0
+}
+
+function main() {
+  parse_args "$@"
+
+  if [ "$pkg_type" = "deb" ]; then
+    install
+    return $?
+  fi
+
+  if ! installed; then
+    install
+    return $?
+  fi
+
+  if ! upgraded; then
+    upgrade
+    return $?
+  fi
+
+  return 0
+}
+
+main "$@"

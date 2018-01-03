@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare install_cmd=""
+declare upgrade_cmd=""
+declare manifest=""
+declare pkg_type=""
+declare first_package=""
+
+function parse_args() {
+  if [ "$#" -ne 1 ]; then
+    die "Expected arguments: manifest"
+  fi
+
+  manifest="$1"
+  first_package=$(head -n 1 $manifest)
+  pkg_type="${first_package:$((${#first_package}-3))}"
+  if [ "$pkg_type" = "deb" ]; then
+    install_cmd="dpkg -i"
+  elif [ "$pkg_type" = "rpm" ]; then
+    install_cmd="yum install -y"
+    upgrade_cmd="yum upgrade -y"
+  else
+    die "Unknown package type for $pkg_name"
+  fi
+}
+
+function upgrade() {
+  $upgrade_cmd $(cat $manifest)
+}
+
+function install() {
+  $install_cmd $(cat $manifest)
+}
+
+function installed() {
+  while read package; do
+    local output="$(rpm -qa $(rpm -qp --queryformat '%{NAME}' "$package"))"
+    if [ "$output" = "" ]; then
+      return 1
+    fi
+  done <$manifest
+  return 0
+}
+
+function main() {
+  parse_args "$@"
+
+  cd "/usr/lib/arc/"
+  if [ "$pkg_type" = "deb" ]; then
+    install
+    return $?
+  fi
+
+  if ! installed; then
+    install
+    return $?
+  fi
+
+  upgrade
+  return $?
+}
+
+main "$@"

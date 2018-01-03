@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Copyright (c) 2016 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+declare user=""
+declare arc_dir="/usr/lib/arc"
+
+function die() {
+  printf "Error: %s\n" "$@"
+  exit 1
+}
+
+function create_arc_dir() {
+  mkdir -p $arc_dir
+}
+
+function create_arc_subdirs() {
+  local d
+  local dirs="cassandra cloudfoundry consul create destroy elasticsearch graphite haproxy jenkins paging provision redis repos sparkcall tools ucxn users"
+  for d in $dirs; do
+    if [ ! -d "$arc_dir/$d" ]; then
+      rm -f $arc_dir/$d
+    fi
+    mkdir -p $arc_dir/$d
+  done
+}
+
+function fix_permissions() {
+  group=$user
+  if $(getent group platform &>/dev/null); then
+    group=platform
+  fi
+  chown -R $user:$group $arc_dir
+  chmod -R 770 $arc_dir
+}
+
+function save_setup() {
+  if [[ "$0" = "/tmp/setup_arc" ]]; then
+    mv -f "$0" "$arc_dir"
+    chown $user:$group $arc_dir/setup_arc
+    chmod 770 $arc_dir/setup_arc
+  fi
+}
+
+function main() {
+  if [[ -z "$SUDO_USER" ]]; then
+    die "Must be run under sudo"
+    return 1
+  fi
+  user="$SUDO_USER"
+  create_arc_dir
+  create_arc_subdirs
+  fix_permissions
+  save_setup
+}
+
+main "$@"

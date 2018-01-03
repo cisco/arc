@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare user=""
+declare uid=""
+declare remove=""
+
+declare ssh_dir
+declare auth_file
+
+function parse_args() {
+  if [ "$#" -lt 1 ]; then
+    die "Expected arguments: user [remove]"
+  fi
+  user="$1"
+  if [[ "$2" == "remove" ]]; then
+    remove="yes"
+  else
+    uid="$2"
+    if [[ "$uid" == "" ]]; then
+      die "Missing uid"
+    fi
+  fi
+
+  ssh_dir="/home/$user/.ssh"
+  auth_file="$ssh_dir/authorized_keys"
+}
+
+function user_create() {
+  if user_exists $user; then
+    return
+  fi
+  useradd -u $uid -d /home/$user -m  -s /bin/bash $user
+}
+
+function user_remove() {
+  if ! user_exists $user; then
+    return
+  fi
+  userdel -r $user
+}
+
+function main() {
+  parse_args "$@"
+  if [[ "$remove" == "yes" ]]; then
+    user_remove
+  else
+    user_create
+  fi
+}
+
+main "$@"

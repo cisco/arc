@@ -1,0 +1,225 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+# Server utility to start, stop, check running
+#   - start and stop service actions are verified with a time limit
+#   - start and stop service actions return 0 if service is not installed
+#   - running service action is verified with a time limit
+#   - running service action returns 0 if service is running, else, 1 for
+#     either not running or timed out.
+#
+# Syntax: servicectl <stop|start|running> <list of service names>
+
+# Always trace remotely executable scripts
+set -x
+
+declare action=""
+declare service_names=""
+declare ID="centos"
+declare VERSION_ID="6"
+if [[ -r /etc/os-release ]]; then
+    source /etc/os-release
+fi
+
+declare -i wait_time=180
+declare -i period=10
+
+function die() {
+  printf "Error: %s\n" "$@" >&2
+  exit 1
+}
+
+function parse_args() {
+  if [ "$#" -lt 2 ]; then
+    die "Expected arguments: <start|stop|running> service_names"
+  fi
+  action="$1"; shift
+  service_names="$@"
+}
+
+# arg1 - data for calling correct status method
+# arg2 - service name
+function get_timed_status() {
+  local method=$1
+  local service=$2
+  local rc
+
+  declare -i cur_time=$(date +%s)
+  declare -i max_time=$cur_time+$wait_time
+  while [ $cur_time -lt $max_time ]; do
+    get_${method}_status $service 2>&1; rc=$?
+    [ $rc -eq 0 ] && return 0
+    [ $rc -eq 2 ] && return 2
+    sleep $period
+    cur_time=$(date +%s)
+  done
+  return 1
+}
+
+# arg1 - service name
+function run_centos_7_stop() {
+  systemctl stop $1 2>&1
+  return $?
+}
+
+# arg1 - service name
+function run_centos_7_start() {
+  systemctl start $1 2>&1
+  return $?
+}
+
+# arg1 - service name
+function get_centos_7_status() {
+  # If the service not installed, return a 2
+  systemctl list-unit-files --type=service | grep -Fq $1.service 2>&1
+  [ $? -ne 0 ] && return 2
+
+  # Check if service is up
+  systemctl is-active $1
+  return $?
+}
+
+# arg1 - service name
+function run_centos_6_stop() {
+  service $1 stop 2>&1
+  return $?
+}
+
+# arg1 - service name
+function run_centos_6_start() {
+  service $1 start 2>&1
+  return $?
+}
+
+# arg1 - service name
+function get_centos_6_status() {
+  # If the service not installed, return a 2
+  chkconfig $1 2>/dev/null
+  [ $? -ne 0 ] && return 2
+
+  # Check if service is up
+  service $1 status
+  return $?
+}
+
+# arg1 - service name
+function run_centos_stop() {
+  case $VERSION_ID in
+    6|7) run_centos_${VERSION_ID}_stop $1; return $?;;
+    *) die "Unsupported centos version ${VERSION_ID}";;
+  esac
+}
+
+# arg1 - service name
+function run_centos_start() {
+  case $VERSION_ID in
+    6|7) run_centos_${VERSION_ID}_start $1; return $?;;
+    *) die "Unsupported centos version ${VERSION_ID}";;
+  esac
+}
+
+function get_centos_status() {
+  case $VERSION_ID in
+    6|7) get_centos_${VERSION_ID}_status $1; return $?;;
+    *) die "Unsupported centos version ${VERSION_ID}";;
+  esac
+}
+
+# arg1 - service name
+function centos_running() {
+  case $VERSION_ID in
+    6) get_timed_status "centos_6" $1; return $?;;
+    7) get_timed_status "centos_7" $1; return $?;;
+    *) die "Unsupported centos version ${VERSION_ID}";;
+  esac
+}
+
+# arg1 - service name
+function run_ubuntu_stop() {
+  service $1 stop 2>&1
+  return $?
+}
+
+# arg1 - service name
+function run_ubuntu_start() {
+  service $1 start 2>&1
+  return $?
+}
+
+# arg1 - service name
+function get_ubuntu_status() {
+  local rc
+
+  # If the service is not installed, return a 2
+
+  # Ubuntu has service script which will use upstart under the covers as needed.
+  service --status-all | grep -Fq $1 2>&1; rc=$?
+  if [ $rc -ne 0 ]; then
+    # Check for Upstart and use that if available
+    if [ -r "/etc/init/$1.conf" ] && which initctl >/dev/null \
+      && initctl version | grep -Fq upstart; then
+        initctl list | grep -Fq $1 2>&1; rc=$?
+    fi
+  fi
+  [ $rc -ne 0 ] && return 2
+
+  # Check if service is up
+  service $1 status
+  return $?
+}
+
+# arg1 - service name
+function ubuntu_running() {
+  get_timed_status "ubuntu" $1
+  return $?
+}
+
+
+# arg1 - action, arg2 - service name
+function run_action() {
+  case $ID in
+    centos|ubuntu)
+      case $1 in
+        running)
+          local rc
+          ${ID}_$1 $2; rc=$?
+          [ $rc -eq 0 ] && return 0
+          [ $rc -eq 2 ] && die "$2 is not installed"
+          die "$2 is not running"
+          ;;
+        stop)
+          get_${ID}_status $2
+          [ $? -gt 0 ] && return 0
+          run_${ID}_$1 $2 && return 0
+          die "Unable to $1 $2"
+          ;;
+        start)
+          get_${ID}_status $2
+          [ $? -eq 2 -o $? -eq 0 ] && return 0
+          run_${ID}_$1 $2 && return 0
+          die "Unable to $1 $2"
+          ;;
+      esac
+      ;;
+    *) die "Unsupported system ${ID}";;
+  esac
+}
+
+function main() {
+  parse_args "$@"
+
+  # Process the action and service names
+  case ${action} in
+    start|stop|running)
+      local service_name
+      for service_name in $service_names; do
+        run_action $action "$service_name"
+      done
+      ;;
+    *) die "Unknown action: $action";;
+  esac
+}
+
+main "$@"

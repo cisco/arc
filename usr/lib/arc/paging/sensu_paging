@@ -1,0 +1,194 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+source "/usr/lib/arc/arc.sh"
+
+declare -r sensu_api='sensu-server-api.service.consul'
+declare -r common_opts='-u sensu:c1sc0lab -s -m 15'
+declare action
+declare reason="silenced due to server shutdown"
+declare server
+declare -a sensu_api_addrs=()
+declare sensu_api_path
+declare vintage
+
+function parse_args() {
+  if [[ "$#" -ne 2 ]]; then
+    die "Expected arguments: (enable|disable) server"
+  fi
+  action="$1"
+  server="$2-internal"
+
+  get_sensu_api_addr
+}
+
+function get_vintage() {
+  local path="${sensu_api_path}/info"
+  local r rc
+
+  r=$(run_curl_cmd "200" $common_opts -w " Response code:%{http_code}" ${path})
+  rc=$?
+
+  # test if sensu server is running old sensu-api version 0.12.2
+  vintage=sensu-ng
+  if [ $rc -eq 0 ] && [ "$r" != "${r##\{\"sensu\":\{\"version\":\"0\.12\.2\"\}}" ]; then
+    vintage=sensu
+  fi
+}
+
+function get_sensu_api_addr() {
+  for (( i=0; i<6; i++ )); do
+    sensu_api_addrs=($(dig +short $sensu_api))
+    if [ ${#sensu_api_addrs[@]} -gt 0 ]; then
+      return
+    fi
+    sleep 5
+  done
+  die "Unable to get sensu api address from $sensu_api"
+}
+
+function run_curl_cmd() {
+  local r rc
+  local ret_codes="$1"; shift
+
+  # Try executing the command up to maximum retry count
+  for (( i=0; i<6; i++ )); do
+    r=$(curl "$@")
+    rc=$?
+
+    # Retry on specific curl failures (currently just connect failure)
+    if [ $rc -eq 7 ]; then
+      sleep 5
+      continue
+
+    # No retries on other failures
+    elif [ $rc -ne 0 ]; then
+      echo "Got error ($r: $rc)"
+      return 1
+    fi
+
+    # Curl did not fail so further check if the response code is expected
+    local ret_code
+    for ret_code in $ret_codes; do
+      if [ "$r" != "${r%%Response code:$ret_code}" ]; then
+        echo "$r"
+        return 0
+      fi
+    done
+    sleep 5
+  done
+  echo "Retries exceeded ($r: $rc)"
+  return 1
+}
+
+function sensu_client_active() {
+  local sensu_client_check='/usr/lib/arc/tools/check_monit_services sensu-client'
+  for r in $(seq 0 10); do
+    if $sensu_client_check; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+function server_silenced() {
+  if [ ${vintage} == sensu-ng ]; then
+    local path="${sensu_api_path}/silenced/ids/client:${server}:*"
+  else
+    local path="${sensu_api_path}/stashes/silence/${server}"
+  fi
+  local r rc
+  r=$(run_curl_cmd "200 404" $common_opts -w " Response code:%{http_code}" ${path})
+  rc=$?
+
+  if [ $rc -eq 0 ] && [ "$r" != "${r%%Response code:200}" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
+function disable_paging() {
+  if server_silenced; then
+    return 0
+  fi
+
+  local opts="$common_opts -i -X POST"
+  local hdr='Content-Type: application/json'
+  if [ ${vintage} == sensu-ng ]; then
+    local data='{"subscription": "client:'${server}'", "reason": "'${reason}'"}'
+    local path="${sensu_api_path}/silenced"
+  else
+    local data='{"path": "silence/'${server}'", "content": {"reason": "'${reason}'"}}'
+    local path="${sensu_api_path}/stashes"
+  fi
+  local r=$(run_curl_cmd "201" ${opts} -H "${hdr}" -d "${data}" -w " Response code:%{http_code}" ${path})
+  if ! server_silenced; then
+    echo "Could not disable paging for ${server}"
+    return 1
+  fi
+  return 0
+}
+
+function enable_paging() {
+  if ! sensu_client_active; then
+    echo "sensu-client not active on ${server}"
+    return 1
+  fi
+
+  if ! server_silenced; then
+    return 0
+  fi
+
+  if [ ${vintage} == sensu-ng ]; then
+    local opts="$common_opts -i -X POST"
+    local hdr='Content-Type: application/json'
+    local data='{"subscription": "client:'${server}'"}'
+    local path="${sensu_api_path}/silenced/clear"
+    local r=$(run_curl_cmd "204 404" ${opts} -H "${hdr}" -d "${data}" -w " Response code:%{http_code}" ${path})
+  else
+    local opts="$common_opts -i -X DELETE"
+    local path="${sensu_api_path}/stashes/silence/${server}"
+    local r=$(run_curl_cmd "204 404" ${opts} -w " Response code:%{http_code}" ${path})
+  fi
+  if server_silenced; then
+    echo "Could not enable paging for ${server}"
+    return 1
+  fi
+  return 0
+}
+
+function main() {
+  parse_args "$@"
+
+  # Perform paging action on each Sensu server
+  local rc=0
+  case $action in
+    "enable")
+        for addr in ${sensu_api_addrs[@]}; do
+          sensu_api_path="http://${addr}:4567"
+          get_vintage
+          if ! enable_paging; then
+            rc=1
+          fi
+        done
+        ;;
+    "disable")
+        for addr in ${sensu_api_addrs[@]}; do
+          sensu_api_path="http://${addr}:4567"
+          get_vintage
+          if ! disable_paging; then
+            rc=1
+          fi
+        done
+        ;;
+    *) die "Unknown action: ${action}" ;;
+  esac
+  return $rc
+}
+
+main "$@"

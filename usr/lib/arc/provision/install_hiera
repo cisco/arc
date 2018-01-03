@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# Copyright (c) 2016 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+declare hiera_name=""
+
+function die() {
+  printf "Error: %s\n" "$@" >&2
+  exit 1
+}
+
+function parse_args() {
+  if [ "$#" -ne 1 ]; then
+    die "Expected arguments: hiera_name"
+  fi
+  hiera_name="$1"
+}
+
+function main() {
+  parse_args "$@"
+  if [ -d /var/lib/hiera ]; then
+    rm -rf /var/lib/hiera
+  fi
+  tar -C / -xvf $hiera_name
+}
+
+main "$@"

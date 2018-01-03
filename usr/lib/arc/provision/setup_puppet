@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# Copyright (c) 2016 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare fresh_install="no"
+
+function puppet_installed() {
+  if [ -e /usr/bin/puppet ]; then
+    return 0
+  fi
+  if [ -e /opt/puppetlabs/bin/puppet ]; then
+    return 0
+  fi
+  return 1
+}
+
+function setup_puppet_centos() {
+  if puppet_installed; then
+    return
+  fi
+
+  # If puppet doesn't exist, install it.
+  #
+  # Only install the puppet rpm from puppetlabs if this is a fresh_install, otherwise we should
+  # load it from the local mirror.
+  #
+  # Reference: https://docs.puppet.com/guides/puppetlabs_package_repositories.html#yum-based-systems
+  if [ "$fresh_install" = "yes" ]; then
+    local rpm="http://yum.puppetlabs.com/puppetlabs-release-el-${VERSION_ID}.noarch.rpm"
+    if ! yum localinstall -y $rpm; then
+      die "Failed to install puppetlabs release rpm"
+    fi
+  fi
+  yum clean all
+  if ! yum install -y puppet; then
+    die "Failed to install puppet"
+  fi
+}
+
+function setup_puppet_ubuntu() {
+  if puppet_installed; then
+    return
+  fi
+
+  # If puppet doesn't exist, install it.
+  #
+  # Only install the puppet deb from puppetlabs if this is a fresh_install, otherwise we should
+  # load it from the local mirror.
+  #
+  # Reference https://docs.puppet.com/guides/puppetlabs_package_repositories.html#apt-based-systems
+  if [ "$fresh_install" = "yes" ]; then
+    local deb="puppetlabs-release-pc1-precise.deb"
+    local url="https://apt.puppetlabs.com/$deb"
+    local dest="/usr/lib/arc/$deb"
+    if ! curl $url > "$dest"; then
+      die "Failed to download puppetlabs release deb"
+    fi
+    if ! dpkg -i $dest; then
+      die "Failed to install puppetlabs release deb"
+    fi
+  fi
+  if ! apt-get update; then
+    die "Failed to update the system"
+  fi
+  if ! apt-get install --assume-yes puppet; then
+    die "Failed to install puppet"
+  fi
+}
+
+function main() {
+  if [ "$1" = "fresh_install" ]; then
+    fresh_install="yes"
+  fi
+  if ! setup_puppet_$ID; then
+    die "Failed to setup puppet"
+  fi
+  return 0
+}
+
+main "$@"

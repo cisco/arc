@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+declare ID="centos"
+if [[ -r /etc/os-release ]]; then
+  source /etc/os-release
+elif [[ -r /etc/system-release-cpe ]]; then
+  ID="$(awk -F: '{print $3}' /etc/system-release-cpe)"
+fi
+
+function die() {
+  printf "Error: %s\n" "$@"
+  exit 1
+}
+
+function main() {
+  # only do this for centos machines
+  # ubuntu will automatically pick the latest
+  if [ "${ID}" == "centos" ]; then
+    if ! /usr/local/bin/grub_reboot_defaults; then
+      die "Failed to set grub reboot defaults."
+    fi
+  fi
+  if ! /usr/local/bin/mirror_update; then
+    die "Failed to update third party software"
+  fi
+}
+
+main "$@"

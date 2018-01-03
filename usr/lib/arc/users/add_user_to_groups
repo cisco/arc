@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare user=""
+declare -a groups=""
+
+function parse_args() {
+  if [ "$#" -lt 1 ]; then
+    die "Expected arguments: user [groups]"
+  fi
+
+  user="$1"
+  if ! user_exists $user; then
+    die "User $user does not exist"
+  fi
+  shift
+
+  groups=( "$@" )
+}
+
+function add_user_to_groups() {
+  local i
+  local -i end
+
+  end=$(( -1 + ${#groups[@]} ))
+
+  for i in seq 0 $end; do
+    add_user_to_group ${groups[$i]}
+  done
+}
+
+function add_user_to_group() {
+  local group="$1"
+  if ! group_exists $group; then
+    die "Group $group does not exist"
+  fi
+  usermod -a -G $group $user
+}
+
+function main() {
+  parse_args "$@"
+  add_user_to_groups
+}
+
+main "$@"

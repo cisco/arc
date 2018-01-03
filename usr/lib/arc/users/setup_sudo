@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare user=""
+declare remove=""
+
+declare sudo_file=""
+
+function parse_args() {
+  if [ "$#" -lt 1 ]; then
+    die "Expected arguments: user [remove]"
+  fi
+  user="$1"
+  if [[ "$2" == "remove" ]]; then
+    remove="yes"
+  fi
+
+  sudo_file="/etc/sudoers.d/$user"
+}
+
+function sudo_create() {
+  if ! user_exists $user; then
+    return
+  fi
+
+  echo "$user ALL=(ALL)    NOPASSWD: ALL" > $sudo_file
+  chown root:root $sudo_file
+  chmod 440 $sudo_file
+}
+
+function sudo_remove() {
+  rm -f $sudo_file
+}
+
+function main() {
+  parse_args "$@"
+  if [[ "$remove" == "yes" ]]; then
+    sudo_remove
+  else
+    sudo_create
+  fi
+}
+
+main "$@"

@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare group=""
+declare gid=""
+declare remove=""
+
+function parse_args() {
+  if [ "$#" -lt 1 ]; then
+    die "Expected arguments: group gid | group remove"
+  fi
+  group="$1"
+  if [[ "$2" == "remove" ]]; then
+    remove="yes"
+  else
+    gid="$2"
+  fi
+
+  if [[ "$gid" == "" ]]; then
+    die "Missing gid"
+  fi
+}
+
+function group_create() {
+  if group_exists $group; then
+    return
+  fi
+  local -i id=$gid
+  if [ $id -le 1000 ]; then
+    groupadd -r $group -d $gid
+  else
+    groupadd $group -g $gid
+  fi
+}
+
+function group_remove() {
+  if ! group_exists $group; then
+    return
+  fi
+  groupdel $group
+}
+
+function main() {
+  parse_args "$@"
+  if [[ "$remove" == "yes" ]]; then
+    group_remove
+  else
+    group_create
+    return $?
+  fi
+}
+
+main "$@"

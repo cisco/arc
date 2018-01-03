@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+set -x
+
+declare dst_dir=""
+declare src_path=""
+declare packages_file=""
+
+declare -r mirror_dir="/var/www/mirror"
+declare -r mirror_server="mirror"
+
+
+function die() {
+  printf "Error: %s\n" "$@" >&2
+  exit 1
+}
+
+function parse_args() {
+  if [ "$#" -ne 3 ]; then
+    die "Expected arguments: servertype version dst_dir"
+  fi
+  local servertype="$1"
+  local version="$2"
+  dst_dir="$3"
+
+  if [ ! -d $dst_dir ]; then
+    die "The package destination $dst_dir is not a directory"
+  fi
+  src_path="$mirror_dir/servertype/$servertype"
+  packages_file="packages-${version}.txt"
+}
+
+function copy_packages_file() {
+  scp -q $mirror_server:$src_path/$packages_file $dst_dir/$packages_file
+
+  # If the packages file doesn't exist, we are done, no big deal.
+  if [ ! -r $dst_dir/$packages_file ]; then
+    exit 0
+  fi
+}
+
+function copy_packages() {
+  cat $dst_dir/$packages_file | while read pkg; do
+  scp -q $mirror_server:$src_path/$pkg $dst_dir/$pkg
+  done
+}
+
+function main() {
+  parse_args "$@"
+  copy_packages_file
+  copy_packages
+}
+
+main "$@"

@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+
+declare user=""
+declare ssh_dir
+declare auth_file
+
+declare tmp_auth_file
+
+function parse_args() {
+  if [ "$#" -ne 1 ]; then
+    die "Expected arguments: user"
+  fi
+  user="$1"
+  ssh_dir="/home/$user/.ssh"
+  tmp_auth_file="/tmp/authorized_keys.$user"
+  auth_file="$ssh_dir/authorized_keys"
+}
+
+function setup() {
+  if ! user_exists $user; then
+    return
+  fi
+
+  if [ ! -f $tmp_auth_file ]; then
+    die "Cannot find $tmp_auth_file"
+  fi
+
+  rm -rf $ssh_dir
+  mkdir $ssh_dir
+  chown $user:$user $ssh_dir
+  chmod 700 $ssh_dir
+
+  mv $tmp_auth_file $auth_file
+  chown $user:$user $auth_file
+  chmod 600 $auth_file
+}
+
+function main() {
+  parse_args "$@"
+  setup
+}
+
+main "$@"

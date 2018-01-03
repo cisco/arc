@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+# Server utility to verify some or all monit services are running
+#
+# Arguments:
+#
+#   - None:         All monit services will be checked
+#
+#   - One or more:  A space separated list of monit service names can optionally be provided.
+#                   This is restrict the monit check to just those services.
+#
+# Authors: Mark Wick, Steven Alhadef
+
+import sys
+import time
+import subprocess
+
+processes_to_check=[]
+
+def die(msg):
+    sys.stderr.write("Error: " + msg + "\n")
+    sys.exit(1)
+
+
+def parse_args():
+    """
+    Check to see if a process list was provided
+    """
+    for i in range(1, len(sys.argv)):
+        processes_to_check.append(sys.argv[i])
+        print "added {0} to process check list".format(sys.argv[i])
+
+
+def check_status():
+    """
+    Checks the status of all the processes monitored by Monit.
+    This script will fail if one or more processes does not report
+    an OK status after (retries * delay) seconds.
+    """
+    retries = 48
+    delay = 10
+    monit_not_running = 'Status not available -- the monit daemon is not running'
+    monit_starting = 'Connection refused'
+    summary_tags = ['Process', 'Program', 'System']
+    ok_statuses = ["Running", "Status ok", "Online with all services", "Accessible", "UP"]
+
+    for i in range(1, retries):
+        # Track failures each iteration
+        failures = []
+
+        # Use monit to check each process it controls is running
+        try:
+            cmd = subprocess.Popen(
+                ['monit', 'summary'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            die(e.output)
+        (result, error) = cmd.communicate()
+
+        # If the command fails then exit immediately
+        if cmd.returncode < 0:
+            die(error)
+
+        # If the daemon is not running, try again
+        if monit_not_running in error or monit_starting in error:
+            time.sleep(delay)
+            continue
+
+        # Check process status by:
+        #   - splitting the command output into lines
+        #   - squishing out extra white space to a single space character
+        #   - checking if the line starts with a summary tag
+        #   - checking if the line middle matches the optional process list
+        #   - checking if the line ends with an expected OK status.
+        lines = result.splitlines()
+        lines = [' '.join(line.strip().split())
+                 for line in lines if len(line) > 0]
+        process_list = []
+        for line in lines:
+            tag, name, status = line.replace("'", "").split(None, 2)
+            process_list.append(name)
+            if tag in summary_tags:
+                # print "{0} {1} status = {2}".format(tag, name, status)
+                if len(processes_to_check) > 0 and name not in processes_to_check:
+                    continue
+                if status not in ok_statuses:
+                    failures.append(line)
+
+        # If requesting specific check processes but some were not found, we fail
+        if len(processes_to_check) > 0 and len(process_list) > 0:
+            for process in processes_to_check:
+                if process not in process_list:
+                    die("{0} not listed in monit results".format(process))
+
+        # If no failures, we have success
+        if not failures:
+            sys.exit(0)
+
+        # Still failures so try again
+        time.sleep(delay)
+
+    die("monit services still not ok after " +
+        str(retries * delay) + " seconds\n" + str(failures))
+
+
+if __name__ == "__main__":
+    parse_args()
+    check_status()

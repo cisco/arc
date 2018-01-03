@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# Copyright (c) 2016-17 by Cisco Systems, Inc.
+# All rights reserved.
+#
+
+declare ID="centos"
+declare VERSION_ID="6"
+if [[ -r /etc/os-release ]]; then
+  source /etc/os-release
+fi
+
+declare enabled="1"
+
+function die() {
+  printf "Error: %s\n" "$@"
+  exit 1
+}
+
+function parse_args() {
+  if [ "$#" -ne 1 ]; then
+    die "Expected arguments: enabled|disabled"
+  fi
+  if [[ "$1" == "disabled" ]]; then
+    enabled="0"
+  fi
+}
+
+function setup_repos() {
+  case $ID in
+    ubuntu) setup_apt_repos;;
+    centos) setup_centos_repos;;
+  esac
+}
+
+function fix_perms() {
+  chown root:root $1
+  chmod 0644 $1
+}
+
+function setup_apt_repos() {
+  local dir="/etc/apt/sources.list.d"
+
+  echo "deb [trusted=yes] http://apt/ stable main" > $dir/repos.list
+  fix_perms $dir/repos.list
+
+  # For later...
+  #echo "deb [arch=amd64 trusted=yes] http://mirror/ubuntu precise main restricted" > $dir/mirror.list
+  #echo "deb [arch=amd64 trusted=yes] http://mirror/ubuntu precise-security main restricted" >> $dir/mirror.list
+  #echo "deb [arch=amd64 trusted=yes] http://mirror/ubuntu precise-updates main restricted" >> $dir/mirror.list
+  #fix_perms $dir/mirror.list
+
+  apt-get update
+}
+
+function create_yum_repo() {
+  local dir="/etc/yum.repos.d"
+
+  local name="$1"
+  local path="$2"
+  local enable="$3"
+  local check="$4"
+
+  echo "[$name]"                 > $dir/${name}.repo
+  echo "name=$name"             >> $dir/${name}.repo
+  echo "baseurl=http://$path/"  >> $dir/${name}.repo
+  echo "enabled=$enable"        >> $dir/${name}.repo
+  echo "gpgcheck=$check"        >> $dir/${name}.repo
+
+  fix_perms $dir/${name}.repo
+}
+
+function setup_centos_repos() {
+  local ver=""
+  local repos=""
+
+  case $VERSION_ID in
+    6*) ver="6"; repos="yum";;
+    7*) ver="7"; repos="centos7";;
+  esac
+
+  create_yum_repo repos           "$repos"                            $enabled 0
+  # For later...
+  #create_yum_repo mirror_os       "mirror/centos/$ver/os/x86_64"      $enabled 1
+  #create_yum_repo mirror_updates  "mirror/centos/$ver/updates/x86_64" $enabled 1
+  #create_yum_repo mirror_epel     "mirror/epel/$ver/x86_64"           $enabled 1
+  #create_yum_repo mirror_newrelic "mirror/newrelic"                   $enabled 0
+  #create_yum_repo mirror_puppet   "mirror/puppet${ver}"               $enabled 1
+}
+
+function main() {
+  parse_args "$@"
+  if ! setup_repos; then
+    die "Failed to setup repos"
+  fi
+  return 0
+}
+
+main "$@"

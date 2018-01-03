@@ -1,0 +1,101 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 by Cisco Systems, Inc.
+# All rights reserved.
+#
+source "/usr/lib/arc/arc.sh"
+source "/etc/profile.d/vault.sh"
+
+export PATH=$PATH:/usr/local/sbin
+
+declare -r paging_cmd='/usr/local/bin/manage_consul_paging'
+
+declare action
+declare server
+declare silence_url
+
+function parse_args() {
+  if [ "$#" -ne 2 ]; then
+    die "Expected arguments: (enable|disable) server"
+  fi
+  action="$1"
+  server="$2"
+  silence_url="silence/${server}"
+
+  verify_consul_agent
+}
+
+function verify_consul_agent() {
+  local r
+  for (( i=0; i<6; i++ )); do
+    r=$(consul info 2>&1)
+    if [ $? -eq $success ]; then
+      return
+    fi
+    if echo ${r} | grep "command not found"; then
+      die "Consul agent command not found on server"
+    fi
+    sleep 5
+  done
+  if echo ${r} | grep "connection refused"; then
+    die "Consul agent unable to connect to server"
+  fi
+  die "Consul agent failing ${r}"
+}
+
+function consul_paging() {
+  local r=$(consul kv get "${silence_url}" 2>&1)
+  local rc=$?
+  if [ -z "$r" ]; then
+    return $failure
+  fi
+  if echo ${r} | grep "No key exists"; then
+    return $success
+  fi
+  if echo ${r} | grep "connection refused"; then
+    die "Consul agent unable to connect to server"
+  fi
+  if [ $rc -ne $success ]; then
+    die "Consul agent failure: $r"
+  fi
+  return $success
+}
+
+function enable_paging() {
+  if consul_paging; then
+    return
+  fi
+
+  if ! $paging_cmd -t node -s disable -v ${server}; then
+    die "Could not disable consul alert blacklisting for ${server}"
+  fi
+  consul kv delete "${silence_url}"
+  if ! consul_paging; then
+    die "Could not enable paging for ${server}"
+  fi
+}
+
+function disable_paging() {
+  if ! consul_paging; then
+    return
+  fi
+
+  if ! $paging_cmd -t node -s enable -v ${server}; then
+    die "Could not enable consul alert blacklisting for ${server}"
+  fi
+  consul kv put "${silence_url}"
+  if consul_paging; then
+    die "Could not disable paging for ${server}"
+  fi
+}
+
+function main() {
+  parse_args "$@"
+  case $action in
+    "enable") enable_paging ;;
+    "disable") disable_paging ;;
+    *) die "Unknown action: ${action}" ;;
+  esac
+}
+
+main "$@"
