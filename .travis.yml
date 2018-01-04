@@ -3,9 +3,7 @@ language: go
 go:
   - 1.9.1
 
+install: true
+
 script:
   - ./build
-
-
-
-
