@@ -3,7 +3,8 @@ language: go
 go:
   - 1.9.1
 
-install: true
+install:
+  - ./install_deps
 
 script:
   - ./build
