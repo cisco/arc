@@ -1,10 +1,13 @@
+git:
+  submodules: false
+
 language: go
+
+go_import_path: github.com/cisco/arc
 
 go:
   - 1.9.1
 
-install:
-  - ./install_deps
+install: ./install_deps
 
-script:
-  - ./build
+script: ./build
