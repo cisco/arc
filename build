@@ -26,6 +26,7 @@
 #
 
 set -xe
+export BUILD_NUMBER=$(cat ./version)
 ./install_deps
 go generate -v ./cmd/...
 go install -v ./cmd/...
