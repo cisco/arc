@@ -6,7 +6,7 @@ language: go
 go_import_path: github.com/cisco/arc
 
 go:
-  - 1.9.1
+  - 1.9.2
 
 install: ./install_deps
 
