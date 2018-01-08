@@ -1,5 +1,4 @@
-arc
-===
+# arc
 
 [![Build Status](https://travis-ci.org/cisco/arc.svg?branch=master)](https://travis-ci.org/cisco/arc)
 
@@ -11,4 +10,6 @@ Current only AWS is supported as a cloud provider.
 - [Getting Started](docs/getting_started.md)
 
 
+## Development
 
+- [Github Process - Forking](docs/github_forking_process.md)
