@@ -29,7 +29,6 @@ package arc
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/cisco/arc/pkg/command"
 	"github.com/cisco/arc/pkg/env"
