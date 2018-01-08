@@ -38,7 +38,6 @@ type usersConfig []userConfig
 
 type userConfig struct {
 	Name    string   `json:"user"`
-	Uid     int      `json:"uid"`
 	Groups  []string `json:"groups"`
 	SshKeys []string `json:"sshkeys"`
 	Remove  bool     `json:"remove"`
@@ -48,7 +47,6 @@ type groupsConfig []groupConfig
 
 type groupConfig struct {
 	Name   string `json:"group"`
-	Gid    int    `json:"gid"`
 	Remove bool   `json:"remove"`
 }
 
