@@ -100,7 +100,7 @@ func (i *Instance) setupGroups(commands []command.Command) []command.Command {
 			Type: command.Sudo,
 			Desc: "setup group \"" + group.Name + "\"",
 			Src:  "/usr/lib/arc/users/setup_group",
-			Args: []string{group.Name, strconv.Itoa(group.Gid)},
+			Args: []string{group.Name},
 		}
 		if group.Remove {
 			c.Desc = "remove group \"" + group.Name + "\""
@@ -169,7 +169,7 @@ func (i *Instance) addUser(user *users.User, commands []command.Command, sudo bo
 			Type: command.Sudo,
 			Desc: "create user \"" + user.Name + "\" account",
 			Src:  "/usr/lib/arc/users/setup_user",
-			Args: []string{user.Name, strconv.Itoa(user.Uid)},
+			Args: []string{user.Name},
 		},
 		command.Command{
 			Type: command.Sudo,

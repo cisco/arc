@@ -27,7 +27,6 @@
 source "/usr/lib/arc/arc.sh"
 
 declare user=""
-declare uid=""
 declare remove=""
 
 declare ssh_dir
@@ -40,11 +39,6 @@ function parse_args() {
   user="$1"
   if [[ "$2" == "remove" ]]; then
     remove="yes"
-  else
-    uid="$2"
-    if [[ "$uid" == "" ]]; then
-      die "Missing uid"
-    fi
   fi
 
   ssh_dir="/home/$user/.ssh"
@@ -55,7 +49,7 @@ function user_create() {
   if user_exists $user; then
     return
   fi
-  useradd -u $uid -d /home/$user -m  -s /bin/bash $user
+  useradd -d /home/$user -m  -s /bin/bash $user
 }
 
 function user_remove() {
