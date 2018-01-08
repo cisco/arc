@@ -50,13 +50,24 @@ func Init(appname, version string) error {
 	if err != nil {
 		return err
 	}
-
-	appDir := "/workspace/" + appname + "/" + u.Username
+	searchPath := []string{os.Getenv(strings.ToUpper(appname)), os.Getenv("HOME") + "/." + appname}
+	appDir := ""
+	for _, d := range searchPath {
+		info, err := os.Stat(d)
+		if err == nil && info.Mode().IsDir() {
+			appDir = d
+			break
+		}
+	}
+	if appDir == "" {
+		appDir = os.Getenv("HOME" + "/." + appname)
+		if err := os.MkdirAll(appDir, 0755); err != nil {
+			return err
+		}
+	}
 	latest := appDir + "/latest"
 
-	// Using a modified RFC3339 format because virtualenv has an issue with colon's
-	// in the path when we create a bootstrap repo and do a source ./env
-	// (See https://github.com/pypa/virtualenv/issues/395)
+	// Using a modified RFC3339 format to having colons in the path
 	t := time.Now()
 	appDir += "/" + t.Format("2006-01-02_150405.000")
 
