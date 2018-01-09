@@ -133,3 +133,7 @@ Push the merged branch up to your github account to keep it in sync with the ups
 ```shell
 git push
 ```
+
+## See also
+
+- [Atlassian Tutorial: Merging vs. Rebasing](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
