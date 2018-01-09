@@ -1,12 +1,12 @@
 # Github Development Process - Fork / Travis Model
 
 This process assumes you are going to fork github.com:cisco/arc to your own account and
-work from it there.
+work from there.
 
 The advantage to this is that you can setup your own personal travis to build development
 branches as you commit code, before you create a pull request in cisco/arc.
 
-You can setup your personal travis here: https://travis-ci.org/profile/[username]
+You can setup your personal travis here: https://travis-ci.org/profile.
 
 
 ## Creating the fork
@@ -16,14 +16,18 @@ Just head over to the https://github.com/cisco/arc and click the "Fork" button. 
 
 ## Cloning the repo
 
+Clone your fork to your local machine
 ```shell
-# Clone your fork to your local machine
 git clone git@github.com:[username]/arc src/github.com/cisco/arc
+```
 
-u# Add cisco/arc as the upstream repo
+Add cisco/arc as the upstream repo
+```shell
 git remote add upstream git@github.com:cisco/arc
+```
 
-# Verify that the "upstream" remote exists.
+Verify that the "upstream" remote exists.
+```shell
 git remote -v
 
 ```
@@ -31,41 +35,50 @@ git remote -v
 
 ## Make changes
 
+Create the development branch
 ```shell
-# Create the development branch
 git checkout -b [branch_name]
+```
 
 ... make changes ...
 
-# Commits go to your local development branch. For each commit to the branch use the
-# general form "Issue #N: ..." where N is the issue number of the problem being worked.
+Commits go to your local development branch. For each commit to the branch use the
+general form "Issue #N: ..." where N is the issue number of the problem being worked.
+```shell
 git commit -m "Issue #N, ..."
+```
 
-# If you have setup a personal travis build, this will kickoff the build.
+This pushes the commited changes in your workspace to your account.
+If you have setup a personal travis build, this will kickoff it off.
+```shell
 git push origin [branch_name]
 ```
 
 
 ## Pull request
 
+Sync your master branch with the upstream master.
 ```shell
-# Sync your master branch with the upstream master.
 git fetch upstream
 git checkout master
 git merge --ff-only upstream/master
+```
 
-# Rebase your changes to pull in any changes on the upstream master.
+Rebase your changes to pull in any changes on the upstream master.
+```shell
 git checkout [branch_name]
 git rebase master
+```
 
 ... re-build / test ...
 
-# Push your development branch upstream. This will kickoff a travis build for cisco/arc.
+Push your development branch upstream. This will kickoff a travis build for cisco/arc.
+```shell
 git push upstream [branch_name]
 ```
 
-Once your development branch is available goto https://github.com/cisco/arc/pulls and create a pull request.
-Create the pull request with the following
+Once your development branch is available goto https://github.com/cisco/arc/pulls and create a pull request
+with the following attributes:
 
 - Reviewers: arc-committers
 - Assignees: _yourself_
@@ -82,17 +95,23 @@ If the issue associated with the PR is complete, mark it as closed.
 
 ## Cleanup the development branch
 
+After the PR has merged, you no longer need your development branch.
 ```shell
-# After the PR has merged, you no longer need your development branch.
 git checkout master
+```
 
-# Since the development branch has been deleted upstream, this will remove it from your local copy.
+Since the development branch has been deleted upstream, this will remove it from your local copy.
+```shell
 git fetch --all --prune
+```
 
-# This will delete your development branch from your personal github account.
+This will delete your development branch from your personal github account.
+```shell
 git push origin :[branch_name]
+```
 
-# This will delete your development from your local workspace.
+This will delete your development from your local workspace.
+```shell
 git branch -D [branch_name]
 ```
 
