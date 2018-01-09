@@ -24,26 +24,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package provider
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
-}
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/resource"
+)
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
-
-	// Run is the entry point for arc.
-	Run() (int, error)
-
-	// Account provides access to Amp's child account.
-	Account() Account
+type Account interface {
+	NewStorage(cfg *config.Storage) (resource.ProviderStorage, error)
+	NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error)
 }

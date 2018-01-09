@@ -1,13 +1,11 @@
 git:
   submodules: false
-
 language: go
-
 go_import_path: github.com/cisco/arc
-
 go:
-  - 1.9.2
-
+- 1.9.2
 install: ./install_deps
-
 script: ./build
+notifications:
+  slack:
+    secure: W8l7IC2XaiUXhkh0HJW4awEGpySSXjQluBN9CGCoHG83LXEhO2gtI8/nRzVAUpetxBq34hZIhymDQjqHC0OS9k6Yy0RgFpVVdO06holM2ycgXxBpq0/QGoAS1wnA0oQVoIih2zh1+89W7b/gq/oc12u6QDqJdCUP+UXDQdiMf83ecSe0+Kw+FKPTuWhIcYNahRNm0Y8va6HgNEpyxndzyctKIYOypZ2Q85w3QQYwrBo2bM3OCKNzenQaFeiB/SwYL5tOFBNu3LXG7fy64keJH34H+bT+hwR2ZLAPkvIAwhlWi2LeMuRnqXq0HEollseqy8MB5E1luuRK04dcPp9KDfXAeY2iZxW4yiquU0XoMlgLXv2uKhqoec2a/4p+hS7U/hfUMnwZIqnjHV+Ty/oX+oIMQJIJ2stTrxtfiWAx08BxgQJ5l+EXioqEf4ru+Rv7YqfMDzS0+T/A04N84bvtQqK4yY6hyEXGxLoW+uQgoaBMXllMBvEYv3OYyePam+a+nomOlbzrc3OD+nIa+Zu4NOs7H92FSR1vHalza518oEq4pRJ9NrKUNk/EfSJT820eqIYHoSLReHCZuaxMpw4BrzppLmPSd2Qn4AA8spjBTncddY0DUVVSl4bdIiRNwpjNZT/THfnRJ4v+BI67Bl7tIQdAlXGri9+gkKc6Q267Uqc=

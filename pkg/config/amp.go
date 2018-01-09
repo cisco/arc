@@ -38,7 +38,7 @@ import (
 type Amp struct {
 	Name_         string         `json:"name"`
 	Notifications *Notifications `json:"notifications"`
-	Storage       *Storage       `json:"storage"`
+	Account       *Account       `json:"account"`
 }
 
 func NewAmp(dc string) (*Amp, error) {
