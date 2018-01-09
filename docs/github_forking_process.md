@@ -16,7 +16,7 @@ Just head over to the https://github.com/cisco/arc and click the "Fork" button. 
 
 ## Cloning the repo
 
-Clone your fork to your local machine
+Clone your fork to your local machine. This assumes your are in the root of your go workspace.
 ```shell
 git clone git@github.com:[username]/arc src/github.com/cisco/arc
 ```
@@ -118,14 +118,18 @@ git branch -D [branch_name]
 
 ## Syncing master to upstream
 
+Pull a copy of the upstream repo.
 ```shell
-# Pull a copy of the upstream repo.
 git fetch upstream
+```
 
-# Merge to code from upstream. You fast forward only, since you should not be making changes on this branch.
+Merge to code from upstream. You fast forward only, since you should not be making changes on this branch.
+```shell
 git checkout master
 git merge --ff-only upstream/master
+```
 
-# Push the merged branch up to your github account to keep it in sync with the upstream repo.
+Push the merged branch up to your github account to keep it in sync with the upstream repo.
+```shell
 git push
 ```
