@@ -12,4 +12,6 @@ Currently only AWS is supported as a cloud provider.
 
 ## Development
 
+- [Github Process - Clonging](docs/github_cloning_process.md)
 - [Github Process - Forking](docs/github_forking_process.md)
+- [Style Guide](docs/style_guide.md)
