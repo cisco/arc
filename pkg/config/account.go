@@ -24,26 +24,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
+type Account struct {
+	Provider      *Provider    `json:"provider"`
+	SecurityTags_ SecurityTags `json:"security_tags"`
+	Storage       *Storage     `json:"storage"`
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
-
-	// Run is the entry point for arc.
-	Run() (int, error)
-
-	// Account provides access to Amp's child account.
-	Account() Account
+func (a *Account) SecurityTags() SecurityTags {
+	return a.SecurityTags_
 }

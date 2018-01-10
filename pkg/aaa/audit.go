@@ -115,7 +115,7 @@ func (a *Audit) FreeFormAudit(format string, b ...interface{}) {
 	freeFormAuditBuffer = append(freeFormAuditBuffer, fmt.Sprintf(format, b...))
 }
 
-func (a *Audit) auditFormatBuffer(t auditType, b []string) string {
+func (a *Audit) auditFormatBuffer(t auditType, b []string, appName string) string {
 	m := ""
 	switch t {
 	case Deployed:
@@ -156,9 +156,9 @@ func (a *Audit) auditFormat(appName string) string {
 			m += a.message[1]
 			return m
 		}
-		m += a.auditFormatBuffer(Deployed, a.deployedBuffer) + "\n> "
-		m += a.auditFormatBuffer(Configured, a.configuredBuffer) + "\n> "
-		m += a.auditFormatBuffer(Mismatched, a.mismatchedBuffer) + "\n"
+		m += a.auditFormatBuffer(Deployed, a.deployedBuffer, appName) + "\n> "
+		m += a.auditFormatBuffer(Configured, a.configuredBuffer, appName) + "\n> "
+		m += a.auditFormatBuffer(Mismatched, a.mismatchedBuffer, appName) + "\n"
 		if len(m) > 7000 {
 			m = m[:7000] + "...\n\n"
 		}
@@ -168,7 +168,20 @@ func (a *Audit) auditFormat(appName string) string {
 		for _, v := range freeFormAuditBuffer {
 			m += v
 		}
-		m += "\n> "
+		m += "\n"
+		m += a.message[1]
+	case "amp":
+		m += a.message[0] + "\n> "
+		if len(a.deployedBuffer) == 0 && len(a.configuredBuffer) == 0 && len(a.mismatchedBuffer) == 0 {
+			m += "No Differences Found\n\n"
+			m += a.message[1]
+			return m
+		}
+		m += a.auditFormatBuffer(Deployed, a.deployedBuffer, appName) + "\n> "
+		m += a.auditFormatBuffer(Configured, a.configuredBuffer, appName) + "\n"
+		if len(m) > 7000 {
+			m = m[:7000] + "...\n\n"
+		}
 		m += a.message[1]
 	}
 	return m
@@ -190,7 +203,7 @@ func PostAudit(appName string) {
 	}
 	token := env.Lookup("SPARK_TOKEN")
 	if token == "" {
-		log.Warn("No spark token available")
+		msg.Warn("No spark token available")
 		return
 	}
 	sparkClient, err := spark.New(token, notification.Spark.Rooms["audit"], spark.Html)
@@ -199,7 +212,7 @@ func PostAudit(appName string) {
 		return
 	}
 	switch appName {
-	case "arc":
+	case "arc", "amp":
 		for _, v := range AuditBuffer {
 			if v.printDeployed {
 				msg.Info("Rogue %ss", v.name)

@@ -24,27 +24,77 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package main
+
+// Create the version in version.go
+//go:generate ../../bin/generate_version
 
 import (
+	"fmt"
+	"os"
+	"path"
+
+	"github.com/cisco/arc/pkg/aaa"
+	"github.com/cisco/arc/pkg/amp"
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/env"
 	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/provider"
-	"github.com/cisco/arc/pkg/resource"
+	"github.com/cisco/arc/pkg/msg"
 )
 
-type storageProvider struct {
-	*config.Provider
+func main() {
+	appName := path.Base(os.Args[0])
+
+	if len(os.Args) > 1 && os.Args[1] == "version" {
+		fmt.Printf("%s %s\n", appName, version)
+		return
+	}
+	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 4 {
+		amp.Help()
+		return
+	}
+
+	if err := env.Init(appName, version); err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
+
+	if err := log.Init(appName); err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
+	defer log.Fini()
+
+	cfg, err := config.NewAmp(os.Args[1])
+	if err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
+
+	if err := aaa.Init(cfg.Notifications); err != nil {
+		fmt.Printf(err.Error())
+		os.Exit(1)
+	}
+
+	aaa.PreAccounting(os.Args)
+	a, err := amp.New(cfg)
+	if err != nil {
+		exit(err)
+	}
+
+	result, err := a.Run()
+	if err != nil {
+		exit(err)
+	}
+	aaa.PostAccounting(result)
+	if result != 0 {
+		os.Exit(result)
+	}
+	aaa.PostAudit(appName)
 }
 
-func NewStorage(cfg *config.Storage) (provider.Storage, error) {
-	log.Info("Initializing mock storage provider")
-
-	return &storageProvider{
-		Provider: cfg.Provider,
-	}, nil
-}
-
-func (p *storageProvider) NewBucket(cfg *config.Bucket) (resource.ProviderBucket, error) {
-	return nil, nil
+func exit(err error) {
+	msg.Error(err.Error())
+	aaa.PostAccounting(1)
+	os.Exit(1)
 }

@@ -27,18 +27,11 @@
 package aws
 
 import (
-	"fmt"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
-	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
-	"github.com/cisco/arc/pkg/route"
 )
 
 type storage struct {
@@ -46,83 +39,24 @@ type storage struct {
 	s3 map[string]*s3.S3
 
 	bucketCache *bucketCache
-	buckets     []*bucket
 }
 
-func NewStorage(cfg *config.Storage) (provider.Storage, error) {
-	log.Debug("Initializing AWS Storage Provider")
+func newStorage(cfg *config.Storage, s map[string]*s3.S3) (resource.ProviderStorage, error) {
+	log.Debug("Initializing AWS Storage")
 
-	name := cfg.Provider.Data["account"]
-	if name == "" {
-		return nil, fmt.Errorf("AWS Storage provider/data config requires an 'account' field, being the aws account name.")
-	}
-	number := cfg.Provider.Data["number"]
-	if number == "" {
-		return nil, fmt.Errorf("AWS Storage provider/data config requires a 'number' field, being the aws account number.")
-	}
-
-	regions := map[string]string{}
-
-	for _, bucket := range cfg.Buckets {
-		if region := regions[bucket.Region()]; region == "" {
-			regions[bucket.Region()] = cfg.Provider.Data["account"]
-		}
-	}
-
-	s := &storage{
+	stor := &storage{
 		Storage: cfg,
+		s3:      s,
 	}
 
-	s.s3 = make(map[string]*s3.S3)
-
-	msg.Info("Creating S3 objects for account %q", cfg.Provider.Data["account"])
-	for region, _ := range regions {
-		msg.Info("Creating S3 object %q", region)
-		opts := session.Options{
-			Config: aws.Config{
-				CredentialsChainVerboseErrors: aws.Bool(true),
-				Region: aws.String(region),
-			},
-			Profile:           name,
-			SharedConfigState: session.SharedConfigEnable,
-		}
-
-		sess, err := session.NewSessionWithOptions(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		s.s3[region] = s3.New(sess)
-	}
 	var err error
-
-	s.bucketCache, err = newBucketCache(s)
+	stor.bucketCache, err = newBucketCache(stor)
 	if err != nil {
 		return nil, err
 	}
-
-	return s, nil
+	return stor, nil
 }
 
-func (s *storage) NewBucket(cfg *config.Bucket) (resource.ProviderBucket, error) {
-	b, err := newBucket(s, cfg, s.s3[cfg.Region()])
-	s.buckets = append(s.buckets, b.(*bucket))
-	return b, err
-}
-
-func (s *storage) Route(req *route.Request) route.Response {
-	log.Route(req, "AWS Storage")
-
-	switch req.Command() {
-	case route.Info:
-		s.Info()
-		return route.OK
-	}
-	return route.FAIL
-}
-
-func (s *storage) Info() {
-	for _, v := range s.buckets {
-		v.Info()
-	}
+func (s *storage) Audit(flags ...string) error {
+	return s.bucketCache.audit(flags...)
 }
