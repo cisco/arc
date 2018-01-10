@@ -24,33 +24,66 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package amp
 
-type StaticStorage interface {
+import (
+	"fmt"
+
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/resource"
+	"github.com/cisco/arc/pkg/route"
+)
+
+type buckets struct {
+	*resource.Resources
+	Buckets []*config.Bucket
+	buckets map[string]resource.Bucket
+	storage *storage
 }
 
-type DynamicStorage interface {
-	// Audit identifies any buckets that have been deployed but are not in the configuration.
-	Audit(flags ...string) error
+func newBuckets(s *storage, prov provider.Account, cfg []*config.Bucket) (*buckets, error) {
+	log.Debug("Initializing Buckets")
+
+	b := &buckets{
+		Resources: resource.NewResources(),
+		Buckets:   cfg,
+		buckets:   map[string]resource.Bucket{},
+		storage:   s,
+	}
+
+	for _, conf := range cfg {
+		if b.Find(conf.Name()) != nil {
+			return nil, fmt.Errorf("Bucket name %q must be unique, but it is used multiple times", conf.Name())
+		}
+		bucket, err := newBucket(s, prov, conf)
+		if err != nil {
+			return nil, err
+		}
+		b.buckets[conf.Name()] = bucket
+		b.Append(bucket)
+	}
+	return b, nil
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
-// access its parent object.
-
-type Storage interface {
-	Resource
-	StaticStorage
-	DynamicStorage
-
-	// Account provides access to Storage's parent object.
-	Account() Account
-	// Bucket provides access to Storage's children Buckets.
-	Buckets() Buckets
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
+func (b *buckets) Find(name string) resource.Bucket {
+	return b.buckets[name]
 }
 
-type ProviderStorage interface {
-	DynamicStorage
+func (b *buckets) Route(req *route.Request) route.Response {
+	log.Route(req, "Buckets")
+	return b.RouteInOrder(req)
+}
+
+func (b *buckets) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find the audit object")
+	}
+	for _, v := range b.buckets {
+		if err := v.Audit(flags...); err != nil {
+			return err
+		}
+	}
+	return nil
 }

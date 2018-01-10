@@ -31,7 +31,6 @@ import (
 	"strings"
 
 	"github.com/cisco/arc/pkg/env"
-	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/spark"
 )
@@ -82,7 +81,7 @@ func PostAccounting(result int) {
 	}
 	token := env.Lookup("SPARK_TOKEN")
 	if token == "" {
-		log.Warn("No spark token available")
+		msg.Warn("No spark token available")
 		return
 	}
 	sparkClient, err := spark.New(token, notification.Spark.Rooms["accounting"], spark.Html)

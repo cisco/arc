@@ -36,6 +36,8 @@ type StaticBucket interface {
 
 // DynamicBucket provides the interface to the dynamic portion of the bucket.
 type DynamicBucket interface {
+	Auditor
+	Creator
 	// SetTags sets the tags for the bucket.
 	SetTags(map[string]string) error
 
@@ -49,7 +51,9 @@ type DynamicBucket interface {
 type Bucket interface {
 	Resource
 	StaticBucket
+	DynamicBucket
 
+	Storage() Storage
 	ProviderBucket() ProviderBucket
 }
 

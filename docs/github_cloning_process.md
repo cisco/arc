@@ -29,7 +29,11 @@ git commit -m "Issue #N: ..."
 
 Before you create the pull request, sync your development branch with the master.
 ```shell
-git pull --rebase
+git checkout master
+git pull --ff-only
+
+git checkout [development_branch]
+git rebase master
 ```
 
 ... re-build / test ...

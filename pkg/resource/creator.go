@@ -36,7 +36,7 @@ type Creator interface {
 	// Created indicated that the underlying resource has not been created
 	// with the cloud provider. With a composite resource, destruction may
 	// only be true if all the contained resources have been created.
-	Created() bool
+	// Created() bool
 }
 
 // CreateOverride allows the create methods of the class to be overridden by a derived class.
