@@ -27,9 +27,12 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
@@ -46,15 +49,15 @@ type bucket struct {
 	bucket *s3.Bucket
 }
 
-func newBucket(stor *storage, cfg *config.Bucket, s *s3.S3) (resource.ProviderBucket, error) {
-	log.Debug("Initializing S3 Bucket %q", cfg.Name())
+func newBucket(bkt resource.Bucket, cfg *config.Bucket, s *s3.S3) (resource.ProviderBucket, error) {
+	log.Debug("Initializing AWS Bucket %q", cfg.Name())
 
 	b := &bucket{
 		Bucket:  cfg,
-		storage: stor,
+		storage: bkt.Storage().ProviderStorage().(*storage),
 		s3:      s,
 	}
-	b.set(stor.bucketCache.find(b))
+	b.set(b.storage.bucketCache.find(b))
 
 	return b, nil
 }
@@ -70,7 +73,7 @@ func (b *bucket) SetTags(tags map[string]string) error {
 		}
 		tagSet = append(tagSet, tag)
 	}
-	for k, v := range b.Bucket.SecurityTags() {
+	for k, v := range b.SecurityTags() {
 		tag := &s3.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),
@@ -123,18 +126,14 @@ func (b *bucket) Route(req *route.Request) route.Response {
 	case route.Config:
 		b.Print()
 		return route.OK
-	case route.Provision:
-		return b.update(req)
 	case route.Create:
-		if err := b.create(); err != nil {
+		if err := b.Create(); err != nil {
 			msg.Error(err.Error())
 			return route.FAIL
 		}
 		if req.Flag("noprovision") {
 			return route.OK
 		}
-		resp := b.update(req)
-		return resp
 	case route.Destroy:
 		if err := b.destroy(); err != nil {
 			msg.Error(err.Error())
@@ -146,6 +145,16 @@ func (b *bucket) Route(req *route.Request) route.Response {
 }
 
 func (b *bucket) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find audit object")
+	}
+	a := aaa.AuditBuffer[flags[0]]
+	if a == nil {
+		return fmt.Errorf("Audit Object does not exist")
+	}
+	if b.bucket == nil {
+		a.Audit(aaa.Configured, "%s", b.Name())
+	}
 	return nil
 }
 
@@ -165,7 +174,7 @@ func (b *bucket) Destroyed() bool {
 	return b.bucket == nil
 }
 
-func (b *bucket) create(flags ...string) error {
+func (b *bucket) Create(flags ...string) error {
 	msg.Info("Bucket Create: %s", b.Name())
 	msg.Detail("Bucket Region: %s", b.Region())
 	params := &s3.CreateBucketInput{
@@ -197,19 +206,4 @@ func (b *bucket) destroy(flags ...string) error {
 	}
 	msg.Detail("Bucket deleted: %s", b.Name())
 	return nil
-}
-
-func (b *bucket) update(req *route.Request) route.Response {
-	if req.Flag("tags") {
-		err := b.SetTags(b.storage.Storage.SecurityTags())
-		if err != nil {
-			return route.FAIL
-		}
-		return route.OK
-	}
-	err := b.SetTags(b.storage.Storage.SecurityTags())
-	if err != nil {
-		return route.FAIL
-	}
-	return route.OK
 }
