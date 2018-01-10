@@ -27,10 +27,13 @@
 package aws
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	// "github.com/cisco/arc/pkg/aaa"
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/log"
 )
 
@@ -56,11 +59,18 @@ func newBucketCache(s *storage) (*bucketCache, error) {
 	// us-east-1 is being used here because it is the default region but plays no role in
 	// listing the buckets, it is dependent on the account that created the s.s3 object.
 	region := "us-east-1"
+	log.Debug("BP1")
 	v := s.s3[region]
+	for key, val := range s.s3 {
+		log.Debug("key = %q | val = %+v", key, val)
+	}
+	log.Debug("BP2")
 	resp, err := v.ListBuckets(params)
+	log.Debug("BP3")
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("BP4")
 
 	for _, r := range resp.Buckets {
 		if r.Name == nil {
@@ -90,28 +100,25 @@ func (c *bucketCache) remove(d *dnsRecord) {
 }
 
 func (c *bucketCache) audit(flags ...string) error {
-	// TODO
-	/*
-		if len(flags) == 0 || flags[0] == "" {
-			return fmt.Errorf("No flag set to find audit object")
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find audit object")
+	}
+	a := aaa.AuditBuffer[flags[0]]
+	if a == nil {
+		return fmt.Errorf("Audit Object does not exist")
+	}
+	for k, v := range c.cache {
+		if v.configured == nil {
+			a.Audit(aaa.Deployed, "%s", k)
 		}
-		a := aaa.AuditBuffer[flags[0]]
-		if a == nil {
-			return fmt.Errorf("Audit Object does not exist")
+	}
+	if c.unnamed != nil {
+		a.Audit(aaa.Deployed, "\r")
+		for i, v := range c.unnamed {
+			u := "\t" + strings.Replace(fmt.Sprintf("%+v", v), "\n", "\n\t", -1)
+			m := fmt.Sprintf("Unnamed Bucket %d - Bucket Name: %q", i+1, *v.Name, u)
+			a.Audit(aaa.Deployed, m)
 		}
-		for k, v := range c.cache {
-			if v.configured == nil {
-				a.Audit(aaa.Deployed, "%s", k)
-			}
-		}
-		if c.unnamed != nil {
-			a.Audit(aaa.Deployed, "\r")
-			for i, v := range c.unnamed {
-				u := "\t" + strings.Replace(fmt.Sprintf("%+v", v), "\n", "\n\t", -1)
-				m := fmt.Sprintf("Unnamed Dns Record %d - DnsName: %q", i+1, *v.Name, u)
-				a.Audit(aaa.Deployed, m)
-			}
-		}
-	*/
+	}
 	return nil
 }

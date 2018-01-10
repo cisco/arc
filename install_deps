@@ -30,7 +30,6 @@ rm -rf $aws_sdk_dir
 git submodule init $aws_sdk_dir
 git submodule update $aws_sdk_dir
 
-
 declare -r cisco_spark_dir="vendor/github.com/jbogarin/go-cisco-spark"
 rm -rf $cisco_spark_dir
 git submodule init $cisco_spark_dir

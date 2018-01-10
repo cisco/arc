@@ -27,11 +27,5 @@
 package config
 
 type Storage struct {
-	Provider      *Provider    `json:"provider"`
-	SecurityTags_ SecurityTags `json:"security_tags"`
-	Buckets       []*Bucket    `json:"buckets"`
-}
-
-func (s *Storage) SecurityTags() SecurityTags {
-	return s.SecurityTags_
+	Buckets []*Bucket `json:"buckets"`
 }
