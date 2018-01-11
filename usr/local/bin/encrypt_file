@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# Copyright (c) 2017, Cisco Systems
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice, this
+#   list of conditions and the following disclaimer in the documentation and/or
+#   other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+source $(dirname $0)/common.sh
+
+declare appname="$(basename $0)"
+
+declare file
+declare -a users
+
+function usage() {
+  echo "usage: $appname file gpg_uid [gpp_uid...]"
+}
+
+function parse_args() {
+  if [ ! -f "$1" ]; then
+    die "Cannot find file to encrypt: $1\n"
+  else
+    file="$1"
+    shift
+  fi
+
+  while [ "$1" != "" ]; do
+    if ! grep -q "$1" <(gpg2 --list-keys  2>/dev/null); then
+      die "Cannot find gpg public key for: $1"
+    fi
+    if [ "$users" = "" ]; then
+      users=($1)
+    else
+      users=(${users[@]} $1)
+    fi
+    shift
+  done
+  if [ "$users" = "" ]; then
+    die "At least one user id for a gpg key must be provided."
+  fi
+}
+
+function encrypt_file() {
+
+  local encrypt_log="/tmp/$USER-$$-encrypt.log"
+  trap "rm -f $encrypt_log" EXIT
+
+  local -a recipients=()
+  local uid
+
+  for uid in ${users[@]}; do
+    if [ "$recipients" = "" ]; then
+      recipients=(${recipients[@]} "-r $uid")
+    else
+      recipients=(${recipients[@]} "-r $uid")
+    fi
+  done
+
+  if ! gpg2 --yes --output $file.gpg --encrypt ${recipients[@]} $file > $encrypt_log 2>&1; then
+    error "Failed to encrypt file. Details below...\n"
+    cat $encrypt_log
+    exit $failure
+  fi
+  detail "Complete"
+
+}
+
+function main() {
+  parse_args "$@"
+  info "Encrypting file:${clear}  $file"
+  detail "Gpg user ids:${clear} ${users[@]}"
+  encrypt_file
+}
+
+main "$@"

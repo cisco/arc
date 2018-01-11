@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
 	"path/filepath"
@@ -105,7 +106,7 @@ func Init(appname, version string) error {
 	env[strings.ToUpper(appname)] = appDir
 	env["ROOT"] = root
 	env["VERSION"] = version
-	env["SPARK_TOKEN"] = os.Getenv("SPARK_TOKEN")
+	env["SPARK_TOKEN"] = initSpark()
 	env["USER"] = u.Username
 	env["SSH_USER"] = u.Username
 	if sshUser := os.Getenv("SSH_USER"); sshUser != "" {
@@ -149,4 +150,17 @@ func cleanup(dir string) error {
 		}
 	}
 	return nil
+}
+
+func initSpark() string {
+	if token := os.Getenv("SPARK_TOKEN"); token != "" {
+		return token
+	}
+	spark := env["ROOT"] + "/etc/arc/spark.gpg"
+	cmd := env["ROOT"] + "/usr/local/bin/decrypt_file"
+	token, err := exec.Command(cmd, spark).CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(token))
 }
