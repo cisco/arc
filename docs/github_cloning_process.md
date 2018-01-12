@@ -3,6 +3,10 @@
 This process assumes you are going to clone directly from https://github.com:cisco/arc.
 This is opposed to forking model as described [here](github_forking_process.md).
 
+You can only use this process if you arc part of the arc-committers team is the Cisco
+org on github.com. The reason for this is that for this process to work, you need the
+to have write access to the repo to create branches.
+
 
 ## Cloning the repo
 

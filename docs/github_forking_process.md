@@ -17,6 +17,7 @@ Just head over to the https://github.com/cisco/arc and click the "Fork" button. 
 ## Cloning the repo
 
 Clone your fork to your local machine. This assumes your are in the root of your go workspace.
+This needs to be placed in github.com/cisco/arc to satisfy the go import paths.
 ```shell
 git clone git@github.com:[username]/arc src/github.com/cisco/arc
 ```
@@ -72,21 +73,22 @@ git rebase master
 
 ... re-build / test ...
 
-Push your development branch upstream. This will kickoff a travis-ci build for cisco/arc.
-```shell
-git push upstream [development_branch]
-```
+Once your development branch is available go to https://github.com/[username]/arc/pulls and create a pull request.
 
-Once your development branch is available go to https://github.com/cisco/arc/pulls and create a pull request
-with the following attributes:
+The base fork will be: **cisco/arc**, base branch: **master**.
+The head fork will be: **[username]/arc**, compare branch: **[development_branc]**
+
+### For reviewers that triage the pull request
+
+Please assign the attributes to the pull request.
 
 - Reviewers: arc-committers
-- Assignees: _yourself_
-- Projects:  arc
+- Assignees: [PR author]
+- Projects:  arc (by default)
 
 This will cause email to be sent out to the reviewers.
 
-When ready to merge the PR use the **Rebase** option.
+When ready to merge the PR use the **Squash** or  **Rebase** options, preferring squashing.
 
 After the PR is merged, delete the branch associated with the PR. We will only use one development branch per PR.
 
