@@ -30,6 +30,9 @@ export BUILD_NUMBER=$(cat ./version)
 ./install_deps
 go generate -v ./cmd/...
 go install -v ./cmd/...
-arc version
-amp version
-audit version
+
+set +x
+tools="arc amp audit spark"
+for tool in $tools; do
+  $tool version
+done
