@@ -95,6 +95,25 @@ After the PR is merged, delete the branch associated with the PR. We will only u
 If the issue associated with the PR is complete, mark it as closed.
 
 
+## Post PR changes
+
+If you need to make changes to your pull request, work on your development as if you were doing regular development. Since you are working on a branch, you want to create a new commit to the branch. You do not need to (and should not) amend the last commit.
+
+Once you commit the code to your local branch, push the branch up to your fork as your did before.
+
+```shell
+git push origin [development_branch]
+```
+
+If you mistakenly used an amended commit you can still push the branch up, but you need to do a force push.
+
+```shell
+git push -f origin [development_branch]
+```
+
+Since the branch associate with the PR has been updates, travis-ci will start a new build.
+
+
 ## Cleanup the development branch
 
 After the PR has merged, you no longer need your development branch. Switch to your master branch.
@@ -120,7 +139,7 @@ git branch -D [development_branch]
 
 ## Syncing master to upstream
 
-Pull a copy of the upstream repo.
+Pull a copy of the upstream repo. If you just did a fetch as part of the branch cleanup you do not need to do it again.
 ```shell
 git fetch upstream
 ```
