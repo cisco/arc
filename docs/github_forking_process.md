@@ -99,19 +99,24 @@ If the issue associated with the PR is complete, mark it as closed.
 
 If you need to make changes to your pull request, work on your development as if you were doing regular development. Since you are working on a branch, you want to create a new commit to the branch. You do not need to (and should not) amend the last commit.
 
-Once you commit the code to your local branch, push the branch up to your fork as your did before.
 
+Always remember to sync your development with the upstream/master before pushing up any changes.
 ```shell
-git push origin [development_branch]
+git fetch upstream
+git checkout master
+git merge --ff-only upstream/master
+git checkout [development_branch]
+git rebase master
 ```
 
-If you mistakenly used an amended commit you can still push the branch up, but you need to do a force push.
+
+Once you commit the code to your local branch, push the branch up to your fork as your did before.  If your commit included changes from upstream, or it includes an amended a commit, you must use a force push (-f flag to push).
 
 ```shell
 git push -f origin [development_branch]
 ```
 
-Since the branch associate with the PR has been updates, travis-ci will start a new build.
+Since the branch associate with the PR has been updated, travis-ci will start a new build.
 
 
 ## Cleanup the development branch
