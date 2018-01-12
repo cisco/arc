@@ -17,6 +17,7 @@ Just head over to the https://github.com/cisco/arc and click the "Fork" button. 
 ## Cloning the repo
 
 Clone your fork to your local machine. This assumes your are in the root of your go workspace.
+This needs to be placed in github.com/cisco/arc to satisfy the go import paths.
 ```shell
 git clone git@github.com:[username]/arc src/github.com/cisco/arc
 ```
@@ -72,25 +73,50 @@ git rebase master
 
 ... re-build / test ...
 
-Push your development branch upstream. This will kickoff a travis-ci build for cisco/arc.
-```shell
-git push upstream [development_branch]
-```
+Once your development branch is available go to https://github.com/[username]/arc/pulls and create a pull request.
 
-Once your development branch is available go to https://github.com/cisco/arc/pulls and create a pull request
-with the following attributes:
+The base fork will be: **cisco/arc**, base branch: **master**.
+The head fork will be: **[username]/arc**, compare branch: **[development_branc]**
+
+### For reviewers that triage the pull request
+
+Please assign the attributes to the pull request.
 
 - Reviewers: arc-committers
-- Assignees: _yourself_
-- Projects:  arc
+- Assignees: [PR author]
+- Projects:  arc (by default)
 
 This will cause email to be sent out to the reviewers.
 
-When ready to merge the PR use the **Rebase** option.
+When ready to merge the PR use the **Squash** or  **Rebase** options, preferring squashing.
 
 After the PR is merged, delete the branch associated with the PR. We will only use one development branch per PR.
 
 If the issue associated with the PR is complete, mark it as closed.
+
+
+## Post PR changes
+
+If you need to make changes to your pull request, work on your development as if you were doing regular development. Since you are working on a branch, you want to create a new commit to the branch. You do not need to (and should not) amend the last commit.
+
+
+Always remember to sync your development with the upstream/master before pushing up any changes.
+```shell
+git fetch upstream
+git checkout master
+git merge --ff-only upstream/master
+git checkout [development_branch]
+git rebase master
+```
+
+
+Once you commit the code to your local branch, push the branch up to your fork as your did before.  If your commit included changes from upstream, or it includes an amended a commit, you must use a force push (-f flag to push).
+
+```shell
+git push -f origin [development_branch]
+```
+
+Since the branch associate with the PR has been updated, travis-ci will start a new build.
 
 
 ## Cleanup the development branch
@@ -118,7 +144,7 @@ git branch -D [development_branch]
 
 ## Syncing master to upstream
 
-Pull a copy of the upstream repo.
+Pull a copy of the upstream repo. If you just did a fetch as part of the branch cleanup you do not need to do it again.
 ```shell
 git fetch upstream
 ```
