@@ -40,8 +40,6 @@ import (
 )
 
 type accountProvider struct {
-	*resource.Resources
-	*config.Account
 	s3     map[string]*s3.S3
 	name   string
 	number string
@@ -69,9 +67,8 @@ func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
 	}
 
 	a := &accountProvider{
-		Account: cfg,
-		name:    name,
-		number:  number,
+		name:   name,
+		number: number,
 	}
 
 	a.s3 = map[string]*s3.S3{}
@@ -101,5 +98,5 @@ func (a *accountProvider) NewStorage(cfg *config.Storage) (resource.ProviderStor
 }
 
 func (a *accountProvider) NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error) {
-	return newBucket(b, cfg, a.s3[cfg.Region()])
+	return newBucket(b, cfg, a)
 }

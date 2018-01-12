@@ -42,22 +42,27 @@ import (
 
 type bucket struct {
 	*config.Bucket
+	provider *accountProvider
+	s3       *s3.S3
+
 	storage *storage
-	s3      *s3.S3
 
 	access string
 	bucket *s3.Bucket
+	arn    *arn
 }
 
-func newBucket(bkt resource.Bucket, cfg *config.Bucket, s *s3.S3) (resource.ProviderBucket, error) {
+func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *accountProvider) (resource.ProviderBucket, error) {
 	log.Debug("Initializing AWS Bucket %q", cfg.Name())
 
 	b := &bucket{
-		Bucket:  cfg,
-		storage: bkt.Storage().ProviderStorage().(*storage),
-		s3:      s,
+		Bucket:   cfg,
+		provider: prov,
+		storage:  bkt.Storage().ProviderStorage().(*storage),
+		s3:       prov.s3[cfg.Region()],
 	}
 	b.set(b.storage.bucketCache.find(b))
+	b.arn = newIamRole(prov.number, b.Role())
 
 	return b, nil
 }
@@ -90,6 +95,67 @@ func (b *bucket) SetTags(tags map[string]string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (b *bucket) enableVersioning() error {
+	log.Debug("Enabling Bucket Versioning")
+	params := &s3.PutBucketVersioningInput{
+		Bucket: aws.String(b.Name()),
+		VersioningConfiguration: &s3.VersioningConfiguration{
+			MFADelete: aws.String("Disabled"),
+			Status:    aws.String("Enabled"),
+		},
+	}
+	_, err := b.s3.PutBucketVersioning(params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *bucket) enableEncryption() error {
+	log.Debug("Enabling Bucket Encryption")
+	/*
+		params := &s3.PutBucketEncryptionInput{
+			Bucket: aws.String(b.Name()),
+			ServerSideEncryptionConfiguration: &s3.ServerSideEncryptionConfiguration{
+				Rules: []*ServerSideEncryptionRule{
+					{
+						ApplyServerSideEncryptionByDefault: &ServerSideEncryptionByDefault{},
+					},
+				},
+			},
+		}
+	*/
+	return nil
+}
+
+func (b *bucket) enableReplication() error {
+	log.Debug("Enabling Bucket Replication")
+	/*
+		fmt.Printf("role = %q", b.arn)
+		params := &s3.PutBucketReplicationInput{
+			Bucket: aws.String(b.Destination()),
+			ReplicationConfiguration: &s3.ReplicationConfiguration{
+				Role: aws.String(b.arn.String()),
+				Rules: []*s3.ReplicationRule{
+					{
+						Destination: &s3.Destination{
+							Bucket: aws.String(b.Destination()),
+						},
+						Prefix: aws.String(""),
+						Status: aws.String("Enabled"),
+					},
+				},
+			},
+		}
+
+		_, err := b.s3.PutBucketReplication(params)
+		if err != nil {
+			return err
+		}
+	*/
 	return nil
 }
 
@@ -191,6 +257,22 @@ func (b *bucket) Create(flags ...string) error {
 		return err
 	}
 	msg.Detail("Bucket created: %s", b.Name())
+	err = b.enableVersioning()
+	if err != nil {
+		return err
+	}
+
+	err = b.enableEncryption()
+	if err != nil {
+		return err
+	}
+
+	if b.Role() != "" && b.Destination() != "" {
+		err = b.enableReplication()
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
