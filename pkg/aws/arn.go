@@ -35,10 +35,18 @@ type arn struct {
 	relativeId string
 }
 
-func newIamInstanceProfile(p *dataCenterProvider, role string) *arn {
+func newIamRole(ns string, role string) *arn {
 	return &arn{
 		service:    "iam",
-		namespace:  p.number,
+		namespace:  ns,
+		relativeId: "role/" + role,
+	}
+}
+
+func newIamInstanceProfile(ns string, role string) *arn {
+	return &arn{
+		service:    "iam",
+		namespace:  ns,
 		relativeId: "instance-profile/" + role,
 	}
 }

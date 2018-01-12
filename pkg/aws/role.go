@@ -57,7 +57,7 @@ func newRole(name string, p *dataCenterProvider, in resource.Instance) (resource
 	var s *ec2.IamInstanceProfileSpecification = nil
 	if name != "" {
 		s = &ec2.IamInstanceProfileSpecification{
-			Arn:  aws.String(newIamInstanceProfile(p, name).String()),
+			Arn:  aws.String(newIamInstanceProfile(p.number, name).String()),
 			Name: aws.String(name),
 		}
 	}

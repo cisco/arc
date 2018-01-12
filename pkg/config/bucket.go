@@ -34,6 +34,8 @@ type Bucket struct {
 	Name_         string       `json:"bucket"`
 	Region_       string       `json:"region"`
 	SecurityTags_ SecurityTags `json:"security_tags"`
+	Role_         string       `json:"role"`
+	Destination_  string       `json:"Destination"`
 }
 
 func (b *Bucket) Name() string {
@@ -46,6 +48,14 @@ func (b *Bucket) Region() string {
 
 func (b *Bucket) SecurityTags() SecurityTags {
 	return b.SecurityTags_
+}
+
+func (b *Bucket) Role() string {
+	return b.Role_
+}
+
+func (b *Bucket) Destination() string {
+	return b.Destination_
 }
 
 func (b *Bucket) Print() {
