@@ -286,6 +286,5 @@ func (i *Instance) createSecurityTags() error {
 	for k, v := range i.Pod().Cluster().SecurityTags() {
 		tags[k] = v
 	}
-	tags["ApplicationName"] = i.ServerType()
 	return i.SetTags(tags)
 }

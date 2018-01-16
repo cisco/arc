@@ -71,14 +71,10 @@ func (b *bucket) SetTags(tags map[string]string) error {
 	log.Debug("Tagging bucket %q", b.Name())
 	log.Debug("Tags = %v+", tags)
 	tagSet := []*s3.Tag{}
-	for k, v := range tags {
-		tag := &s3.Tag{
-			Key:   aws.String(k),
-			Value: aws.String(v),
-		}
-		tagSet = append(tagSet, tag)
-	}
 	for k, v := range b.SecurityTags() {
+		tags[k] = v
+	}
+	for k, v := range tags {
 		tag := &s3.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),

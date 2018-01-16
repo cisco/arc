@@ -72,6 +72,10 @@ func (b *bucket) Route(req *route.Request) route.Response {
 		}
 		return route.OK
 	case route.Provision:
+		if !b.Created() {
+			msg.Detail("Bucket does not exist, skipping...")
+			return route.OK
+		}
 		return b.update(req)
 	}
 	return b.providerBucket.Route(req)
