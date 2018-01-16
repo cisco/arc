@@ -71,9 +71,6 @@ func (b *bucket) SetTags(tags map[string]string) error {
 	log.Debug("Tagging bucket %q", b.Name())
 	log.Debug("Tags = %v+", tags)
 	tagSet := []*s3.Tag{}
-	for k, v := range b.SecurityTags() {
-		tags[k] = v
-	}
 	for k, v := range tags {
 		tag := &s3.Tag{
 			Key:   aws.String(k),
@@ -181,29 +178,7 @@ func (b *bucket) Info() {
 
 func (b *bucket) Route(req *route.Request) route.Response {
 	log.Route(req, "AWS Bucket %q", b.Name())
-	switch req.Command() {
-	case route.Info:
-		b.Info()
-		return route.OK
-	case route.Config:
-		b.Print()
-		return route.OK
-	case route.Create:
-		if err := b.Create(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
-		}
-		if req.Flag("noprovision") {
-			return route.OK
-		}
-	case route.Destroy:
-		if err := b.destroy(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
-		}
-		return route.OK
-	}
-	return route.FAIL
+	return route.OK
 }
 
 func (b *bucket) Audit(flags ...string) error {
@@ -272,7 +247,7 @@ func (b *bucket) Create(flags ...string) error {
 	return nil
 }
 
-func (b *bucket) destroy(flags ...string) error {
+func (b *bucket) Destroy(flags ...string) error {
 	msg.Info("Bucket Deletion: %s", b.Name())
 	msg.Detail("Bucket Region: %s", b.Region())
 	params := &s3.DeleteBucketInput{
