@@ -60,7 +60,7 @@ func newBucket(s *storage, prov provider.Account, cfg *config.Bucket) (*bucket, 
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Bucket.
-// Bucket handles load, create, destroy, and info requests by delegating them
+// Bucket handles load, create, destroy, config and info requests by delegating them
 // to the providerBucket.
 func (b *bucket) Route(req *route.Request) route.Response {
 	log.Route(req, "Bucket %q", b.Name())
@@ -71,8 +71,24 @@ func (b *bucket) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Destroy:
+		if err := b.Destroy(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Provision:
-		return b.update(req)
+		if err := b.update(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
+	case route.Info:
+		b.Info()
+		return route.OK
+	case route.Config:
+		b.Print()
+		return route.OK
 	}
 	return b.providerBucket.Route(req)
 }
@@ -105,28 +121,52 @@ func (b *bucket) Audit(flags ...string) error {
 }
 
 func (b *bucket) Create(flags ...string) error {
+	if b.Created() {
+		msg.Detail("Bucket exists, skipping...")
+		return nil
+	}
 	if err := b.providerBucket.Create(flags...); err != nil {
 		return err
 	}
-	if err := b.SetTags(b.Storage().Account().SecurityTags()); err != nil {
+	if err := b.createSecurityTags(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *bucket) update(req *route.Request) route.Response {
-	if req.Flag("tags") {
-		if err := b.updateTags(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
+func (b *bucket) Destroy(flags ...string) error {
+	if b.Destroyed() {
+		msg.Detail("Bucket does not exist, skipping...")
+		return nil
+	}
+	return b.ProviderBucket().Destroy(flags...)
+}
+
+func (b *bucket) update(flags ...string) error {
+	if b.Destroyed() {
+		msg.Detail("Bucket does not exist, skipping...")
+		return nil
+	}
+	tagsFlagSet := false
+	if len(flags) != 0 {
+		for _, v := range flags {
+			if v == "tags" {
+				tagsFlagSet = true
+			}
 		}
-		return route.OK
 	}
-	if err := b.updateTags(); err != nil {
+	if tagsFlagSet {
+		if err := b.createSecurityTags(); err != nil {
+			msg.Error(err.Error())
+			return err
+		}
+		return nil
+	}
+	if err := b.createSecurityTags(); err != nil {
 		msg.Error(err.Error())
-		return route.FAIL
+		return err
 	}
-	return route.OK
+	return nil
 }
 
 func (b *bucket) SetTags(t map[string]string) error {
@@ -136,10 +176,17 @@ func (b *bucket) SetTags(t map[string]string) error {
 	return b.providerBucket.SetTags(t)
 }
 
-func (b *bucket) updateTags() error {
-	return b.SetTags(b.Storage().Account().SecurityTags())
+func (b *bucket) createSecurityTags() error {
+	tags := map[string]string{}
+	for k, v := range b.Storage().Account().SecurityTags() {
+		tags[k] = v
+	}
+	for k, v := range b.SecurityTags() {
+		tags[k] = v
+	}
+	return b.SetTags(tags)
 }
 
 func (b *bucket) Info() {
-
+	b.ProviderBucket().Info()
 }

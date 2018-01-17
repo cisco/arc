@@ -38,6 +38,7 @@ type StaticBucket interface {
 type DynamicBucket interface {
 	Auditor
 	Creator
+	Destroyer
 	// SetTags sets the tags for the bucket.
 	SetTags(map[string]string) error
 
