@@ -31,6 +31,7 @@ import (
 	"io/ioutil"
 
 	conf "github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
 )
 
 var Users map[string]*User
@@ -41,7 +42,8 @@ var DataCenters []*conf.Arc
 func Init(name string) error {
 	file, err := ioutil.ReadFile(name)
 	if err != nil {
-		return err
+		log.Warn(err.Error())
+		return nil
 	}
 
 	cfg := &config{}

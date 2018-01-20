@@ -38,6 +38,9 @@ import (
 )
 
 func (i *Instance) configureUsers(req *route.Request, asRoot bool) route.Response {
+	if users.Groups == nil {
+		return route.OK
+	}
 	var err error
 	commands := []command.Command{}
 

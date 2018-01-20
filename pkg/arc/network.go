@@ -51,6 +51,9 @@ type network struct {
 
 // newNetwork is the constructor for a network object. It returns a non-nil error upon failure.
 func newNetwork(dc *dataCenter, prov provider.DataCenter, cfg *config.Network) (*network, error) {
+	if cfg == nil {
+		return nil, nil
+	}
 	log.Debug("Initializing Network")
 
 	// Validate the config.Network object.

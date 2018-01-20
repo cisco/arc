@@ -35,6 +35,9 @@ import (
 var notification *config.Notifications
 
 func Init(cfg *config.Notifications) error {
+	if cfg == nil {
+		return nil
+	}
 	notification = cfg
 	u, err := user.Current()
 	if err != nil {

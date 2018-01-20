@@ -33,6 +33,9 @@ import (
 )
 
 func (i *Instance) newDnsARecords() error {
+	if i.dns == nil {
+		return nil
+	}
 	var err error
 	// Allocate the dns a record for the private ip address.
 	if i.privateARecord == nil {
@@ -52,6 +55,9 @@ func (i *Instance) newDnsARecords() error {
 }
 
 func (i *Instance) loadDnsARecords(req *route.Request) route.Response {
+	if i.dns == nil {
+		return route.OK
+	}
 	log.Debug("Loading Instance %q, DNS A Records", i.Name())
 
 	// Load the dns records
@@ -73,6 +79,9 @@ func (i *Instance) loadDnsARecords(req *route.Request) route.Response {
 }
 
 func (i *Instance) updateDnsARecord(req *route.Request, r *dnsRecord, ip, t string) route.Response {
+	if i.dns == nil {
+		return route.OK
+	}
 	if r != nil && len(r.DynamicValues()) == 1 && ip != "" {
 		cIp := r.DynamicValues()[0]
 		if cIp != ip {
@@ -90,6 +99,9 @@ func (i *Instance) updateDnsARecord(req *route.Request, r *dnsRecord, ip, t stri
 }
 
 func (i *Instance) createDnsARecords(req *route.Request) route.Response {
+	if i.dns == nil {
+		return route.OK
+	}
 	r := req.Clone(route.Create)
 	if i.privateARecord.Route(r) != route.OK {
 		return route.FAIL
@@ -101,6 +113,9 @@ func (i *Instance) createDnsARecords(req *route.Request) route.Response {
 }
 
 func (i *Instance) destroyDnsARecords(req *route.Request) route.Response {
+	if i.dns == nil {
+		return route.OK
+	}
 	r := req.Clone(route.Destroy)
 	if i.publicARecord != nil && i.publicARecord.Route(r) != route.OK {
 		return route.FAIL

@@ -147,6 +147,14 @@ func (i *Instance) PostCreate(req *route.Request) route.Response {
 		return resp
 	}
 
+	dcName := i.Pod().Cluster().Compute().Name()
+	domain := dcName + ".local"
+	consulDomain := dcName + ".consul"
+	if i.Dns() == nil {
+		domain = i.Dns().Domain()
+		consulDomain = i.Dns().Subdomain() + ".consul"
+	}
+
 	commands := []command.Command{
 		{
 			Type: command.Remote,
@@ -158,7 +166,7 @@ func (i *Instance) PostCreate(req *route.Request) route.Response {
 			Type: command.Remote,
 			Desc: "setup dhcp",
 			Src:  "/usr/lib/arc/create/setup_dhcp",
-			Args: []string{i.Dns().Subdomain() + ".consul", i.Dns().Domain()},
+			Args: []string{consulDomain, domain},
 		},
 		{
 			Type: command.Remote,

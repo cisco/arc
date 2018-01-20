@@ -63,6 +63,9 @@ func init() {
 }
 
 func NewAuditWithOptions(name string, deployed, configured, mismatched bool) error {
+	if notification == nil {
+		return nil
+	}
 	if name == "" {
 		return fmt.Errorf("No name given for the Audit")
 	}
@@ -82,6 +85,9 @@ func NewAudit(name string) error {
 }
 
 func (a *Audit) PreAudit(args []string) {
+	if notification == nil {
+		return
+	}
 	version := env.Lookup("VERSION")
 	sshUser := env.Lookup("SSH_USER")
 	userId := env.Lookup("USER")
@@ -99,6 +105,9 @@ func (a *Audit) PreAudit(args []string) {
 }
 
 func (a *Audit) Audit(t auditType, format string, b ...interface{}) {
+	if notification == nil {
+		return
+	}
 	s := fmt.Sprintf(format, b...)
 	log.Debug("%s Audit of %s", a.name, s)
 	switch t {
@@ -112,6 +121,9 @@ func (a *Audit) Audit(t auditType, format string, b ...interface{}) {
 }
 
 func (a *Audit) FreeFormAudit(format string, b ...interface{}) {
+	if notification == nil {
+		return
+	}
 	freeFormAuditBuffer = append(freeFormAuditBuffer, fmt.Sprintf(format, b...))
 }
 

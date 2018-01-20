@@ -57,6 +57,9 @@ type dns struct {
 
 // newDns is the constructor for a dns object. It returns a non-nil error upon failure.
 func newDns(arc *arc, cfg *config.Dns) (*dns, error) {
+	if cfg == nil {
+		return nil, nil
+	}
 	log.Debug("Initializing Dns")
 
 	if cfg.Provider == nil {
@@ -155,6 +158,9 @@ func (d *dns) associate(dc *dataCenter) {
 
 // DataCenter providess acess to the DataCenter resource.
 func (d *dns) DataCenter() resource.DataCenter {
+	if d.datacenter == nil {
+		return nil
+	}
 	return d.datacenter
 }
 
