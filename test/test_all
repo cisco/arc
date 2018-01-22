@@ -32,6 +32,7 @@ declare -r key="./.ssh/id_rsa"
 function init() {
   eval "$(ssh-agent -s)"
   cp ./.ssh/fake $key
+  chmod 400 $key
   ssh-add $key
   ssh-add -l
 }
