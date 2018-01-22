@@ -1,0 +1,30 @@
+{
+  "comments": [
+    "Copyright (c) 2018 by Cisco Systems, Inc.",
+    "All rights reserved."
+  ],
+
+  "datacenters": [],
+
+  "users": [
+    {
+      "user":    "bob", "groups":  [ "admin" ],
+      "sshkeys": [ "ssh-rsa AAAAB3N1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ bob@example.com" ]
+    },
+    {
+      "user":    "alice", "groups":  [ "admin" ],
+      "sshkeys": [ "ssh-rsa AAAAB3N1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ bob@example.com" ]
+    }
+  ],
+
+  "groups": [
+    { "group": "admin" }
+  ],
+
+  "teams": [
+    {
+      "team": "admins", "sudo": true,
+      "users": [ "bob", "alice" ]
+    }
+  ]
+}

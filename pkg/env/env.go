@@ -90,12 +90,14 @@ func Init(appname, version string) error {
 		fmt.Printf("\nWarning: %s\n\n", err.Error())
 	}
 
-	root := ""
-	info, err := os.Stat("./cmd/" + appname + "/main.go")
-	if err == nil && info.Mode().IsRegular() {
-		root, err = os.Getwd()
-		if err != nil {
-			return err
+	root := os.Getenv(strings.ToUpper(appname) + "_ROOT")
+	if root == "" {
+		info, err := os.Stat("./cmd/" + appname + "/main.go")
+		if err == nil && info.Mode().IsRegular() {
+			root, err = os.Getwd()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	err = os.Setenv(strings.ToUpper(appname), appDir)

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, Cisco Systems
+# Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-#
+
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -25,18 +25,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
-export BUILD_NUMBER=$(cat ./version)
-./install_deps
-go generate -v ./cmd/...
-go install -v ./cmd/...
+export ARC="$PWD/logs"
 
-set +x
-tools="arc amp audit spark"
-for tool in $tools; do
-  $tool version
-done
-
-cd test
-./test_all
-cd - >/dev/null 2>&1
+./run_tests "Config" config

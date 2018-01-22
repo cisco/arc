@@ -38,7 +38,7 @@ import (
 )
 
 func (i *Instance) configureUsers(req *route.Request, asRoot bool) route.Response {
-	if users.Groups == nil {
+	if users.Users == nil || users.Groups == nil || users.Teams == nil {
 		return route.OK
 	}
 	var err error

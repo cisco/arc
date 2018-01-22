@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, Cisco Systems
+# Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-#
+
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -26,17 +26,13 @@
 #
 
 set -xe
-export BUILD_NUMBER=$(cat ./version)
-./install_deps
-go generate -v ./cmd/...
-go install -v ./cmd/...
 
-set +x
-tools="arc amp audit spark"
-for tool in $tools; do
-  $tool version
-done
+export ARC_ROOT="$PWD/config"
 
-cd test
-./test_all
-cd - >/dev/null 2>&1
+function cleanup() {
+  rm -f $ARC_ROOT/etc/arc/users.json
+}
+trap cleanup EXIT
+
+cp $ARC_ROOT/etc/arc/users.json.orig $ARC_ROOT/etc/arc/users.json
+arc dc_network_compute_dns info
