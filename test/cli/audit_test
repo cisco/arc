@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, Cisco Systems
+# Copyright (c) 2018, Cisco Systems
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -25,50 +25,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -e
-declare -r esc=$'\033'
-declare -r color="${esc}[1;33m"
-declare -r clear="${esc}[0;39m"
+source $(dirname $0)/cli.sh
 
-function build() {
-  printf "\n\n${color}Building...${clear}\n\n"
-  set -x
-  export BUILD_NUMBER=$(cat ./version)
-  ./install_deps
-  time go generate -v ./cmd/...
-  time go install -v ./cmd/...
-  set +x
-}
+run arc cli subnet audit test
+run arc cli subnet bastion audit test
 
-function report_versions() {
-  printf "\n\n${color}Versions...${clear}\n\n"
-  local tools="arc amp audit spark"
-  for tool in $tools; do
-    $tool version
-  done
-}
+run arc cli secgroup audit test
+run arc cli secgroup common audit test
 
-function run_unit_tests() {
-  printf "\n\n${color}Running unit tests...${clear}\n\n"
-  local pkg_with_tests="route ssh"
-  local pkg
-  for pkg in $pkg_with_tests; do
-    go test -v ./pkg/$pkg
-  done
-}
+run arc cli instance audit test
+run arc cli instance bastion-01 audit test
+run arc cli cluster core pod bastion instance bastion-01 audit test
 
-function run_integ_tests() {
-  printf "\n\n${color}Running integrated tests...${clear}\n\n"
-  cd test
-  time ./test_all
-  cd - >/dev/null 2>&1
-}
+run arc cli volume audit test
+run arc cli eip audit test
 
-function main() {
-  build
-  report_versions
-  run_unit_tests
-  run_integ_tests
-}
-
-main "$@"
+run arc cli network audit test
+run arc cli compute audit test
+run arc cli dns audit test
+run arc cli audit test

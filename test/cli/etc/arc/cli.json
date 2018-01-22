@@ -24,16 +24,11 @@
         {
           "subnet": "private",
           "cidr":   "10.0.12.0/24",
-          "access": "public"
-        },
-        {
-          "subnet": "sub1",
-          "cidr":   "10.0.16.0/24",
           "access": "private"
         },
         {
-          "subnet": "sub2",
-          "cidr":   "10.0.20.0/24",
+          "subnet": "bastion",
+          "cidr":   "10.0.16.0/24",
           "access": "private"
         }
       ],
@@ -99,29 +94,18 @@
 
       "clusters": [
         {
-          "cluster": "ClusterA",
+          "cluster": "core",
           "pods": [
             {
-              "pod":             "PodA",
-              "servertype":      "base",
+              "pod":             "bastion",
+              "servertype":      "bastion",
               "version":         1,
-              "subnet_group":    "sub1",
+              "subnet_group":    "bastion",
               "security_groups": [ "common" ],
               "volumes": [
                 { "device": "/dev/sda1", "type": "standard", "size": 8, "boot": true }
               ],
               "count": 3
-            },
-            {
-              "pod":             "PodB",
-              "servertype":      "base",
-              "version":         1,
-              "subnet_group":    "sub1",
-              "security_groups": [ "common" ],
-              "volumes": [
-                { "device": "/dev/sda1", "type": "standard", "size": 8, "boot": true }
-              ],
-              "count": 1
             }
           ]
         }

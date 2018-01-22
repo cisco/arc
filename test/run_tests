@@ -42,8 +42,6 @@ function handle_test_result() {
 
   if [ $rc -ne 0 ]; then
     printf "${failure}failed${clear}\n"; (( result = result + 1 ))
-    cat ${t}.out.txt
-    echo ""
   else
     printf "${success}success${clear}\n"
   fi
