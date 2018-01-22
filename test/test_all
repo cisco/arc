@@ -30,8 +30,10 @@ export ARC="$PWD/logs"
 declare -r key="./.ssh/id_rsa"
 
 function init() {
+  eval "$(ssh-agent -s)"
   cp ./.ssh/fake $key
   ssh-add $key
+  ssh-add -l
 }
 
 function cleanup() {
