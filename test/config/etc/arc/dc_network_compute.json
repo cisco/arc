@@ -1,0 +1,77 @@
+{
+  "name": "dc_network_compute",
+  "title": "Config Test - DataCenter Network and Compute",
+
+  "datacenter": {
+
+    "provider": { "vendor": "mock" },
+
+
+    "network": {
+      "cidr": "10.0.0.0/16",
+      "availability_zones": [ "us-east-2a", "us-east-2b", "us-east-2c" ],
+
+      "subnet_groups": [
+        {
+          "subnet": "public",
+          "cidr":   "10.0.4.0/24",
+          "access": "public"
+        },
+        {
+          "subnet": "sub1",
+          "cidr":   "10.0.8.0/24",
+          "access": "private"
+        },
+        {
+          "subnet": "sub2",
+          "cidr":   "10.0.12.0/24",
+          "access": "private"
+        }
+      ],
+
+      "cidr_aliases": {
+        "global": "0.0.0.0/0",
+        "local":  "10.0.0.0/0"
+      },
+
+      "security_groups": [
+        {
+          "security_group": "default",
+          "rules": [
+            {
+              "description": "default",
+              "directions":  [ "ingress" ],
+              "remotes":     [ "cidr:local" ],
+              "protocols":   [ "tcp" ],
+              "ports":       [ "22" ]
+            }
+          ]
+        }
+      ]
+    },
+
+    "compute": {
+
+      "clusters": [
+        {
+          "cluster": "clusterA",
+          "pods": [
+            {
+              "pod":             "podA",
+              "servertype":      "base",
+              "version":         1,
+              "subnet_group":    "sub1",
+              "security_groups": [ "default" ],
+              "volumes": [
+                { "device": "/dev/sda1", "type": "standard", "size": 8, "boot": true }
+              ],
+              "count": 3
+            }
+          ]
+        }
+      ]
+    }
+
+  }
+
+}

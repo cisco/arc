@@ -58,6 +58,9 @@ type compute struct {
 
 // newCompute is the constructor for a compute object. It returns a non-nil error upon failure.
 func newCompute(dc *dataCenter, prov provider.DataCenter, cfg *config.Compute) (*compute, error) {
+	if cfg == nil {
+		return nil, nil
+	}
 	log.Debug("Initializing Compute")
 
 	// Validate the config.Compute object.

@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# Copyright (c) 2018, Cisco Systems
+# All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice, this
+#   list of conditions and the following disclaimer in the documentation and/or
+#   other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+declare -i result=0
+
+declare -r esc=$'\033'
+declare -r date_color="${esc}[1;33m"
+declare -r success="${esc}[1;32m"
+declare -r failure="${esc}[1;31m"
+declare -r clear="${esc}[0;39m"
+
+declare title=""
+declare test_dir=""
+
+function handle_test_result() {
+  local t=$1
+  local rc=$2
+
+  if [ $rc -ne 0 ]; then
+    printf "${failure}failed${clear}\n"; (( result = result + 1 ))
+    cat ${t}.out.txt
+    echo ""
+  else
+    printf "${success}success${clear}\n"
+  fi
+}
+
+function run_tests() {
+ local tests="$(find ${test_dir} -maxdepth 1 -executable -type f -name "*_test" 2>/dev/null | sort)"
+  for t in ${tests}; do
+    printf  "%-50s" "  ${t##*/}"
+    if [ -r ${t}.in.txt ]; then
+      ${t} < ${t}.in.txt > ${t}.out.txt 2>&1
+    else
+      ${t} > ${t}.out.txt 2>&1
+    fi
+    handle_test_result ${t} $?
+  done
+}
+
+function report_results() {
+  if [ ${result} -ne 0 ]; then
+    if [ ${result} -ne 1 ]; then
+      printf "${result} ${failure}failures${clear}\n"
+    else
+      printf "${result} ${failure}failure${clear}\n"
+    fi
+  else
+    printf "${success}success${clear}\n"
+  fi
+}
+
+function main() {
+  if [ "$1" = "" -o "$2" = "" -o ! -d "$(readlink -f $2)" ]; then
+    printf "Usage: $(basename $0) title test_directory\n"
+    exit 1
+  fi
+  title="$1"
+  test_dir="$(readlink -f $2)"
+  printf "\nRunning $title Tests\t ${date_color}$(date)${clear}\n\n"
+
+  run_tests
+
+  printf "\n%-50s" "Completed Tests"
+  report_results
+
+  return ${result}
+}
+
+main "$@"

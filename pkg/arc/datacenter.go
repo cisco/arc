@@ -53,17 +53,18 @@ type dataCenter struct {
 
 // newDataCenter is the constructor for a dataCenter object. It returns a non-nil error upon failure.
 func newDataCenter(arc *arc, cfg *config.DataCenter) (*dataCenter, error) {
+	if cfg == nil {
+		return nil, nil
+	}
 	log.Debug("Initializing Datacenter")
 
 	// Validate the config.DataCenter object.
 	if cfg.Provider == nil {
 		return nil, fmt.Errorf("The provider element is missing from the datacenter configuration")
 	}
-	if cfg.Network == nil {
+
+	if cfg.Network == nil && cfg.Compute != nil {
 		return nil, fmt.Errorf("The network element is missing from the datacenter configuration")
-	}
-	if cfg.Compute == nil {
-		return nil, fmt.Errorf("The compute element is missing from the datacenter configuration")
 	}
 
 	d := &dataCenter{
@@ -94,20 +95,28 @@ func newDataCenter(arc *arc, cfg *config.DataCenter) (*dataCenter, error) {
 
 	// The network and compute name field is a convenience field in the config struct and
 	// is set at run time to the arc name.
-	cfg.Network.SetName(arc.Name())
-	cfg.Compute.SetName(arc.Name())
+	if cfg.Network != nil {
+		cfg.Network.SetName(arc.Name())
+	}
+	if cfg.Compute != nil {
+		cfg.Compute.SetName(arc.Name())
+	}
 
 	d.network, err = newNetwork(d, p, cfg.Network)
 	if err != nil {
 		return nil, err
 	}
-	d.Append(d.network)
+	if d.network != nil {
+		d.Append(d.network)
+	}
 
 	d.compute, err = newCompute(d, p, cfg.Compute)
 	if err != nil {
 		return nil, err
 	}
-	d.Append(d.compute)
+	if d.compute != nil {
+		d.Append(d.compute)
+	}
 
 	return d, nil
 }
@@ -121,22 +130,34 @@ func (d *dataCenter) Arc() resource.Arc {
 // Network satisfies the resource.DataCenter interface and provides access
 // to datacenter's network.
 func (d *dataCenter) Network() resource.Network {
+	if d.network == nil {
+		return nil
+	}
 	return d.network
 }
 
 // Compute satisfies the resource.DataCenter interface and provides access
 // to datacenter's compuet .
 func (d *dataCenter) Compute() resource.Compute {
+	if d.compute == nil {
+		return nil
+	}
 	return d.compute
 }
 
-// associate the DataCenter resource with this Dns resource.
+// associate the DataCenter resource with the Dns resource.
 func (d *dataCenter) associate(r *dns) {
+	if r == nil {
+		return
+	}
 	d.dns = r
 }
 
 // Dns providess acess to the Dns resource.
 func (d *dataCenter) Dns() resource.Dns {
+	if d.dns == nil {
+		return nil
+	}
 	return d.dns
 }
 
@@ -151,12 +172,28 @@ func (d *dataCenter) Route(req *route.Request) route.Response {
 	case "":
 		break
 	case "network":
+		if d.Network() == nil {
+			msg.Error("Network not defined in the config file")
+			return route.OK
+		}
 		return d.Network().Route(req.Pop())
 	case "subnet", "secgroup":
+		if d.Network() == nil {
+			msg.Error("Network not defined in the config file")
+			return route.OK
+		}
 		return d.Network().Route(req)
 	case "compute":
+		if d.Compute() == nil {
+			msg.Error("Compute not defined in the config file")
+			return route.OK
+		}
 		return d.Compute().Route(req.Pop())
 	case "keypair", "cluster", "pod", "instance", "volume", "eip":
+		if d.Compute() == nil {
+			msg.Error("Compute not defined in the config file")
+			return route.OK
+		}
 		return d.Compute().Route(req)
 	default:
 		panic("Internal Error: Unknown path " + req.Top())

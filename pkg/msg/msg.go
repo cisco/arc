@@ -142,10 +142,13 @@ func LastError() []string {
 // extra spaces from the string as well as any tabs indicated with a \t
 func removeExtraSpaces(s string) string {
 	newString := ""
+	var prev byte
 	for i, v := range s {
-		if v == ' ' && i < len(s) && s[i+1] == ' ' {
+		if v == ' ' && prev == ' ' {
+			prev = s[i]
 			continue
 		}
+		prev = s[i]
 		if v == '\t' {
 			continue
 		}

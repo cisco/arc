@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, Cisco Systems
+# Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-#
+
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -24,19 +24,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+set -e
 
-set -xe
-export BUILD_NUMBER=$(cat ./version)
-./install_deps
-go generate -v ./cmd/...
-go install -v ./cmd/...
+export ARC="$PWD/logs"
+declare -r key="./.ssh/id_rsa"
 
-set +x
-tools="arc amp audit spark"
-for tool in $tools; do
-  $tool version
-done
+function init() {
+  eval "$(ssh-agent -s)"
+  cp ./.ssh/fake $key
+  chmod 400 $key
+  ssh-add $key
+  ssh-add -l
+}
 
-cd test
-./test_all
-cd - >/dev/null 2>&1
+function cleanup() {
+  ssh-add -D >/dev/null 2>&1
+  rm -f $key
+}
+trap cleanup EXIT
+
+function main() {
+  init
+  ./run_tests "Config" config
+}
+
+main "$@"

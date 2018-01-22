@@ -1,0 +1,16 @@
+{
+  "name": "dns_only",
+  "title": "Config Test - DNS Only",
+
+  "dns": {
+    "provider": { "vendor": "mock" },
+    "domain_name": "example.com",
+
+    "a_records": [
+    ],
+
+    "cname_records": [
+    ]
+  }
+
+}

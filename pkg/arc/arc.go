@@ -52,13 +52,6 @@ type arc struct {
 func New(cfg *config.Arc) (*arc, error) {
 	log.Info("Initializing Arc: %q", cfg.Name())
 
-	if cfg.DataCenter == nil {
-		return nil, fmt.Errorf("The datacenter element is missing from the arc configuration")
-	}
-	if cfg.Dns == nil {
-		return nil, fmt.Errorf("The dns element is missing from the arc configuration")
-	}
-
 	a := &arc{
 		Resources: resource.NewResources(),
 		Arc:       cfg,
@@ -70,16 +63,22 @@ func New(cfg *config.Arc) (*arc, error) {
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.datacenter)
+	if a.datacenter != nil {
+		a.Append(a.datacenter)
+	}
 
 	a.dns, err = newDns(a, cfg.Dns)
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.dns)
+	if a.dns != nil {
+		a.Append(a.dns)
+	}
 
-	a.datacenter.associate(a.dns)
-	a.dns.associate(a.datacenter)
+	if a.datacenter != nil && a.dns != nil {
+		a.datacenter.associate(a.dns)
+		a.dns.associate(a.datacenter)
+	}
 
 	return a, nil
 }
@@ -134,12 +133,18 @@ func (a *arc) Run() (int, error) {
 // DataCenter satisfies the resource.Arc interface and provides access
 // to arc's datacenter object.
 func (a *arc) DataCenter() resource.DataCenter {
+	if a.datacenter == nil {
+		return nil
+	}
 	return a.datacenter
 }
 
 // Dns satisfies the resource.Arc interface and provides access
 // to arc's dns object.
 func (a *arc) Dns() resource.Dns {
+	if a.dns == nil {
+		return nil
+	}
 	return a.dns
 }
 
@@ -154,8 +159,16 @@ func (a *arc) Route(req *route.Request) route.Response {
 	case "":
 		break
 	case "network", "subnet", "secgroup", "compute", "keypair", "cluster", "pod", "instance", "volume", "eip":
+		if a.datacenter == nil {
+			msg.Error("Datacenter not defined in the config file")
+			return route.FAIL
+		}
 		return a.DataCenter().Route(req)
 	case "dns":
+		if a.dns == nil {
+			msg.Error("Dns not defined in the config file")
+			return route.FAIL
+		}
 		return a.Dns().Route(req.Pop())
 	default:
 		Help()

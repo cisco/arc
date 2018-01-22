@@ -130,6 +130,9 @@ func (p *Pod) DnsCNameRecords() []resource.DnsRecord {
 }
 
 func (p *Pod) primaryIndex() int {
+	if p.primaryCName == nil {
+		return -1
+	}
 	for n, j := range p.instances.Get() {
 		i := j.(resource.Instance)
 		if !i.Created() {
@@ -301,8 +304,10 @@ func (p *Pod) load(req *route.Request) route.Response {
 	// Set the cname records here rather than in new since the dns subsystem
 	// is allocated after the datacenter subsystem.
 	dns := p.Cluster().Compute().DataCenter().Dns()
-	p.cnameRecords = dns.CNameRecords().FindByPod(p.Name())
-	p.primaryCName = dns.CNameRecords().Find(p.Name())
+	if dns != nil {
+		p.cnameRecords = dns.CNameRecords().FindByPod(p.Name())
+		p.primaryCName = dns.CNameRecords().Find(p.Name())
+	}
 	return p.RouteInOrder(req)
 }
 

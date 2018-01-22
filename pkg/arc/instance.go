@@ -186,6 +186,9 @@ func (i *Instance) KeyPair() resource.KeyPair {
 
 // Dns provides access to the dns associated with the datacenter.
 func (i *Instance) Dns() resource.Dns {
+	if i.dns == nil {
+		return nil
+	}
 	return i.dns
 }
 
@@ -197,7 +200,11 @@ func (i *Instance) PrivateHostname() string {
 
 // PrivateFQDN returns the FQDN associated with the private ip address of the instance.
 func (i *Instance) PrivateFQDN() string {
-	return i.PrivateHostname() + "." + i.dns.Domain()
+	domain := i.Pod().Cluster().Compute().Name()
+	if i.Dns() != nil {
+		domain = i.Dns().Domain()
+	}
+	return i.PrivateHostname() + "." + domain
 }
 
 // PublicHostname returns the hostname (without the domain name) associated with the
@@ -216,9 +223,13 @@ func (i *Instance) PublicHostname() string {
 // If this instance doesn't have a public ip address (most don't) this will return
 // an empty string "".
 func (i *Instance) PublicFQDN() string {
+	domain := i.Pod().Cluster().Compute().Name()
+	if i.Dns() != nil {
+		domain = i.Dns().Domain()
+	}
 	switch i.subnet.Access() {
 	case "public", "public_elastic":
-		return i.PublicHostname() + "." + i.dns.Domain()
+		return i.PublicHostname() + "." + domain
 	}
 	return ""
 }
@@ -442,7 +453,7 @@ func (i *Instance) load(req *route.Request) route.Response {
 	// See instance_dns.go for instance dns implementation
 
 	// Initialize dns, since the dns subsystem is created after the datacenter subsystem.
-	if i.dns == nil {
+	if i.dns == nil && i.Pod().Cluster().Compute().DataCenter().Dns() != nil {
 		var ok bool
 		i.dns, ok = i.Pod().Cluster().Compute().DataCenter().Dns().(*dns)
 		if !ok {
