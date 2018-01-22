@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -45,7 +45,8 @@ trap cleanup EXIT
 
 function main() {
   init
-  ./run_tests "Config" config
+  ./run_tests "Arc Config" config
+  ./run_tests "Arc Cli" cli
 }
 
 main "$@"

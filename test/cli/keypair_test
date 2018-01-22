@@ -25,9 +25,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli keypair help
+run arc cli keypair config
+run arc cli keypair info
 
-arc empty info
-
+run_err arc cli keypair
+run_err arc cli keypair foobar

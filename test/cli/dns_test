@@ -23,11 +23,18 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Copyright (c) 2018 by Cisco Systems, Inc.
+# All rights reserved.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli dns help
+run arc cli dns config
+run arc cli dns info
+run arc cli dns create test
+run arc cli dns destroy test
 
-arc empty info
+run_err arc cli dns
+run_err arc cli dns foobar
 

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -30,4 +30,3 @@ set -xe
 export ARC_ROOT="$PWD/config"
 
 arc dc_network_compute_dns info
-

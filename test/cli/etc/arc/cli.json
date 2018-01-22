@@ -1,0 +1,124 @@
+{
+  "name": "cli",
+  "title": "Config used for CLI testing",
+
+  "datacenter": {
+
+    "provider": { "vendor": "mock" },
+
+    "network": {
+      "cidr": "10.0.0.0/16",
+      "availability_zones": [ "az1", "az2", "az3" ],
+
+      "subnet_groups": [
+        {
+          "subnet": "public",
+          "cidr":   "10.0.4.0/24",
+          "access": "public"
+        },
+        {
+          "subnet": "local",
+          "cidr":   "10.0.8.0/24",
+          "access": "local"
+        },
+        {
+          "subnet": "private",
+          "cidr":   "10.0.12.0/24",
+          "access": "private"
+        },
+        {
+          "subnet": "bastion",
+          "cidr":   "10.0.16.0/24",
+          "access": "private"
+        }
+      ],
+
+      "cidr_aliases": {
+         "global":                       "0.0.0.0/0",
+         "local":                        "10.0.0.0/16"
+      },
+
+      "cidr_groups": {
+      },
+
+      "security_groups": [
+        {
+          "security_group": "default",
+          "rules": [
+            {
+              "description": "default",
+              "directions":  [ "ingress" ],
+              "remotes":     [ "subnet_group:bastion" ],
+              "protocols":   [ "tcp" ],
+              "ports":       [ "22" ]
+            }
+          ]
+        },
+        {
+          "security_group": "common",
+          "rules": [
+            {
+              "description": "global icmp egress",
+              "directions":  [ "egress" ],
+              "remotes":     [ "cidr:global" ],
+              "protocols":   [ "icmp" ],
+              "ports":       [ "8:0" ]
+            },
+            {
+              "description": "local icmp echo request, echo reply and mtu discovery",
+              "directions":  [ "ingress" ],
+              "remotes":     [ "cidr:local" ],
+              "protocols":   [ "icmp" ],
+              "ports":       [ "0:0", "8:0", "3:4" ]
+            },
+            {
+              "description": "global common tcp egress",
+              "directions":  [ "egress" ],
+              "remotes":     [ "cidr:global" ],
+              "protocols":   [ "tcp" ],
+              "ports":       [ "53", "80", "123", "443", "8443" ]
+            },
+            {
+              "description": "global common udp egress",
+              "directions":  [ "egress" ],
+              "remotes":     [ "cidr:global" ],
+              "protocols":   [ "udp" ],
+              "ports":       [ "53", "123" ]
+            }
+          ]
+        }
+      ]
+    },
+
+    "compute": {
+
+      "clusters": [
+        {
+          "cluster": "core",
+          "pods": [
+            {
+              "pod":             "bastion",
+              "servertype":      "bastion",
+              "version":         1,
+              "subnet_group":    "bastion",
+              "security_groups": [ "common" ],
+              "volumes": [
+                { "device": "/dev/sda1", "type": "standard", "size": 8, "boot": true }
+              ],
+              "count": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  "dns": {
+    "provider": { "vendor": "mock" },
+    "domain_name": "example.com",
+    "a_records": [
+    ],
+    "cname_records": [
+    ]
+  }
+}

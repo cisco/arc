@@ -25,9 +25,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli compute help
+run arc cli compute config
+run arc cli compute info
 
-arc empty info
-
+run_err arc cli compute
+run_err arc cli compute foobar
+run_err arc cli compute create
+run_err arc cli compute foobar create

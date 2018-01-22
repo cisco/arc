@@ -25,9 +25,44 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli network subnet help
+run arc cli network subnet config
+run arc cli network subnet info
+run arc cli network subnet create test
+run arc cli network subnet destroy test
 
-arc empty info
+run_err arc cli network subnet
+run_err arc cli network subnet foobar
+run_err arc cli network subnet foobar create
+ 
+run arc cli subnet help
+run arc cli subnet config
+run arc cli subnet info
+run arc cli subnet create test
+run arc cli subnet destroy test
 
+run_err arc cli subnet
+run_err arc cli network subnet foobar
+run_err arc cli network subnet foobar create
+
+run arc cli network subnet bastion help
+run arc cli network subnet bastion config
+run arc cli network subnet bastion info
+run arc cli network subnet bastion create test
+run arc cli network subnet bastion destroy test
+
+run_err arc cli network subnet bastion
+run_err arc cli network subnet bastion foobar
+run_err arc cli network subnet bastion foobar create
+
+run arc cli subnet bastion help
+run arc cli subnet bastion config
+run arc cli subnet bastion info
+run arc cli subnet bastion create test
+run arc cli subnet bastion destroy test
+
+run_err arc cli subnet bastion
+run_err arc cli subnet bastion foobar
+run_err arc cli subnet bastion foobar create

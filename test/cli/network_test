@@ -25,9 +25,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli network help
+run arc cli network config
+run arc cli network info
+run arc cli network create test
+run arc cli network delete test
 
-arc empty info
-
+run_err arc cli network
+run_err arc cli network foobar
+run_err arc cli network foobar delete test

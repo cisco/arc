@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2018, Cisco Systems
 # All rights reserved.
@@ -25,9 +24,51 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+set -e
 
-export ARC_ROOT="$PWD/config"
+export ARC_ROOT="$PWD/cli"
+export debug=yes
 
-arc empty info
+function die() {
+  local rc=$1; shift
+  printf "Failed: $@, rc: $rc"
+  exit $rc
+}
 
+function run() {
+  local rc=0
+
+  echo ""
+  echo "$@: success expected"
+  echo "-------------------------------------------------------"
+
+  set +e
+  "$@"; rc=$?
+  set -e
+  echo -e "\nresult: $rc"
+
+  if [[ $rc -ne 0 ]]; then
+    die $rc "$@"
+  fi
+
+  printf "\n\n"
+}
+
+
+function run_err() {
+  local rc=0
+
+  echo "$@: err expected"
+  echo "-------------------------------------------------------"
+
+  set +e
+  "$@"; rc=$?
+  set -e
+  echo -e "\nresult: $rc"
+
+  if [[ $rc -eq 0 ]]; then
+    die $rc "$@"
+  fi
+
+  printf "\n\n"
+}

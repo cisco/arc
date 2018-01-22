@@ -25,9 +25,27 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli cluster help
+run arc cli cluster config
+run arc cli cluster info
 
-arc empty info
+run_err arc cli cluster
+run_err arc cli cluster create
+run_err arc cli cluster foobar
 
+run arc cli cluster core help
+run arc cli cluster core config
+run arc cli cluster core info
+run arc cli cluster core create test
+run arc cli cluster core provision test
+run arc cli cluster core stop test
+run arc cli cluster core start test
+run arc cli cluster core restart test
+run arc cli cluster core replace test
+run arc cli cluster core destroy test
+
+run_err arc cli cluster core
+run_err arc cli cluster core foobar
+run_err arc cli cluster core foobar create

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2018, Cisco Systems
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
@@ -42,8 +42,6 @@ function handle_test_result() {
 
   if [ $rc -ne 0 ]; then
     printf "${failure}failed${clear}\n"; (( result = result + 1 ))
-    cat ${t}.out.txt
-    echo ""
   else
     printf "${success}success${clear}\n"
   fi

@@ -25,9 +25,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -xe
+source $(dirname $0)/cli.sh
 
-export ARC_ROOT="$PWD/config"
+run arc cli dns a help
+run arc cli dns a config
+run arc cli dns a info
+run arc cli dns a create test
+run arc cli dns a destroy test
 
-arc empty info
+run_err arc cli dns a
+run_err arc cli dns a foobar
+
+run arc cli dns cname help
+run arc cli dns cname config
+run arc cli dns cname info
+run arc cli dns cname create test
+run arc cli dns cname destroy test
+
+run_err arc cli dns cname
+run_err arc cli dns cname foobar
 
