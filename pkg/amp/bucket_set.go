@@ -37,33 +37,43 @@ import (
 	"github.com/cisco/arc/pkg/route"
 )
 
-type bucket struct {
-	*config.Bucket
-	storage        resource.Storage
-	providerBucket resource.ProviderBucket
+type bucketSet struct {
+	*resource.Resources
+	*config.BucketSet
+	bucketSets resource.BucketSets
+
+	buckets *buckets
 }
 
-func newBucket(s *storage, prov provider.Account, cfg *config.Bucket) (*bucket, error) {
-	log.Debug("Initializing Bucket, %q", cfg.Name())
-	b := &bucket{
-		Bucket:  cfg,
-		storage: s,
+func newBucketSet(bs *bucketSets, prov provider.Account, cfg *config.BucketSet) (*bucketSet, error) {
+	log.Debug("Initializing Bucket Set, %q", cfg.Name())
+	b := &bucketSet{
+		BucketSet:  cfg,
+		bucketSets: bs,
 	}
 
-	var err error
-	b.providerBucket, err = prov.NewBucket(b, cfg)
+	bkts, err := newBuckets(bs.Storage().(*storage), prov, cfg.Buckets())
 	if err != nil {
 		return nil, err
 	}
 
+	b.buckets = bkts
+	b.Append(bkts)
 	return b, nil
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Bucket.
 // Bucket handles load, create, destroy, config and info requests by delegating them
 // to the providerBucket.
-func (b *bucket) Route(req *route.Request) route.Response {
+func (b *bucketSet) Route(req *route.Request) route.Response {
 	log.Route(req, "Bucket %q", b.Name())
+
+	// Skip if the test flag is set
+	if req.TestFlag() {
+		msg.Detail("Test. Skipping...")
+		return route.OK
+	}
+
 	switch req.Command() {
 	case route.Create:
 		if err := b.Create(req.Flags().Get()...); err != nil {
@@ -86,114 +96,101 @@ func (b *bucket) Route(req *route.Request) route.Response {
 	case route.Info:
 		b.Info()
 		return route.OK
-	case route.Config:
-		b.Print()
-		return route.OK
 	}
-	return b.providerBucket.Route(req)
+	return b.RouteInOrder(req)
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
 // It delegates the call to the provider's bucket.
-func (b *bucket) Created() bool {
-	return b.providerBucket.Created()
+func (b *bucketSet) Created() bool {
+	for _, bkt := range b.buckets.buckets {
+		if bkt.Created() == false {
+			return false
+		}
+	}
+	return true
 }
 
 // Destroyed satisfies the embedded resource.Resource interaface in resource.Bucket.
 // It delegates the call to the provider's bucket.
-func (b *bucket) Destroyed() bool {
-	return b.providerBucket.Destroyed()
+func (b *bucketSet) Destroyed() bool {
+	for _, bkt := range b.buckets.buckets {
+		if bkt.Destroyed() == false {
+			return false
+		}
+	}
+	return true
 }
 
-func (b *bucket) Storage() resource.Storage {
-	return b.storage
+func (b *bucketSet) BucketSets() resource.BucketSets {
+	return b.bucketSets
 }
 
-func (b *bucket) EnableReplication() error {
-	return b.providerBucket.EnableReplication()
-}
-
-func (b *bucket) ProviderBucket() resource.ProviderBucket {
-	return b.providerBucket
-}
-
-func (b *bucket) Audit(flags ...string) error {
+func (b *bucketSet) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
-	return b.providerBucket.Audit(flags...)
-}
-
-func (b *bucket) Create(flags ...string) error {
-	if b.Created() {
-		msg.Detail("Bucket exists, skipping...")
-		return nil
-	}
-	if err := b.providerBucket.Create(flags...); err != nil {
-		return err
-	}
-	if err := b.createSecurityTags(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (b *bucket) Destroy(flags ...string) error {
-	if b.Destroyed() {
-		msg.Detail("Bucket does not exist, skipping...")
-		return nil
-	}
-	return b.ProviderBucket().Destroy(flags...)
-}
-
-func (b *bucket) Provision(flags ...string) error {
-	if b.Destroyed() {
-		msg.Detail("Bucket does not exist, skipping...")
-		return nil
-	}
-	tagsFlagSet := false
-	if len(flags) != 0 {
-		for _, v := range flags {
-			if v == "tags" {
-				tagsFlagSet = true
-			}
-		}
-	}
-	if tagsFlagSet {
-		if err := b.createSecurityTags(); err != nil {
-			msg.Error(err.Error())
+	for _, bkt := range b.buckets.buckets {
+		if err := bkt.Audit(flags...); err != nil {
 			return err
 		}
-		return nil
-	}
-	if err := b.createSecurityTags(); err != nil {
-		msg.Error(err.Error())
-		return err
 	}
 	return nil
 }
 
-func (b *bucket) SetTags(t map[string]string) error {
-	if b.providerBucket == nil {
-		return fmt.Errorf("providerBucket not created")
+func (b *bucketSet) Create(flags ...string) error {
+	if b.Created() {
+		msg.Detail("Bucket Set exists, skipping...")
+		return nil
 	}
-	return b.providerBucket.SetTags(t)
+	for _, bkt := range b.buckets.buckets {
+		if err := bkt.Create(flags...); err != nil {
+			return err
+		}
+	}
+	for _, bkt := range b.buckets.buckets {
+		if err := bkt.EnableReplication(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (b *bucket) createSecurityTags() error {
-	tags := map[string]string{}
-	for k, v := range b.Storage().Account().SecurityTags() {
-		tags[k] = v
+func (b *bucketSet) Destroy(flags ...string) error {
+	if b.Destroyed() {
+		msg.Detail("Bucket Set does not exist, skipping...")
+		return nil
 	}
-	for k, v := range b.SecurityTags() {
-		tags[k] = v
+	for _, bkt := range b.buckets.buckets {
+		if err := bkt.Destroy(flags...); err != nil {
+			return err
+		}
 	}
-	return b.SetTags(tags)
+	return nil
 }
 
-func (b *bucket) Info() {
+func (b *bucketSet) Provision(flags ...string) error {
+	if b.Destroyed() {
+		msg.Detail("Bucket Set does not exist, skipping...")
+		return nil
+	}
+	for _, bkt := range b.buckets.buckets {
+		if err := bkt.Provision(flags...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *bucketSet) Info() {
 	if b.Destroyed() {
 		return
 	}
-	b.ProviderBucket().Info()
+	msg.Info("Bucket Set")
+	msg.Detail("%-20s\t%s", "name", b.Name())
+	msg.IndentInc()
+	for _, bkt := range b.buckets.buckets {
+		bkt.Info()
+	}
+	msg.IndentDec()
 }
