@@ -53,7 +53,9 @@ function run_unit_tests() {
   local pkg_with_tests="route ssh"
   local pkg
   for pkg in $pkg_with_tests; do
-    go test -v ./pkg/$pkg
+    if [[ -d ./pkg/$pkg ]]; then
+      go test -v ./pkg/$pkg
+    fi
   done
 }
 
