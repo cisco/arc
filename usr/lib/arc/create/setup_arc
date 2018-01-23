@@ -39,7 +39,7 @@ function create_arc_dir() {
 
 function create_arc_subdirs() {
   local d
-  local dirs="cassandra cloudfoundry consul create destroy elasticsearch graphite haproxy jenkins paging provision redis repos sparkcall tools ucxn users"
+  local dirs="cassandra cloudfoundry consul create destroy elasticsearch graphite haproxy jenkins paging plugins provision redis repos sparkcall tools ucxn users"
   for d in $dirs; do
     if [ ! -d "$arc_dir/$d" ]; then
       rm -f $arc_dir/$d
