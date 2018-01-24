@@ -1,0 +1,9 @@
+{
+  "name": "database_only",
+  "title": "Config Test - Database Only",
+
+  "database": {
+    "provider": { "vendor": "mock" }
+  }
+
+}

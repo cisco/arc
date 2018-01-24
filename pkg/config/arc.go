@@ -42,6 +42,7 @@ type Arc struct {
 	Title_        string         `json:"title"`
 	Notifications *Notifications `json:"notifications"`
 	DataCenter    *DataCenter    `json:"datacenter"`
+	Database      *Database      `json:"database"`
 	Dns           *Dns           `json:"dns"`
 }
 

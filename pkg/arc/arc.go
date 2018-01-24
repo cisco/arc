@@ -45,6 +45,7 @@ type arc struct {
 	*resource.Resources
 	*config.Arc
 	datacenter *dataCenter
+	database   *database
 	dns        *dns
 }
 
@@ -67,6 +68,14 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.Append(a.datacenter)
 	}
 
+	a.database, err = newDatabase(a, cfg.Database)
+	if err != nil {
+		return nil, err
+	}
+	if a.database != nil {
+		a.Append(a.database)
+	}
+
 	a.dns, err = newDns(a, cfg.Dns)
 	if err != nil {
 		return nil, err
@@ -75,9 +84,16 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.Append(a.dns)
 	}
 
+	// Associate datacenter service to dns service, and vice versa.
 	if a.datacenter != nil && a.dns != nil {
 		a.datacenter.associate(a.dns)
 		a.dns.associate(a.datacenter)
+	}
+
+	// Associate database service to datacenter service, since the database service
+	// depends on datacenter's networking.
+	if a.datacenter != nil && a.database != nil {
+		// a.database.associate(a.datacenter)
 	}
 
 	return a, nil
@@ -131,7 +147,7 @@ func (a *arc) Run() (int, error) {
 }
 
 // DataCenter satisfies the resource.Arc interface and provides access
-// to arc's datacenter object.
+// to arc's datacenter service object.
 func (a *arc) DataCenter() resource.DataCenter {
 	if a.datacenter == nil {
 		return nil
@@ -139,8 +155,17 @@ func (a *arc) DataCenter() resource.DataCenter {
 	return a.datacenter
 }
 
+// Database satisfies the resource.Arc interface and provides access to
+// arc's database service object.
+func (a *arc) Database() resource.Database {
+	if a.database == nil {
+		return nil
+	}
+	return a.database
+}
+
 // Dns satisfies the resource.Arc interface and provides access
-// to arc's dns object.
+// to arc's dns service object.
 func (a *arc) Dns() resource.Dns {
 	if a.dns == nil {
 		return nil

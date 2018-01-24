@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,33 +24,55 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package aws
 
-// StaticArc provides the interface to the static portion of the
-// arc resource tree. This information is provided via config file
-// and is implemented config.Arc.
-type StaticArc interface {
-	Name() string
-	Title() string
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/rds"
+
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/provider"
+)
+
+type databaseProvider struct {
+	rds    *rds.RDS
+	name   string
+	region string
 }
 
-// Arc provides the resource interface used for the common arc object
-// implemented in the arc package. It contains an Run method used to
-// start application processing. It also contains DataCenter and Dns
-// methods used to access it's children.
-type Arc interface {
-	Resource
-	StaticArc
+func NewDatabaseProvider(cfg *config.Database) (provider.Database, error) {
+	log.Debug("Initializing AWS Database Provider")
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+	name := cfg.Provider.Data["account"]
+	if name == "" {
+		return nil, fmt.Errorf("AWS Database provider/data config requires an 'account' field, being the aws account name.")
+	}
+	region := cfg.Provider.Data["region"]
+	if region == "" {
+		return nil, fmt.Errorf("AWS Database provider/data config requires a 'region' field, being the aws region.")
+	}
 
-	// DataCenter provides access to Arc's child datacenter service.
-	DataCenter() DataCenter
+	opts := session.Options{
+		Config: aws.Config{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+			Region: aws.String(region),
+		},
+		Profile:           name,
+		SharedConfigState: session.SharedConfigEnable,
+	}
 
-	// Database provides access to Arc's child database service.
-	Database() Database
+	sess, err := session.NewSessionWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
 
-	// Dns provides access to Arc's child dns service.
-	Dns() Dns
+	return &databaseProvider{
+		rds:    rds.New(sess),
+		name:   name,
+		region: region,
+	}, nil
 }
