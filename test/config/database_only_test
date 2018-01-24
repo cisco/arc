@@ -29,5 +29,5 @@ set -xe
 
 export ARC_ROOT="$PWD/config"
 
-arc database_only info
+arc database_only config
 

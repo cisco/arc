@@ -29,5 +29,5 @@ set -xe
 
 export ARC_ROOT="$PWD/config"
 
-arc dns_only info
+arc dns_only config
 

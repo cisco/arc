@@ -29,5 +29,5 @@ set -xe
 
 export ARC_ROOT="$PWD/config"
 
-arc dc_network_compute info
+arc dc_network_compute config
 
