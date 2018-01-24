@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 #
 # Copyright (c) 2017, Cisco Systems
 # All rights reserved.
