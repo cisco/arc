@@ -133,7 +133,7 @@ git fetch --all --prune
 
 This will delete your development branch from your personal github account.
 ```shell
-git push origin :[development_branch]
+git push origin --delete [development_branch]
 ```
 
 This will delete your development branch from your local workspace.
