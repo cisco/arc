@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -31,57 +31,79 @@ import (
 
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 	"github.com/cisco/arc/pkg/route"
 )
 
-type buckets struct {
+type bucketSets struct {
 	*resource.Resources
-	buckets map[string]resource.Bucket
-	storage *storage
+	bucketSets map[string]resource.BucketSet
+	storage    *storage
 }
 
-func newBuckets(s *storage, prov provider.Account, cfg *config.Buckets) (*buckets, error) {
-	log.Debug("Initializing Buckets")
+func newBucketSets(s *storage, prov provider.Account, cfg *config.BucketSets) (*bucketSets, error) {
+	log.Debug("Initializing Bucket Sets")
 
-	b := &buckets{
-		Resources: resource.NewResources(),
-		buckets:   map[string]resource.Bucket{},
-		storage:   s,
+	b := &bucketSets{
+		Resources:  resource.NewResources(),
+		bucketSets: map[string]resource.BucketSet{},
+		storage:    s,
 	}
 
 	for _, conf := range *cfg {
 		if b.Find(conf.Name()) != nil {
-			return nil, fmt.Errorf("Bucket name %q must be unique, but it is used multiple times", conf.Name())
+			return nil, fmt.Errorf("Bucket Replication Set name %q must be unique, but it is used multiple times", conf.Name())
 		}
-		bucket, err := newBucket(s, prov, conf)
+		bucketSet, err := newBucketSet(b, prov, conf)
 		if err != nil {
 			return nil, err
 		}
-		b.buckets[conf.Name()] = bucket
-		b.Append(bucket)
+		b.bucketSets[conf.Name()] = bucketSet
+		b.Append(bucketSet)
 	}
 	return b, nil
 }
 
-func (b *buckets) Find(name string) resource.Bucket {
-	return b.buckets[name]
+func (b *bucketSets) Storage() resource.Storage {
+	return b.storage
 }
 
-func (b *buckets) Route(req *route.Request) route.Response {
-	log.Route(req, "Buckets")
+func (b *bucketSets) Find(name string) resource.BucketSet {
+	return b.bucketSets[name]
+}
+
+func (b *bucketSets) Route(req *route.Request) route.Response {
+	log.Route(req, "Bucket Replication Sets")
+	switch req.Command() {
+	case route.Info:
+		b.Info()
+		return route.OK
+	}
 	return b.RouteInOrder(req)
 }
 
-func (b *buckets) Audit(flags ...string) error {
+func (b *bucketSets) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
-	for _, v := range b.buckets {
+	for _, v := range b.bucketSets {
 		if err := v.Audit(flags...); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (b *bucketSets) Info() {
+	if b.Destroyed() {
+		return
+	}
+	msg.Info("Bucket Sets")
+	msg.IndentInc()
+	for _, bs := range b.bucketSets {
+		bs.Info()
+	}
+	msg.IndentDec()
 }

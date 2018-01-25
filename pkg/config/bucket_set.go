@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,45 +24,19 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-import "github.com/cisco/arc/pkg/config"
+type BucketSets []*BucketSet
 
-type StaticBucket interface {
-	Name() string
-	Region() string
-	SecurityTags() config.SecurityTags
+type BucketSet struct {
+	Name_    string   `json:"bucket_set"`
+	Buckets_ *Buckets `json:"buckets"`
 }
 
-// DynamicBucket provides the interface to the dynamic portion of the bucket.
-type DynamicBucket interface {
-	Auditor
-	Creator
-	Destroyer
-	Provisioner
-	// SetTags sets the tags for the bucket.
-	SetTags(map[string]string) error
-
-	// EnableReplication enables cross region bucket replication - requires role and destination in json file.
-	EnableReplication() error
-
-	// Info prints out the bucket's information to the console.
-	Info()
+func (b *BucketSet) Name() string {
+	return b.Name_
 }
 
-// Bucket provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Storage method used to
-// access its parent object.
-type Bucket interface {
-	Resource
-	StaticBucket
-	DynamicBucket
-
-	Storage() Storage
-	ProviderBucket() ProviderBucket
-}
-
-type ProviderBucket interface {
-	Resource
-	DynamicBucket
+func (b *BucketSet) Buckets() *Buckets {
+	return b.Buckets_
 }

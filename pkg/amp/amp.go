@@ -122,7 +122,7 @@ func (a *amp) Route(req *route.Request) route.Response {
 		break
 	case "storage":
 		return a.account.storage.Route(req.Pop())
-	case "bucket":
+	case "bucket", "bucket_set":
 		return a.account.storage.Route(req)
 	}
 	return route.OK

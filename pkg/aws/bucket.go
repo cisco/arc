@@ -124,56 +124,35 @@ func (b *bucket) enableEncryption() error {
 	return nil
 }
 
-func (b *bucket) enableReplication() error {
+func (b *bucket) EnableReplication() error {
 	log.Debug("Enabling Bucket Replication")
-	/*
-		fmt.Printf("role = %q", b.arn)
-		params := &s3.PutBucketReplicationInput{
-			Bucket: aws.String(b.Destination()),
-			ReplicationConfiguration: &s3.ReplicationConfiguration{
-				Role: aws.String(b.arn.String()),
-				Rules: []*s3.ReplicationRule{
-					{
-						Destination: &s3.Destination{
-							Bucket: aws.String(b.Destination()),
-						},
-						Prefix: aws.String(""),
-						Status: aws.String("Enabled"),
+	if b.Role() == "" || b.Destination() == "" {
+		return fmt.Errorf("No Role or Destination found for replication")
+	}
+	params := &s3.PutBucketReplicationInput{
+		Bucket: aws.String(b.Name()),
+		ReplicationConfiguration: &s3.ReplicationConfiguration{
+			Role: aws.String(b.arn.String()),
+			Rules: []*s3.ReplicationRule{
+				{
+					Destination: &s3.Destination{
+						Bucket: aws.String((&arn{
+							service:    "s3",
+							relativeId: b.Destination(),
+						}).String()),
 					},
+					Prefix: aws.String(""),
+					Status: aws.String("Enabled"),
 				},
 			},
-		}
-
-		_, err := b.s3.PutBucketReplication(params)
-		if err != nil {
-			return err
-		}
-	*/
-	return nil
-}
-
-func (b *bucket) Info() {
-	if b.bucket == nil {
-		return
+		},
 	}
-	msg.Info("Bucket")
-	params := &s3.GetBucketAclInput{
-		Bucket: aws.String(b.Name()),
-	}
-	msg.Detail("%-20s\t%s", "name", aws.StringValue(b.bucket.Name))
-	msg.Detail("%-20s\t%+v", "date created", b.bucket.CreationDate)
-	resp, err := b.s3.GetBucketAcl(params)
+
+	_, err := b.s3.PutBucketReplication(params)
 	if err != nil {
-		msg.Error(err.Error())
-		return
+		return err
 	}
-	msg.Detail("Permissions")
-	for _, v := range resp.Grants {
-		msg.IndentInc()
-		msg.Detail("%-20s\t%s", "grantee", aws.StringValue(v.Grantee.Type))
-		msg.Detail("%-20s\t%s", "permission", aws.StringValue(v.Permission))
-		msg.IndentDec()
-	}
+	return nil
 }
 
 func (b *bucket) Route(req *route.Request) route.Response {
@@ -237,13 +216,6 @@ func (b *bucket) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
-
-	if b.Role() != "" && b.Destination() != "" {
-		err = b.enableReplication()
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -259,4 +231,33 @@ func (b *bucket) Destroy(flags ...string) error {
 	}
 	msg.Detail("Bucket deleted: %s", b.Name())
 	return nil
+}
+
+func (b *bucket) Provision(flags ...string) error {
+	msg.Info("Bucket Provision")
+	return nil
+}
+
+func (b *bucket) Info() {
+	if b.bucket == nil {
+		return
+	}
+	msg.Info("Bucket")
+	params := &s3.GetBucketAclInput{
+		Bucket: aws.String(b.Name()),
+	}
+	msg.Detail("%-20s\t%s", "name", aws.StringValue(b.bucket.Name))
+	msg.Detail("%-20s\t%+v", "date created", b.bucket.CreationDate)
+	resp, err := b.s3.GetBucketAcl(params)
+	if err != nil {
+		msg.Error(err.Error())
+		return
+	}
+	msg.Detail("Permissions")
+	for _, v := range resp.Grants {
+		msg.IndentInc()
+		msg.Detail("%-20s\t%s", "grantee", aws.StringValue(v.Grantee.Type))
+		msg.Detail("%-20s\t%s", "permission", aws.StringValue(v.Permission))
+		msg.IndentDec()
+	}
 }

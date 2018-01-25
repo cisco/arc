@@ -43,6 +43,7 @@ type storage struct {
 	*config.Storage
 	account         *account
 	buckets         *buckets
+	bucketSets      *bucketSets
 	providerStorage resource.ProviderStorage
 }
 
@@ -72,6 +73,13 @@ func newStorage(account *account, prov provider.Account, cfg *config.Storage) (*
 		return nil, err
 	}
 	s.Append(s.buckets)
+
+	s.bucketSets, err = newBucketSets(s, prov, cfg.BucketSets)
+	if err != nil {
+		return nil, err
+	}
+	s.Append(s.bucketSets)
+
 	return s, nil
 }
 
@@ -105,10 +113,21 @@ func (s *storage) Route(req *route.Request) route.Response {
 		req.Pop()
 		bucket := s.Buckets().Find(req.Top())
 		if bucket == nil {
-			msg.Error("Uknown bucket %q.", req.Top())
+			msg.Error("Unknown bucket %q.", req.Top())
 			return route.FAIL
 		}
 		return bucket.Route(req)
+	case "bucket_set":
+		req.Pop()
+		if req.Top() == "" {
+			return s.bucketSets.Route(req)
+		}
+		bucketSet := s.bucketSets.Find(req.Top())
+		if bucketSet == nil {
+			msg.Error("Unknown bucket set %q.", req.Top())
+			return route.FAIL
+		}
+		return bucketSet.Route(req)
 	}
 
 	// Skip if the test flag is set

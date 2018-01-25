@@ -27,5 +27,6 @@
 package config
 
 type Storage struct {
-	Buckets []*Bucket `json:"buckets"`
+	Buckets    *Buckets    `json:"buckets"`
+	BucketSets *BucketSets `json:"bucket_sets"`
 }
