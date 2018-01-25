@@ -150,7 +150,7 @@ func (i *Instance) PostCreate(req *route.Request) route.Response {
 	dcName := i.Pod().Cluster().Compute().Name()
 	domain := dcName + ".local"
 	consulDomain := dcName + ".consul"
-	if i.Dns() == nil {
+	if i.Dns() != nil {
 		domain = i.Dns().Domain()
 		consulDomain = i.Dns().Subdomain() + ".consul"
 	}
