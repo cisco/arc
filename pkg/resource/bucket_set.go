@@ -30,7 +30,7 @@ import "github.com/cisco/arc/pkg/config"
 
 type StaticBucketSet interface {
 	Name() string
-	Buckets() []*config.Bucket
+	Buckets() *config.Buckets
 }
 
 // DynamicBucketReplicationSet provides the interface to the dynamic portion of the bucket replication set.

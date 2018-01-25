@@ -136,7 +136,10 @@ func (b *bucket) EnableReplication() error {
 			Rules: []*s3.ReplicationRule{
 				{
 					Destination: &s3.Destination{
-						Bucket: aws.String("arn:aws:s3:::" + b.Destination()),
+						Bucket: aws.String((&arn{
+							service:    "s3",
+							relativeId: b.Destination(),
+						}).String()),
 					},
 					Prefix: aws.String(""),
 					Status: aws.String("Enabled"),

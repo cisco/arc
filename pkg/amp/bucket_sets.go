@@ -39,22 +39,20 @@ import (
 
 type bucketSets struct {
 	*resource.Resources
-	BucketSets []*config.BucketSet
 	bucketSets map[string]resource.BucketSet
 	storage    *storage
 }
 
-func newBucketSets(s *storage, prov provider.Account, cfg []*config.BucketSet) (*bucketSets, error) {
+func newBucketSets(s *storage, prov provider.Account, cfg *config.BucketSets) (*bucketSets, error) {
 	log.Debug("Initializing Bucket Sets")
 
 	b := &bucketSets{
 		Resources:  resource.NewResources(),
-		BucketSets: cfg,
 		bucketSets: map[string]resource.BucketSet{},
 		storage:    s,
 	}
 
-	for _, conf := range cfg {
+	for _, conf := range *cfg {
 		if b.Find(conf.Name()) != nil {
 			return nil, fmt.Errorf("Bucket Replication Set name %q must be unique, but it is used multiple times", conf.Name())
 		}

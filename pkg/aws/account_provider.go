@@ -59,7 +59,7 @@ func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
 
 	regions := map[string]string{}
 
-	for _, bucket := range cfg.Storage.Buckets {
+	for _, bucket := range *cfg.Storage.Buckets {
 		if region := regions[bucket.Region()]; region == "" {
 			log.Debug("Region %q", region)
 			regions[bucket.Region()] = cfg.Provider.Data["account"]

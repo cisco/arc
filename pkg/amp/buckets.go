@@ -38,22 +38,20 @@ import (
 
 type buckets struct {
 	*resource.Resources
-	Buckets []*config.Bucket
 	buckets map[string]resource.Bucket
 	storage *storage
 }
 
-func newBuckets(s *storage, prov provider.Account, cfg []*config.Bucket) (*buckets, error) {
+func newBuckets(s *storage, prov provider.Account, cfg *config.Buckets) (*buckets, error) {
 	log.Debug("Initializing Buckets")
 
 	b := &buckets{
 		Resources: resource.NewResources(),
-		Buckets:   cfg,
 		buckets:   map[string]resource.Bucket{},
 		storage:   s,
 	}
 
-	for _, conf := range cfg {
+	for _, conf := range *cfg {
 		if b.Find(conf.Name()) != nil {
 			return nil, fmt.Errorf("Bucket name %q must be unique, but it is used multiple times", conf.Name())
 		}
