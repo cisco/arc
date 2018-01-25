@@ -76,7 +76,7 @@ git rebase master
 Once your development branch is available go to https://github.com/[username]/arc/pulls and create a pull request.
 
 The base fork will be: **cisco/arc**, base branch: **master**.
-The head fork will be: **[username]/arc**, compare branch: **[development_branc]**
+The head fork will be: **[username]/arc**, compare branch: **[development_branch]**
 
 ### For reviewers that triage the pull request
 
