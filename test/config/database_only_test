@@ -29,4 +29,5 @@ set -xe
 
 export ARC_ROOT="$PWD/config"
 
-arc dc_network_compute_dns config
+arc database_only config
+

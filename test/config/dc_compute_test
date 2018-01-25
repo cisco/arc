@@ -30,5 +30,5 @@ set -xe
 export ARC_ROOT="$PWD/config"
 
 # This is expected to fail.
-arc dc_compute info && exit 1 || exit 0
+arc dc_compute config && exit 1 || exit 0
 
