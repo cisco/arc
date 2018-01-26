@@ -27,3 +27,5 @@
 
 # cron hardening
 $(pwd)/cron_hardening
+# ssh hardening
+$(pwd)/ssh_hardening
