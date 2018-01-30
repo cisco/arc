@@ -73,7 +73,7 @@ function setup_puppet_ubuntu() {
   #
   # Reference https://docs.puppet.com/guides/puppetlabs_package_repositories.html#apt-based-systems
   if [ "$fresh_install" = "yes" ]; then
-    local deb="puppetlabs-release-pc1-precise.deb"
+    local deb="puppetlabs-release-trusty.deb"
     local url="https://apt.puppetlabs.com/$deb"
     local dest="/usr/lib/arc/$deb"
     if ! curl $url > "$dest"; then
