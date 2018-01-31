@@ -27,109 +27,65 @@
 package arc
 
 import (
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
+	// "github.com/cisco/arc/pkg/help"
+	// "github.com/cisco/arc/pkg/log"
+	// "github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 	"github.com/cisco/arc/pkg/route"
 )
 
-type subnet struct {
-	*config.Subnet
-	network        *network
-	providerSubnet resource.ProviderSubnet
+type database struct {
+	*config.Database
+	db resource.ProviderDatabase
 }
 
-// newSubnet is the constructor for a subnet object. It returns a non-nil error upon failure.
-func newSubnet(net *network, prov provider.DataCenter, cfg *config.Subnet) (*subnet, error) {
-	log.Debug("Initializing Subnet '%s'", cfg.Name())
-
-	s := &subnet{
-		Subnet:  cfg,
-		network: net,
-	}
-
-	var err error
-
-	s.providerSubnet, err = prov.NewSubnet(net, cfg)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+func newDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService, p provider.DatabaseService) (resource.Database, error) {
+	return nil, nil
 }
 
-// Id provides the id of the provider specific subnet resource.
-// This satisfies the resource.DynamicSubnet interface.
-func (s *subnet) Id() string {
-	if s.providerSubnet == nil {
-		return ""
-	}
-	return s.providerSubnet.Id()
-}
-
-// State provides the state of the provider specific subnet resource.
-// This satisfies the resource.DynamicSubnet interface.
-func (s *subnet) State() string {
-	if s.providerSubnet == nil {
-		return ""
-	}
-	return s.providerSubnet.State()
-}
-
-// ProviderSubnet satisfies the resource.Subnet interface and provides access
-// to provider's subnet implementation.
-func (s *subnet) ProviderSubnet() resource.ProviderSubnet {
-	return s.providerSubnet
-}
-
-// Network satisfies the resource.Subnet interface and provides access
-// to subnet's parent.
-func (s *subnet) Network() resource.Network {
-	return s.network
-}
-
-// Route satisfies the embedded resource.Resource interface in resource.Subnet.
-// Subnet handles load, create, destroy, and info requests by delegating them
-// to the providerSubnet.
-func (s *subnet) Route(req *route.Request) route.Response {
-	log.Route(req, "Subnet %q", s.Name())
-
-	if req.Top() != "" {
-		panic("Internal error: Unknown resource " + req.Top())
-	}
-
-	switch req.Command() {
-	case route.Load:
-		if err := s.Load(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
-		}
-		return route.OK
-	case route.Create, route.Destroy, route.Info:
-		return s.providerSubnet.Route(req)
-	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
-	}
+func (db *database) Route(req *route.Request) route.Response {
 	return route.FAIL
 }
 
-func (s *subnet) Load() error {
-	return s.providerSubnet.Load()
+func (db *database) Load() error {
+	return db.db.Load()
 }
 
-// Created satisfies the embedded resource.Resource interface in resource.Subnet.
-// It delegates the call to the provider's subnet.
-func (s *subnet) Created() bool {
-	return s.providerSubnet.Created()
+func (db *database) Create(flags ...string) error {
+	return db.db.Create(flags...)
 }
 
-// Destroyed satisfies the embedded resource.Resource interface in resource.Subnet.
-// It delegates the call to the provider's subnet.
-func (s *subnet) Destroyed() bool {
-	return s.providerSubnet.Destroyed()
+func (db *database) Created() bool {
+	return db.db.Created()
 }
 
-func (s *subnet) Audit(flags ...string) error {
-	return s.providerSubnet.Audit(flags...)
+func (db *database) Destroy(flags ...string) error {
+	return db.db.Destroy(flags...)
+}
+
+func (db *database) Destroyed() bool {
+	return db.db.Destroyed()
+}
+
+func (db *database) Provision(flags ...string) error {
+	return db.db.Provision(flags...)
+}
+
+func (db *database) Audit(flags ...string) error {
+	err := aaa.NewAudit("Database")
+	if err != nil {
+		return err
+	}
+	return db.db.Audit("Database")
+}
+
+func (db *database) Info() {
+	db.db.Info()
+}
+
+func (db *database) Id() string {
+	return db.db.Id()
 }

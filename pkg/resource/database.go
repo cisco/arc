@@ -26,6 +26,11 @@
 
 package resource
 
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 // StaticDatabase provides the interface to the static portion of the
 // database. This information is provided via config file and is implemented
 // by config.Database.

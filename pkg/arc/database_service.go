@@ -40,16 +40,15 @@ import (
 )
 
 type databaseService struct {
-	*resource.Resources
 	*config.DatabaseService
 	arc             *arc
 	dc              resource.DataCenter
 	databaseService resource.ProviderDatabaseService
-	databases       *databases
+	database        []resource.Database
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
-func newDatabaseService(arc *arc, cfg *config.DatabaseService) (*databaseService, error) {
+func newDatabaseService(cfg *config.DatabaseService, arc *arc) (*databaseService, error) {
 	if cfg == nil {
 		return nil, nil
 	}
@@ -61,7 +60,6 @@ func newDatabaseService(arc *arc, cfg *config.DatabaseService) (*databaseService
 	}
 
 	dbs := &databaseService{
-		Resources:       resource.NewResources(),
 		DatabaseService: cfg,
 		arc:             arc,
 	}
@@ -71,42 +69,23 @@ func newDatabaseService(arc *arc, cfg *config.DatabaseService) (*databaseService
 		return nil, err
 	}
 
-	db.databaseService, err = p.NewDatabaseService(cfg)
+	dbs.databaseService, err = p.NewDatabaseService(cfg)
 	if err != nil {
 		return nil, err
 	}
-	n.Append(db.databaseService)
 
-	db.databases, err = newDatabases(cfg.Databases, db.databaseService, p)
-	if err != nil {
-		return nil, err
+	for _, c := range cfg.Databases {
+		db, err := newDatabase(c, dbs.databaseService, p)
+		if err != nil {
+			return nil, err
+		}
+		dbs.database = append(dbs.database, db)
 	}
-	n.Append(db.databases)
 
-	return db, nil
+	return dbs, nil
 }
 
-// Arc satisfies the resource.DatabaseService interface and provides access
-// to database's parent.
-func (dbs *databaseService) Arc() resource.Arc {
-	return dbs.arc
-}
-
-// Databases satisfies the resource.DatabaseService interface and provides access
-// the the database service's children.
-func (dbs *databaseService) Databases() resource.Databases {
-	return dbs.databases
-}
-
-func (dbs *databaseService) Associate(dc resource.DataCenter) {
-	dbs.dc = dc
-}
-
-func (dbs *databaseService) DataCenter() resource.DataCenter {
-	return dbs.dc
-}
-
-// Route satisfies the embedded resource.Resource interface in resource.DatabaseService.
+// Route satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Route(req *route.Request) route.Response {
 	log.Route(req, "DatabaseService")
 
@@ -114,32 +93,13 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 	switch req.Top() {
 	case "":
 		break
-	case "network":
-		if d.Network() == nil {
-			msg.Error("Network not defined in the config file")
-			return route.OK
-		}
-		return d.Network().Route(req.Pop())
-	case "subnet", "secgroup":
-		if d.Network() == nil {
-			msg.Error("Network not defined in the config file")
-			return route.OK
-		}
-		return d.Network().Route(req)
-	case "compute":
-		if d.Compute() == nil {
-			msg.Error("Compute not defined in the config file")
-			return route.OK
-		}
-		return d.Compute().Route(req.Pop())
-	case "keypair", "cluster", "pod", "instance", "volume", "eip":
-		if d.Compute() == nil {
-			msg.Error("Compute not defined in the config file")
-			return route.OK
-		}
-		return d.Compute().Route(req)
 	default:
-		panic("Internal Error: Unknown path " + req.Top())
+		db := dbs.Find(req.Top())
+		if db == nil {
+			msg.Error("Unknown database %q.", req.Top())
+			return route.FAIL
+		}
+		return db.Route(req.Pop())
 	}
 
 	// Skip if the test flag is set
@@ -151,32 +111,59 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Load:
-		return d.RouteInOrder(req)
-	case route.Info:
-		d.info(req)
-		return route.OK
+		if err := dbs.Load(); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Provision:
+		if err := dbs.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
 	case route.Audit:
-		return d.RouteInOrder(req)
+		if err := dbs.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Info:
+		dbs.Info()
+	case route.Config:
+		dbs.Print()
+	case route.Help:
+		dbs.Help()
 	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
+		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		return route.FAIL
 	}
-	return route.FAIL
+	return route.OK
 }
 
-func (dbs *databaseService) config() {
-	dbs.DatabaseService.Print()
-}
-
-func (dbs *databaseService) info(req *route.Request) {
-	if dbs.Destroyed() {
-		return
+// Load satisfies the resource.DatabaseService interface.
+func (dbs *databaseService) Load() error {
+	log.Info("Loading database service")
+	if err := dbs.databaseService.Load(); err != nil {
+		return err
 	}
-	msg.Info("Database Service")
-	msg.IndentInc()
-	dbs.RouteInOrder(req)
-	msg.IndentDec()
+	for _, db := range dbs.database {
+		if err := db.Load(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
+// Provision satisfies the resource.DatabaseService interface.
+func (dbs *databaseService) Provision(flags ...string) error {
+	log.Info("Provisioning database service")
+	for _, db := range dbs.database {
+		if err := db.Provision(flags...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Audit satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Audit(flags ...string) error {
 	err := aaa.NewAudit("Database")
 	if err != nil {
@@ -185,10 +172,84 @@ func (dbs *databaseService) Audit(flags ...string) error {
 	if err := dbs.databaseService.Audit("Database"); err != nil {
 		return err
 	}
-	for _, d := range dbs.databases {
-		if err := d.Audit("Database"); err != nil {
+	for _, db := range dbs.database {
+		if err := db.Audit("Database"); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// Info satisfies the resource.DatabaseService interface.
+func (dbs *databaseService) Info() {
+	if dbs.Destroyed() {
+		return
+	}
+	msg.Info("Database Service")
+	msg.IndentInc()
+	dbs.databaseService.Info()
+	for _, db := range dbs.database {
+		db.Info()
+	}
+	msg.IndentDec()
+}
+
+// Help satisfies resource.DatabaseService.
+func (dbs *databaseService) Help() {
+	commands := []help.Command{
+		{"'name'", "manage named database instance"},
+		{route.Provision.String(), "update the database service"},
+		{route.Audit.String(), "audit the database service"},
+		{route.Info.String(), "show information about allocated database service"},
+		{route.Config.String(), "show the configuration for the given database service"},
+		{route.Help.String(), "show this help"},
+	}
+	help.Print("db", commands)
+}
+
+// Arc satisfies the resource.DatabaseService interface and provides access to database's parent.
+func (dbs *databaseService) Arc() resource.Arc {
+	return dbs.arc
+}
+
+// Find satisfies the resource.DatabaseService interface. It returns the database with the given name.
+func (dbs *databaseService) Find(name string) resource.Database {
+	for _, db := range dbs.database {
+		if db.Name() == name {
+			return db
+		}
+	}
+	return nil
+}
+
+// Associate satisfies the resource.DatabaseService interface.
+func (dbs *databaseService) Associate(dc resource.DataCenter) {
+	dbs.dc = dc
+}
+
+// DataCenter satisfies the resource.DatabaseService interface.
+func (dbs *databaseService) DataCenter() resource.DataCenter {
+	return dbs.dc
+}
+
+// Created is required since the parent of this object, Arc, wants to treat it like a resource.Resource.
+func (dbs *databaseService) Created() bool {
+	// All database instances must be created to consider it created.
+	for _, db := range dbs.database {
+		if !db.Created() {
+			return false
+		}
+	}
+	return true
+}
+
+// Destroyed is required since the parent of this object, Arc, wants to treat it like a resource.Resource.
+func (dbs *databaseService) Destroyed() bool {
+	// All database instances must be destroyed to consider it destroyed.
+	for _, db := range dbs.database {
+		if !db.Destroyed() {
+			return false
+		}
+	}
+	return true
 }

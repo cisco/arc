@@ -30,8 +30,8 @@ import "github.com/cisco/arc/pkg/msg"
 
 // The configuration of the database_service object.
 type DatabaseService struct {
-	Provider  *Provider  `json:"provider"`
-	Databases *Databases `json:"databases"`
+	Provider  *Provider   `json:"provider"`
+	Databases []*Database `json:"databases"`
 }
 
 // Print provides a user friendly way to view the configuration of the database service.
@@ -42,7 +42,7 @@ func (dbs *DatabaseService) Print() {
 	if dbs.Provider != nil {
 		dbs.Provider.Print()
 	}
-	for _, db := range *dbs.databases {
+	for _, db := range dbs.Databases {
 		db.Print()
 	}
 	msg.IndentDec()

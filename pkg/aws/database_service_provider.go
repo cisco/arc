@@ -78,11 +78,11 @@ func newDatabaseServiceProvider(cfg *config.DatabaseService) (provider.DatabaseS
 	}, nil
 }
 
-func (p *databaseServiceProvider) NewDatabaseService(cfg *config.DatabaseService) (resource.DatabaseService, error) {
+func (p *databaseServiceProvider) NewDatabaseService(cfg *config.DatabaseService) (resource.ProviderDatabaseService, error) {
 	return newDatabaseService(cfg, p)
 }
 
-func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, dbs resource.DatabaseService) (resource.Database, error) {
+func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService) (resource.ProviderDatabase, error) {
 	return newDatabase(cfg, dbs, p)
 }
 

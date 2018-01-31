@@ -26,6 +26,11 @@
 
 package resource
 
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 // StaticDatabaseService provides the interface to the static portion of the
 // database service. This information is provided via config file and is implemented
 // by config.DatabaseService.
@@ -36,7 +41,6 @@ type StaticDatabaseService interface {
 // DynamicDatabaseService provides access to the dynamic portion of the database service.
 type DynamicDatabaseService interface {
 	Loader
-	Provisioner
 	Auditor
 	Informer
 }
@@ -47,13 +51,14 @@ type DatabaseService interface {
 	route.Router
 	StaticDatabaseService
 	DynamicDatabaseService
+	Provisioner
 	Helper
 
 	// Arc provides access to DataCenter's parent.
 	Arc() Arc
 
-	// Databases provides access to the database services children.
-	Databases() Databases
+	// Find returns the database with the given name.
+	Find(string) Database
 
 	// DataCenter provides access to the datacenter with which this database service is associated.
 	DataCenter() DataCenter

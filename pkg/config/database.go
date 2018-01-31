@@ -28,19 +28,6 @@ package config
 
 import "github.com/cisco/arc/pkg/msg"
 
-// Databases is a collection of Database objects.
-type Databases []*Database
-
-// Print provides a user friendly way to view the configuration of the databases.
-func (d *Databases) Print() {
-	msg.Info("Databases Config")
-	msg.IndentInc()
-	for _, db := range *d {
-		db.Print()
-	}
-	msg.IndentDec()
-}
-
 // Database represents the configuration of a database instance resource.
 type Database struct {
 	Name_           string   `json:"database"`

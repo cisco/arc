@@ -68,7 +68,7 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.Append(a.datacenter)
 	}
 
-	a.databaseService, err = newDatabaseService(a, cfg.DatabaseService)
+	a.databaseService, err = newDatabaseService(cfg.DatabaseService, a)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (a *arc) Route(req *route.Request) route.Response {
 			msg.Error("DatabaseService not defined in the config file")
 			return route.FAIL
 		}
-		return a.databaseService.Route(req)
+		return a.databaseService.Route(req.Pop())
 	case "dns":
 		if a.dns == nil {
 			msg.Error("Dns not defined in the config file")

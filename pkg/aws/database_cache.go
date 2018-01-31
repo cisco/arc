@@ -24,19 +24,4 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
-
-// Databases provides the resource interface used for the databases
-// object implemented in the arc package. Databases is a collection
-// of Database objects, so it has a Find method associated with it.
-// Since this is a collection object, having a pointer to it's parent
-// isn't practical.
-type Databases interface {
-	Loader
-	Provisioner
-	Auditor
-	Informer
-
-	// Find the subnet group with the given name.
-	Find(name string) Database
-}
+package aws

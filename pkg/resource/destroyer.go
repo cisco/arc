@@ -36,7 +36,7 @@ type Destroyer interface {
 	// Destroyed indicated that the underlying resource has not been created
 	// with the cloud provider. With a composite resource, destruction may
 	// only be true if all the contained resources have been destroyed.
-	// Destroyed() bool
+	Destroyed() bool
 }
 
 // DestroyOverride allows the destroy methods of the class to be overridden by a derived class.

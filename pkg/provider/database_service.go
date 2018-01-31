@@ -27,6 +27,8 @@
 package provider
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/resource"
 )
@@ -35,8 +37,8 @@ import (
 // create the provider resources. Vendor implementations will provide the
 // concrete implementations of these methods.
 type DatabaseService interface {
-	NewDatabaseService(*config.DatabaseService) (resource.DatabaseService, error)
-	NewDatabase(*config.Database, resource.DatabaseService) (resource.Database, error)
+	NewDatabaseService(*config.DatabaseService) (resource.ProviderDatabaseService, error)
+	NewDatabase(*config.Database, resource.ProviderDatabaseService) (resource.ProviderDatabase, error)
 }
 
 // DatabaseServiceCtor is the function signature for the provider's database service constructor.
@@ -53,7 +55,8 @@ func RegisterDatabaseService(vendor string, ctor DatabaseServiceCtor) {
 
 // NewDatabaseService is the provider agnostic constructor used by pkg/arc.
 func NewDatabaseService(cfg *config.DatabaseService) (DatabaseService, error) {
-	ctor := dbsCtors[cfg.Provider.Vendor]
+	vendor := cfg.Provider.Vendor
+	ctor := dbsCtors[vendor]
 	if ctor == nil {
 		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}

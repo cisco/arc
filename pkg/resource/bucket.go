@@ -26,7 +26,10 @@
 
 package resource
 
-import "github.com/cisco/arc/pkg/config"
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
 
 type StaticBucket interface {
 	Name() string
@@ -54,7 +57,7 @@ type DynamicBucket interface {
 // object implemented in the amp package. It contains an Storage method used to
 // access its parent object.
 type Bucket interface {
-	Resource
+	route.Router
 	StaticBucket
 	DynamicBucket
 
@@ -63,6 +66,6 @@ type Bucket interface {
 }
 
 type ProviderBucket interface {
-	Resource
+	route.Router
 	DynamicBucket
 }
