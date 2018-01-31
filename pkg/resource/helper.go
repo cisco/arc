@@ -30,5 +30,5 @@ package resource
 type Helper interface {
 
 	// Help dumps help text to the console.
-	Helper()
+	Help()
 }

@@ -10,7 +10,11 @@ Currently only AWS is supported as a cloud provider.
 - [Getting Started](docs/getting_started.md)
 
 
-## Development
+## Contributing
 
-- [Github Process](docs/github_forking_process.md)
+- [Creating Pull Requests](docs/github_forking_process.md)
 - [Style Guide](docs/style_guide.md)
+
+## Design
+
+- [Database Service Design](docs/design/database_service/design.md)
