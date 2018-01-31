@@ -24,55 +24,46 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package aws
+package resource
 
-import (
-	"fmt"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
-
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/provider"
-)
-
-type databaseProvider struct {
-	rds    *rds.RDS
-	name   string
-	region string
+// StaticDatabaseService provides the interface to the static portion of the
+// database service. This information is provided via config file and is implemented
+// by config.DatabaseService.
+type StaticDatabaseService interface {
+	config.Printer
 }
 
-func NewDatabaseProvider(cfg *config.Database) (provider.Database, error) {
-	log.Debug("Initializing AWS Database Provider")
+// DynamicDatabaseService provides access to the dynamic portion of the database service.
+type DynamicDatabaseService interface {
+	Loader
+	Provisioner
+	Auditor
+	Informer
+}
 
-	name := cfg.Provider.Data["account"]
-	if name == "" {
-		return nil, fmt.Errorf("AWS Database provider/data config requires an 'account' field, being the aws account name.")
-	}
-	region := cfg.Provider.Data["region"]
-	if region == "" {
-		return nil, fmt.Errorf("AWS Database provider/data config requires a 'region' field, being the aws region.")
-	}
+// DatabaseService provides the resource interface used for the database service
+// object implemented in the arc package.
+type DatabaseService interface {
+	route.Router
+	StaticDatabaseService
+	DynamicDatabaseService
+	Helper
 
-	opts := session.Options{
-		Config: aws.Config{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			Region: aws.String(region),
-		},
-		Profile:           name,
-		SharedConfigState: session.SharedConfigEnable,
-	}
+	// Arc provides access to DataCenter's parent.
+	Arc() Arc
 
-	sess, err := session.NewSessionWithOptions(opts)
-	if err != nil {
-		return nil, err
-	}
+	// Databases provides access to the database services children.
+	Databases() Databases
 
-	return &databaseProvider{
-		rds:    rds.New(sess),
-		name:   name,
-		region: region,
-	}, nil
+	// DataCenter provides access to the datacenter with which this database service is associated.
+	DataCenter() DataCenter
+
+	// Associate creates a relationship between the database service and the datacenter. Some providers
+	// require that the database reside on a datacenter network.
+	Associate(DataCenter)
+}
+
+// ProviderDatabaseService provides a resource interface for the provider supplied database service.
+type ProviderDatabaseService interface {
+	DynamicDatabaseService
 }

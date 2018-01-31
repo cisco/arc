@@ -44,9 +44,9 @@ import (
 type arc struct {
 	*resource.Resources
 	*config.Arc
-	datacenter *dataCenter
-	database   *database
-	dns        *dns
+	datacenter      *dataCenter
+	databaseService *databaseService
+	dns             *dns
 }
 
 // New is the constructor for an arc object. It returns a non-nil error upon failure.
@@ -68,12 +68,12 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.Append(a.datacenter)
 	}
 
-	a.database, err = newDatabase(a, cfg.Database)
+	a.databaseService, err = newDatabaseService(a, cfg.DatabaseService)
 	if err != nil {
 		return nil, err
 	}
-	if a.database != nil {
-		a.Append(a.database)
+	if a.databaseService != nil {
+		a.Append(a.databaseService)
 	}
 
 	a.dns, err = newDns(a, cfg.Dns)
@@ -92,8 +92,8 @@ func New(cfg *config.Arc) (*arc, error) {
 
 	// Associate database service to datacenter service, since the database service
 	// depends on datacenter's networking.
-	if a.datacenter != nil && a.database != nil {
-		// a.database.associate(a.datacenter)
+	if a.datacenter != nil && a.databaseService != nil {
+		a.databaseService.Associate(a.datacenter)
 	}
 
 	return a, nil
@@ -157,11 +157,11 @@ func (a *arc) DataCenter() resource.DataCenter {
 
 // Database satisfies the resource.Arc interface and provides access to
 // arc's database service object.
-func (a *arc) Database() resource.Database {
-	if a.database == nil {
+func (a *arc) DatabaseService() resource.DatabaseService {
+	if a.databaseService == nil {
 		return nil
 	}
-	return a.database
+	return a.databaseService
 }
 
 // Dns satisfies the resource.Arc interface and provides access
@@ -189,6 +189,12 @@ func (a *arc) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return a.DataCenter().Route(req)
+	case "database", "db":
+		if a.databaseService == nil {
+			msg.Error("DatabaseService not defined in the config file")
+			return route.FAIL
+		}
+		return a.databaseService.Route(req)
 	case "dns":
 		if a.dns == nil {
 			msg.Error("Dns not defined in the config file")
@@ -240,6 +246,8 @@ func Help() {
 		{"cluster 'name'", "manage named cluster"},
 		{"pod 'name'", "manage named pod"},
 		{"instance 'name'", "manage named instance"},
+		{"db", "manage database service"},
+		{"db 'name'", "manage named database service"},
 		{"dns", "manage dns"},
 		{route.Config.String(), "show the arc configuration for the given datacenter"},
 		{route.Info.String(), "show information about allocated arc resources"},

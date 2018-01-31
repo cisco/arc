@@ -26,12 +26,77 @@
 
 package resource
 
-// Database provides the resource interface used for the common database
-// object implemented in the arc package. It contains an Arc method used to
-// access it's parent object.
-type Database interface {
-	Resource
+// StaticDatabase provides the interface to the static portion of the
+// database. This information is provided via config file and is implemented
+// by config.Database.
+type StaticDatabase interface {
+	config.Printer
 
-	// Arc provides access to DataCenter's parent.
-	Arc() Arc
+	// Name of the configured database instance. Required.
+	Name() string
+
+	// Engine used by the database instance. Required.
+	Engine() string
+
+	// Version of the engine. Optional.
+	Version() string
+
+	// InstanceType of the database instance. Required.
+	InstanceType() string
+
+	// Port used by the database instance. Optional.
+	Port() int
+
+	// Subnet the database instance will use. Required.
+	SubnetGroup() string
+
+	// SecurityGroups the database instance will use. Required.
+	SecurityGroups() []string
+
+	// StorageType associated with the database instance. Optional.
+	StorageType() string
+
+	// StorageSize is the configured size of the storage attached to the database instance. Optional.
+	StorageSize() int
+
+	// StorageIops is the configured tops of the storage attached to the database instance. Optional.
+	StorageIops() int
+
+	// MasterUserName is the name for the master user. Optional
+	MasterUserName() string
+
+	// MasterPassword is the password for the master user. Optional.
+	MasterPassword() string
+}
+
+// DynamicDatabase provides access to the dynamic portion of the database.
+type DynamicDatabase interface {
+	Loader
+	Creator
+	Destroyer
+	Provisioner
+	Auditor
+	Informer
+
+	// Id returns the id of the instance.
+	Id() string
+}
+
+// Database provides the resource interface used for the common subnet group
+// object implemented in the arc package.
+type Database interface {
+	route.Router
+	StaticDatabase
+	DynamicDatabase
+
+	// ProviderDatabase provides access tot he provider specific database.
+	ProviderDatabase() ProviderDatabase
+
+	// DatabaseService provides access to the database's parent.
+	DataBaseService() DatabaseService
+}
+
+// ProviderDatabase provides a resource interface for the provider supplied database instance.
+type ProviderDatabase interface {
+	DynamicDatabase
 }

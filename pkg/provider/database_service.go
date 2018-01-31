@@ -24,22 +24,38 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package provider
 
 import (
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseProvider struct {
-	*config.Provider
+// DatabaseService is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type DatabaseService interface {
+	NewDatabaseService(*config.DatabaseService) (resource.DatabaseService, error)
+	NewDatabase(*config.Database, resource.DatabaseService) (resource.Database, error)
 }
 
-func NewDatabaseProvider(cfg *config.Database) (provider.Database, error) {
-	log.Info("Initializing mock database provider")
+// DatabaseServiceCtor is the function signature for the provider's database service constructor.
+type DatabaseServiceCtor func(*config.DatabaseService) (DatabaseService, error)
 
-	return &databaseProvider{
-		Provider: cfg.Provider,
-	}, nil
+var dbsCtors map[string]DatabaseServiceCtor = map[string]DatabaseServiceCtor{}
+
+// RegisterDatabaseService is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the arc package. This function is called in the
+// packages' init() function.
+func RegisterDatabaseService(vendor string, ctor DatabaseServiceCtor) {
+	dbsCtors[vendor] = ctor
+}
+
+// NewDatabaseService is the provider agnostic constructor used by pkg/arc.
+func NewDatabaseService(cfg *config.DatabaseService) (DatabaseService, error) {
+	ctor := dbsCtors[cfg.Provider.Vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
+	}
+	return ctor(cfg)
 }

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,33 +24,26 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-// StaticArc provides the interface to the static portion of the
-// arc resource tree. This information is provided via config file
-// and is implemented config.Arc.
-type StaticArc interface {
-	Name() string
-	Title() string
+import "github.com/cisco/arc/pkg/msg"
+
+// The configuration of the database_service object.
+type DatabaseService struct {
+	Provider  *Provider  `json:"provider"`
+	Databases *Databases `json:"databases"`
 }
 
-// Arc provides the resource interface used for the common arc object
-// implemented in the arc package. It contains an Run method used to
-// start application processing. It also contains DataCenter and Dns
-// methods used to access it's children.
-type Arc interface {
-	Resource
-	StaticArc
-
-	// Run is the entry point for arc.
-	Run() (int, error)
-
-	// DataCenter provides access to Arc's child datacenter service.
-	DataCenter() DataCenter
-
-	// DatabaseService provides access to Arc's child database service.
-	DatabaseService() DatabaseService
-
-	// Dns provides access to Arc's child dns service.
-	Dns() Dns
+// Print provides a user friendly way to view the configuration of the database service.
+// This is a deep print.
+func (dbs *DatabaseService) Print() {
+	msg.Info("Database Service Config")
+	msg.IndentInc()
+	if dbs.Provider != nil {
+		dbs.Provider.Print()
+	}
+	for _, db := range *dbs.databases {
+		db.Print()
+	}
+	msg.IndentDec()
 }

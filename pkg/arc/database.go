@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018, Cisco Systems
+// Copyright (c) 2017, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -27,102 +27,109 @@
 package arc
 
 import (
-	"fmt"
-
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
-	// "github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 	"github.com/cisco/arc/pkg/route"
-
-	"github.com/cisco/arc/pkg/aws"
-	"github.com/cisco/arc/pkg/mock"
-	//"github.com/cisco/arc/pkg/gcp"
-	//"github.com/cisco/arc/pkg/azure"
 )
 
-type database struct {
-	*resource.Resources
-	*config.Database
-	arc *arc
+type subnet struct {
+	*config.Subnet
+	network        *network
+	providerSubnet resource.ProviderSubnet
 }
 
-// newDatabase is the constructor for a database service object. It returns a non-nil error upon failure.
-func newDatabase(arc *arc, cfg *config.Database) (*database, error) {
-	if cfg == nil {
-		return nil, nil
-	}
-	log.Debug("Initializing Database")
+// newSubnet is the constructor for a subnet object. It returns a non-nil error upon failure.
+func newSubnet(net *network, prov provider.DataCenter, cfg *config.Subnet) (*subnet, error) {
+	log.Debug("Initializing Subnet '%s'", cfg.Name())
 
-	// Validate the config.Database object.
-	if cfg.Provider == nil {
-		return nil, fmt.Errorf("The provider element is missing from the database configuration")
+	s := &subnet{
+		Subnet:  cfg,
+		network: net,
 	}
 
-	db := &database{
-		Resources: resource.NewResources(),
-		Database:  cfg,
-		arc:       arc,
-	}
-
-	vendor := cfg.Provider.Vendor
 	var err error
-	// var p provider.Database
 
-	switch vendor {
-	case "mock":
-		_, err = mock.NewDatabaseProvider(cfg)
-	case "aws":
-		_, err = aws.NewDatabaseProvider(cfg)
-	//case "azure":
-	//	p, err = azure.NewDatabaseProvider(cfg)
-	//case "gcp":
-	//	p, err = gcp.NewDatabaseProvider(cfg)
-	default:
-		err = fmt.Errorf("Unknown vendor %q", vendor)
-	}
+	s.providerSubnet, err = prov.NewSubnet(net, cfg)
 	if err != nil {
 		return nil, err
 	}
-
-	return db, nil
+	return s, nil
 }
 
-// Arc satisfies the resource.Database interface and provides access
-// to database's parent.
-func (db *database) Arc() resource.Arc {
-	return db.arc
+// Id provides the id of the provider specific subnet resource.
+// This satisfies the resource.DynamicSubnet interface.
+func (s *subnet) Id() string {
+	if s.providerSubnet == nil {
+		return ""
+	}
+	return s.providerSubnet.Id()
 }
 
-// Route satisfies the embedded resource.Resource interface in resource.Database.
-// Database does not directly terminate a request so only handles load and info
-// requests from it's parent.  All other commands are routed to arc's children.
-func (db *database) Route(req *route.Request) route.Response {
-	log.Route(req, "Database")
+// State provides the state of the provider specific subnet resource.
+// This satisfies the resource.DynamicSubnet interface.
+func (s *subnet) State() string {
+	if s.providerSubnet == nil {
+		return ""
+	}
+	return s.providerSubnet.State()
+}
 
-	// Skip if the test flag is set
-	if req.TestFlag() {
-		msg.Detail("Test. Skipping...")
-		return route.OK
+// ProviderSubnet satisfies the resource.Subnet interface and provides access
+// to provider's subnet implementation.
+func (s *subnet) ProviderSubnet() resource.ProviderSubnet {
+	return s.providerSubnet
+}
+
+// Network satisfies the resource.Subnet interface and provides access
+// to subnet's parent.
+func (s *subnet) Network() resource.Network {
+	return s.network
+}
+
+// Route satisfies the embedded resource.Resource interface in resource.Subnet.
+// Subnet handles load, create, destroy, and info requests by delegating them
+// to the providerSubnet.
+func (s *subnet) Route(req *route.Request) route.Response {
+	log.Route(req, "Subnet %q", s.Name())
+
+	if req.Top() != "" {
+		panic("Internal error: Unknown resource " + req.Top())
 	}
 
-	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Load:
-		return db.RouteInOrder(req)
+		if err := s.Load(); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
+	case route.Create, route.Destroy, route.Info:
+		return s.providerSubnet.Route(req)
 	default:
 		panic("Internal Error: Unknown command " + req.Command().String())
 	}
 	return route.FAIL
 }
 
-func (db *database) info(req *route.Request) {
-	if db.Destroyed() {
-		return
-	}
-	msg.Info("Database")
-	msg.IndentInc()
-	db.RouteInOrder(req)
-	msg.IndentDec()
+func (s *subnet) Load() error {
+	return s.providerSubnet.Load()
+}
+
+// Created satisfies the embedded resource.Resource interface in resource.Subnet.
+// It delegates the call to the provider's subnet.
+func (s *subnet) Created() bool {
+	return s.providerSubnet.Created()
+}
+
+// Destroyed satisfies the embedded resource.Resource interface in resource.Subnet.
+// It delegates the call to the provider's subnet.
+func (s *subnet) Destroyed() bool {
+	return s.providerSubnet.Destroyed()
+}
+
+func (s *subnet) Audit(flags ...string) error {
+	return s.providerSubnet.Audit(flags...)
 }

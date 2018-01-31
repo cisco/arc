@@ -9,7 +9,7 @@ pkg/aws/database_service_provider.go
 pkg/mock/database_service_provider.go
 pkg/arc/database_service.go
 pkg/arc/databases.go
-pkg/arg/database.go
+pkg/arc/database.go
 pkg/aws/database_service.go
 pkg/aws/database.go
 pkg/mock/database_service.go
