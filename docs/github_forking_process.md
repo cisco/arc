@@ -157,7 +157,7 @@ git merge --ff-only upstream/master
 
 Push the merged branch up to your github account to keep it in sync with the upstream repo.
 ```shell
-git push
+git push origin master
 ```
 
 ## See also
