@@ -1,0 +1,16 @@
+pkg/config/arc.go
+pkg/config/database_service.go
+pkg/config/database.go
+pkg/resource/database_service.go
+pkg/resource/databases.go
+pkg/resource/database.go
+pkg/provider/database_service.go
+pkg/aws/database_service_provider.go
+pkg/mock/database_service_provider.go
+pkg/arc/database_service.go
+pkg/arc/databases.go
+pkg/arg/database.go
+pkg/aws/database_service.go
+pkg/aws/database.go
+pkg/mock/database_service.go
+pkg/mock/database.go
