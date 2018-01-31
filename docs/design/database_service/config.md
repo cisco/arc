@@ -49,6 +49,7 @@ For an aws vendor, the following value are required:
 ### mock vendor
 
 For a mock vendor, the data section is not required.
+<<<<<<< HEAD
 
 ```json
   "database": {
@@ -56,6 +57,8 @@ For a mock vendor, the data section is not required.
   }
 ```
 
+=======
+>>>>>>> design docs
 ## databases
 
 Since a datacenter can most multi database instances, the database element is an array of database elements.
