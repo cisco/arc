@@ -43,10 +43,10 @@ The commands available to a database instance are
 - **create**:  Creates the database instance. If the database already exists this command will do nothing.
 - **destroy**: Destroyes the database instance. If the database does not exist the command will do nothing.
 - **update**:  Updates the tags for this database instance. If the database does not exist the command will do nothing.
-- **audit**:  Audit the database instance. The audit will compare the configuration of the database instance and report if the run time instance does not match.
-- **info**:   Provides run time information for the database instance.
-- **config**: Provides configuration information for the database instance.
-- **help**:   Provides help with the named database command.
+- **audit**:   Audit the database instance. The audit will compare the configuration of the database instance and report if the run time instance does not match.
+- **info**:    Provides run time information for the database instance.
+- **config**:  Provides configuration information for the database instance.
+- **help**:    Provides help with the named database command.
 
 
 For example, to create a database named "contacts" in the "example-integration" datacenter, run the command
