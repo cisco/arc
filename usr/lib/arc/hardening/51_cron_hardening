@@ -25,7 +25,29 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# cron hardening
-$(pwd)/cron_hardening
-# ssh hardening
-$(pwd)/ssh_hardening
+source $(dirname $0)/../arc.sh
+
+function main() {
+  # Ensure directory permissions are configured
+  chmod 600 /etc/crontab
+  chmod 600 /etc/cron.hourly
+  chmod 600 /etc/cron.daily
+  chmod 600 /etc/cron.weekly
+  chmod 600 /etc/cron.monthly
+  chmod 600 /etc/cron.d
+
+  # Remove cron.deny, at.deny & anacron.deny
+  rm -f /etc/cron.deny
+  rm -f /etc/at.deny
+  rm -f /etc/anacron.deny
+
+  if [[ $ID == "centos" ]]; then
+    if [ $(systemctl is-enabled crond) != "enabled" ]; then
+      systemctl enable crond
+    fi
+  elif [[ $(grep -i "start on runlevel [2345]" /etc/init/cron.conf | wc -l) -ne 1 ]]; then
+    sed -i -e 's/start on runlevel \[.*\]/start on runlevel [2345]/g' /etc/init/cron.conf
+  fi
+}
+
+main "$@"
