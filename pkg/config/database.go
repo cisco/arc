@@ -102,7 +102,7 @@ func (db *Database) PrintLocal() {
 	msg.Detail("%-20s\t%s", "name", db.Name())
 	msg.Detail("%-20s\t%s", "engine", db.Engine())
 	if db.Version() != "" {
-		msg.Detail("%-20s\t%s", db.Version())
+		msg.Detail("%-20s\t%s", "version", db.Version())
 	}
 	msg.Detail("%-20s\t%s", "type", db.InstanceType())
 	if db.Port() > 0 {
@@ -115,13 +115,17 @@ func (db *Database) PrintLocal() {
 		sep = ", "
 	}
 	msg.Detail("%-20s\t%s", "security_groups", groups)
-	msg.Detail("%-20s\t%s", "storage type", db.StorageType())
-	msg.Detail("%-20s\t%s", "storage size", db.StorageSize())
-	if db.StorageIops() > 0 {
-		msg.Detail("%-20s\t%s", "storage iops", db.StorageIops())
+	if db.StorageType() != "" {
+		msg.Detail("%-20s\t%s", "storage type", db.StorageType())
+		msg.Detail("%-20s\t%d", "storage size", db.StorageSize())
+		if db.StorageIops() > 0 {
+			msg.Detail("%-20s\t%d", "storage iops", db.StorageIops())
+		}
 	}
-	msg.Detail("%-20s\t%s", "master username", db.MasterUserName())
-	msg.Detail("%-20s\t%s", "master password", db.MasterPassword())
+	if db.MasterUserName() != "" {
+		msg.Detail("%-20s\t%s", "master username", db.MasterUserName())
+		msg.Detail("%-20s\t%s", "master password", db.MasterPassword())
+	}
 }
 
 // Print provides a user friendly way to view a subnet group configuration.

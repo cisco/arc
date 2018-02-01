@@ -35,7 +35,9 @@ type databaseService struct {
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	return nil, nil
+	dbs := &databaseService{}
+
+	return dbs, nil
 }
 
 func (dbs *databaseService) Load() error {

@@ -41,18 +41,18 @@ import (
 
 type databaseService struct {
 	*config.DatabaseService
-	arc             *arc
+	arc             resource.Arc
 	dc              resource.DataCenter
 	databaseService resource.ProviderDatabaseService
 	database        []resource.Database
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
-func newDatabaseService(cfg *config.DatabaseService, arc *arc) (*databaseService, error) {
+func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databaseService, error) {
 	if cfg == nil {
 		return nil, nil
 	}
-	log.Debug("Initializing Database")
+	log.Debug("Initializing Database Service")
 
 	// Validate the config.DatabaseService object.
 	if cfg.Provider == nil {
@@ -75,7 +75,7 @@ func newDatabaseService(cfg *config.DatabaseService, arc *arc) (*databaseService
 	}
 
 	for _, c := range cfg.Databases {
-		db, err := newDatabase(c, dbs.databaseService, p)
+		db, err := newDatabase(c, dbs, p)
 		if err != nil {
 			return nil, err
 		}
@@ -165,15 +165,18 @@ func (dbs *databaseService) Provision(flags ...string) error {
 
 // Audit satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Audit(flags ...string) error {
-	err := aaa.NewAudit("Database")
+	auditSession := "Database"
+	flags = append(flags, auditSession)
+
+	err := aaa.NewAudit(auditSession)
 	if err != nil {
 		return err
 	}
-	if err := dbs.databaseService.Audit("Database"); err != nil {
+	if err := dbs.databaseService.Audit(flags...); err != nil {
 		return err
 	}
 	for _, db := range dbs.database {
-		if err := db.Audit("Database"); err != nil {
+		if err := db.Audit(flags...); err != nil {
 			return err
 		}
 	}

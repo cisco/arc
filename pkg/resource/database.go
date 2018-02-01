@@ -93,12 +93,10 @@ type Database interface {
 	route.Router
 	StaticDatabase
 	DynamicDatabase
-
-	// ProviderDatabase provides access tot he provider specific database.
-	ProviderDatabase() ProviderDatabase
+	Helper
 
 	// DatabaseService provides access to the database's parent.
-	DataBaseService() DatabaseService
+	DatabaseService() DatabaseService
 }
 
 // ProviderDatabase provides a resource interface for the provider supplied database instance.

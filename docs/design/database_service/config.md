@@ -71,12 +71,13 @@ The database element represent a single database instance in the datacenter. It 
 - **port**            (integer) _optional_: The port the engine will uses for connections.
 - **subnet_group**    (string)  _required_: The subnet group that this database instance will use.
 - **security_groups** (string)  _required_: The security groups that are applied to the database instance.
-- **storage**         (object)  _optional_:      The storage allocated to the database instance.
-  - **type**            (string):             The type of storage.
-  - **size**            (integer):            The size of the storage in GiB.
+- **storage**         (object)  _optional_: The storage allocated to the database instance.
+  - **type**            (string)  _required_: The type of storage.
+  - **size**            (integer) _required_: The size of the storage in GiB.
+  - **iops**            (integer) _optional_: The iops requested.
 - **master**          (object)  _optional_
-  - **username**:       (string):             The name of the master user.
-  - **password**:       (string):             The password of the master user.
+  - **username**:       (string)  _required_: The name of the master user.
+  - **password**:       (string)  _required_: The password of the master user.
 
 ```json
       {

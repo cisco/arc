@@ -71,7 +71,7 @@ func (db *database) Provision(flags ...string) error {
 }
 
 func (db *database) Destroyed() bool {
-	return false
+	return true
 }
 
 func (db *database) Audit(flags ...string) error {
