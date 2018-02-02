@@ -5,7 +5,7 @@
   "database_service": {
     "provider": {
       "vendor": "mock",
-      "data":   { "dbs.Audit": "error" }
+      "data":   { "db.Audit": "error" }
     },
     "databases": [
       {

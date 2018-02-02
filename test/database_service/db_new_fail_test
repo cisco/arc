@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Copyright (c) 2018, Cisco Systems
+# All rights reserved. See LICENSE file.
+#
+set -xe
+export ARC_ROOT="$PWD/database_service"
+
+# This is expected to fail.
+arc db_new_fail db testdb config && exit 1 || exit 0

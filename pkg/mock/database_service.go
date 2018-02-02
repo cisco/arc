@@ -59,7 +59,7 @@ func (dbs *databaseService) Load() error {
 }
 
 func (dbs *databaseService) Audit(flags ...string) error {
-	log.Info("Auditing Mock DatabaseService")
+	msg.Info("Auditing Mock DatabaseService")
 	if dbs.opt.err("dbs.Audit") {
 		return dberr{"dbs.Audit"}
 	}

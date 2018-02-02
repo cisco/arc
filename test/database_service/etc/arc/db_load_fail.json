@@ -1,11 +1,11 @@
 {
-  "name": "db_audit_fail",
+  "name": "db_load_fail",
   "title": "mock db",
 
   "database_service": {
     "provider": {
       "vendor": "mock",
-      "data":   { "dbs.Audit": "error" }
+      "data":   { "db.Load": "error" }
     },
     "databases": [
       {

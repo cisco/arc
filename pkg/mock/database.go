@@ -51,7 +51,7 @@ func newDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService, p *
 }
 
 func (db *database) Load() error {
-	log.Info("Loading Mock Database")
+	log.Info("Loading Mock Database %q", db.Name())
 	if db.opt.err("db.Load") {
 		return dberr{"db.Load"}
 	}
@@ -59,7 +59,7 @@ func (db *database) Load() error {
 }
 
 func (db *database) Create(flags ...string) error {
-	log.Info("Creating Mock Database")
+	msg.Info("Creating Mock Database %q", db.Name())
 	if db.opt.err("db.Create") {
 		return dberr{"db.Create"}
 	}
@@ -74,27 +74,30 @@ func (db *database) Created() bool {
 }
 
 func (db *database) Destroy(flags ...string) error {
-	log.Info("Destroying Mock Database")
+	msg.Info("Destroying Mock Database %q", db.Name())
 	if db.opt.err("db.Destroy") {
 		return dberr{"db.Destroy"}
 	}
 	return nil
 }
 
+func (db *database) Destroyed() bool {
+	if db.opt.err("db.Destroyed") {
+		return false
+	}
+	return true
+}
+
 func (db *database) Provision(flags ...string) error {
-	log.Info("Provisioning Mock Database")
+	msg.Info("Provisioning Mock Database %q", db.Name())
 	if db.opt.err("db.Provision") {
 		return dberr{"db.Provision"}
 	}
 	return nil
 }
 
-func (db *database) Destroyed() bool {
-	return false
-}
-
 func (db *database) Audit(flags ...string) error {
-	log.Info("Auditing Mock Database")
+	msg.Info("Auditing Mock Database %q", db.Name())
 	if db.opt.err("db.Audit") {
 		return dberr{"db.Audit"}
 	}
