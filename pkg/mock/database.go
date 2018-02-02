@@ -28,48 +28,84 @@ package mock
 
 import (
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 type database struct {
+	*config.Database
+	opt options
 }
 
 func newDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
-	db := &database{}
+	log.Info("Initializing Mock Database %q", cfg.Name())
+	db := &database{
+		Database: cfg,
+		opt:      options{p.Provider.Data},
+	}
+	if db.opt.err("db.New") {
+		return nil, dberr{"db.New"}
+	}
 	return db, nil
 }
 
-func (d *database) Load() error {
+func (db *database) Load() error {
+	log.Info("Loading Mock Database")
+	if db.opt.err("db.Load") {
+		return dberr{"db.Load"}
+	}
 	return nil
 }
 
-func (d *database) Create(flags ...string) error {
+func (db *database) Create(flags ...string) error {
+	log.Info("Creating Mock Database")
+	if db.opt.err("db.Create") {
+		return dberr{"db.Create"}
+	}
 	return nil
 }
 
-func (d *database) Created() bool {
+func (db *database) Created() bool {
+	if db.opt.err("db.Created") {
+		return false
+	}
+	return true
+}
+
+func (db *database) Destroy(flags ...string) error {
+	log.Info("Destroying Mock Database")
+	if db.opt.err("db.Destroy") {
+		return dberr{"db.Destroy"}
+	}
+	return nil
+}
+
+func (db *database) Provision(flags ...string) error {
+	log.Info("Provisioning Mock Database")
+	if db.opt.err("db.Provision") {
+		return dberr{"db.Provision"}
+	}
+	return nil
+}
+
+func (db *database) Destroyed() bool {
 	return false
 }
 
-func (d *database) Destroy(flags ...string) error {
+func (db *database) Audit(flags ...string) error {
+	log.Info("Auditing Mock Database")
+	if db.opt.err("db.Audit") {
+		return dberr{"db.Audit"}
+	}
 	return nil
 }
 
-func (d *database) Provision(flags ...string) error {
-	return nil
+func (db *database) Info() {
+	msg.Info("Mock Database")
+	msg.Detail("%-20s\t%s", "id", db.Id())
 }
 
-func (d *database) Destroyed() bool {
-	return false
-}
-
-func (d *database) Audit(flags ...string) error {
-	return nil
-}
-
-func (d *database) Info() {
-}
-
-func (d *database) Id() string {
-	return ""
+func (db *database) Id() string {
+	return "db-mock-" + db.Name()
 }

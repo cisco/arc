@@ -47,6 +47,7 @@ function main() {
   init
   ./run_tests "Arc Config" config
   ./run_tests "Arc Cli" cli
+  ./run_tests "Database Service" database_service
 }
 
 main "$@"

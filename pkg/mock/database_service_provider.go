@@ -38,7 +38,7 @@ type databaseServiceProvider struct {
 }
 
 func newDatabaseServiceProvider(cfg *config.DatabaseService) (provider.DatabaseService, error) {
-	log.Info("Initializing mock database service provider")
+	log.Info("Initializing Mock Database Service Provider")
 
 	return &databaseServiceProvider{
 		Provider: cfg.Provider,

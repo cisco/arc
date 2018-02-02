@@ -26,47 +26,14 @@
 
 package mock
 
-import (
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
-	"github.com/cisco/arc/pkg/resource"
-)
-
-type databaseService struct {
-	*config.DatabaseService
-	opt options
+type options struct {
+	data map[string]string
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
+func (o *options) err(k string) bool {
+	v := o.data[k]
+	if v == "error" || v == "false" {
+		return true
 	}
-	if dbs.opt.err("dbs.New") {
-		return nil, dberr{"dbs.New"}
-	}
-	return dbs, nil
-}
-
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return dberr{"dbs.Load"}
-	}
-	return nil
-}
-
-func (dbs *databaseService) Audit(flags ...string) error {
-	log.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return dberr{"dbs.Audit"}
-	}
-	return nil
-}
-
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
-	msg.Detail("...")
+	return false
 }

@@ -79,7 +79,7 @@ function main() {
   fi
   title="$1"
   test_dir="$(readlink -f $2)"
-  printf "\nRunning $title Tests\t ${date_color}$(date)${clear}\n\n"
+  printf "\n%-40s\t${date_color}%s${clear}\n\n" "Running $title Tests" "$(date)"
 
   run_tests
 

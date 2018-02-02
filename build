@@ -73,16 +73,16 @@ function run_unit_tests() {
 function run_integ_tests() {
   printf "\n\n${color}Running integrated tests...${clear}\n\n"
   cd test
-  time ./test_all
+  ./test_all
   cd - >/dev/null 2>&1
 }
 
 function main() {
   setup_version
-  build
+  time build
   report_versions
-  run_unit_tests
-  run_integ_tests
+  time run_unit_tests
+  time run_integ_tests
 }
 
 main "$@"
