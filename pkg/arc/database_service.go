@@ -41,10 +41,10 @@ import (
 
 type databaseService struct {
 	*config.DatabaseService
-	arc             resource.Arc
-	dc              resource.DataCenter
-	databaseService resource.ProviderDatabaseService
-	database        []resource.Database
+	arc                     resource.Arc
+	dc                      resource.DataCenter
+	providerDatabaseService resource.ProviderDatabaseService
+	database                []resource.Database
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
@@ -69,7 +69,7 @@ func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databas
 		return nil, err
 	}
 
-	dbs.databaseService, err = p.NewDatabaseService(cfg)
+	dbs.providerDatabaseService, err = p.NewDatabaseService(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 // Load satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Load() error {
 	log.Info("Loading database service")
-	if err := dbs.databaseService.Load(); err != nil {
+	if err := dbs.providerDatabaseService.Load(); err != nil {
 		return err
 	}
 	for _, db := range dbs.database {
@@ -172,7 +172,7 @@ func (dbs *databaseService) Audit(flags ...string) error {
 	if err != nil {
 		return err
 	}
-	if err := dbs.databaseService.Audit(flags...); err != nil {
+	if err := dbs.providerDatabaseService.Audit(flags...); err != nil {
 		return err
 	}
 	for _, db := range dbs.database {
@@ -190,7 +190,7 @@ func (dbs *databaseService) Info() {
 	}
 	msg.Info("Database Service")
 	msg.IndentInc()
-	dbs.databaseService.Info()
+	dbs.providerDatabaseService.Info()
 	for _, db := range dbs.database {
 		db.Info()
 	}

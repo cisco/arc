@@ -41,8 +41,8 @@ import (
 
 type database struct {
 	*config.Database
-	databaseService *databaseService
-	database        resource.ProviderDatabase
+	databaseService  *databaseService
+	providerDatabase resource.ProviderDatabase
 }
 
 func newDatabase(cfg *config.Database, dbs *databaseService, p provider.DatabaseService) (resource.Database, error) {
@@ -70,7 +70,7 @@ func newDatabase(cfg *config.Database, dbs *databaseService, p provider.Database
 	}
 
 	var err error
-	db.database, err = p.NewDatabase(cfg, db.databaseService.databaseService)
+	db.providerDatabase, err = p.NewDatabase(cfg, db.databaseService.providerDatabaseService)
 	if err != nil {
 		return nil, err
 	}
@@ -135,32 +135,32 @@ func (db *database) Route(req *route.Request) route.Response {
 
 // Load satisfies the resource.Database interface.
 func (db *database) Load() error {
-	return db.database.Load()
+	return db.providerDatabase.Load()
 }
 
 // Create satisfies the resource.Database interface.
 func (db *database) Create(flags ...string) error {
-	return db.database.Create(flags...)
+	return db.providerDatabase.Create(flags...)
 }
 
 // Created satisfies the resource.Database interface.
 func (db *database) Created() bool {
-	return db.database.Created()
+	return db.providerDatabase.Created()
 }
 
 // Destroy satisfies the resource.Database interface.
 func (db *database) Destroy(flags ...string) error {
-	return db.database.Destroy(flags...)
+	return db.providerDatabase.Destroy(flags...)
 }
 
 // Destroyed satisfies the resource.Database interface.
 func (db *database) Destroyed() bool {
-	return db.database.Destroyed()
+	return db.providerDatabase.Destroyed()
 }
 
 // Provision satisfies the resource.Database interface.
 func (db *database) Provision(flags ...string) error {
-	return db.database.Provision(flags...)
+	return db.providerDatabase.Provision(flags...)
 }
 
 // Audit satisfies the resource.Database interface.
@@ -180,17 +180,17 @@ func (db *database) Audit(flags ...string) error {
 	if err != nil {
 		return err
 	}
-	return db.database.Audit(flags...)
+	return db.providerDatabase.Audit(flags...)
 }
 
 // Info satisfies the resource.Database interface.
 func (db *database) Info() {
-	db.database.Info()
+	db.providerDatabase.Info()
 }
 
 // Id satisfies the resource.Database interface.
 func (db *database) Id() string {
-	return db.database.Id()
+	return db.providerDatabase.Id()
 }
 
 // Help satisfies the resource.Database interface.
