@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Copyright (c) 2018, Cisco Systems
+# All rights reserved. See LICENSE file.
+#
+set -xe
+
+export ARC_ROOT="$PWD/database_service"
+
+arc db config
+arc db info
+arc db audit
+

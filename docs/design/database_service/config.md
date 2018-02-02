@@ -8,13 +8,13 @@ objects.
 ## database_service
 
 The "database_service" section is a json object that contains two elements, the "provider" element and the "databases" element.
-The "provider" element is a json object that defines the cloud provider data. The "databases" element is a json array of database instances. 
+The "provider" element is a json object that defines the cloud provider data. The "databases" element is a json array of database instances.
 
 ```
   "database_service": {
     "provider": {
       ...
-    },  
+    },
 
     "databases": [
       ...
@@ -42,7 +42,7 @@ For an aws vendor, the following value are required:
       "data": {
         "account": "example-integration",
         "region":  "us-east-1"
-      }   
+      }
     }
 ```
 
@@ -58,7 +58,7 @@ For a mock vendor, the data section is not required.
 
 ## databases
 
-Since a datacenter can most multi database instances, the database element is an array of database elements.
+Since a datacenter can host multiple database instances, the database element is an array of database elements.
 
 ### database
 
@@ -71,15 +71,16 @@ The database element represent a single database instance in the datacenter. It 
 - **port**            (integer) _optional_: The port the engine will uses for connections.
 - **subnet_group**    (string)  _required_: The subnet group that this database instance will use.
 - **security_groups** (string)  _required_: The security groups that are applied to the database instance.
-- **storage**         (object)  _optional_:      The storage allocated to the database instance.
-  - **type**            (string):             The type of storage.
-  - **size**            (integer):            The size of the storage in GiB.
+- **storage**         (object)  _optional_: The storage allocated to the database instance.
+  - **type**            (string)  _required_: The type of storage.
+  - **size**            (integer) _required_: The size of the storage in GiB.
+  - **iops**            (integer) _optional_: The iops requested.
 - **master**          (object)  _optional_
-  - **username**:       (string):             The name of the master user.
-  - **password**:       (string):             The password of the master user.
+  - **username**:       (string)  _required_: The name of the master user.
+  - **password**:       (string)  _required_: The password of the master user.
 
 ```json
-      {   
+      {
         "database":        "contacts",
         "engine":          "postgress",
         "version":         "9.6.5",
@@ -104,10 +105,10 @@ Here is an example of a simple postgres database using the AWS RDS service. Ther
       "data": {
         "account": "example-integration",
         "region":  "us-east-1"
-      }   
-    },  
+      }
+    },
     "databases": [
-      {   
+      {
         "database":        "contacts",
         "engine":          "postgress",
         "version":         "9.6.5",
@@ -117,7 +118,7 @@ Here is an example of a simple postgres database using the AWS RDS service. Ther
         "security_groups": [ "postgres_secgroup" ],
         "storage":         { "type": "gp2", "size": 50 },
         "master":          { "username": "myuser", "password": "mypasswd" }
-      }   
-    ]   
+      }
+    ]
   },
 ```

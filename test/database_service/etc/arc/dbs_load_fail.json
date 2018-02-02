@@ -1,0 +1,24 @@
+{
+  "name": "dbs_load_fail",
+  "title": "mock db",
+
+  "database_service": {
+    "provider": {
+      "vendor": "mock",
+      "data":   { "dbs.Load": "error" }
+    },
+    "databases": [
+      {
+        "database":        "testdb",
+        "engine":          "postgress",
+        "version":         "9.6.5",
+        "type":            "db.m4.large",
+        "port":            5432,
+        "subnet_group":    "postgres",
+        "security_groups": [ "postgres" ],
+        "storage":         { "type": "gp2", "size": 50 },
+        "master":          { "username": "myuser", "password": "mypasswd" }
+      }
+    ]
+  }
+}

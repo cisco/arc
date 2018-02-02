@@ -147,7 +147,7 @@ func logMsg(lg *log.Logger, format string, a ...interface{}) {
 	}
 	args := []interface{}{fileName, line}
 	args = append(args, a...)
-	lg.Println(fmt.Sprintf("| %22s +%-3d | "+format, args...))
+	lg.Println(fmt.Sprintf("| %30s +%-3d | "+format, args...))
 	l.writer.Flush()
 }
 

@@ -29,59 +29,48 @@ package arc
 import (
 	"fmt"
 
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
-	// "github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 	"github.com/cisco/arc/pkg/route"
-
-	"github.com/cisco/arc/pkg/aws"
-	"github.com/cisco/arc/pkg/mock"
-	//"github.com/cisco/arc/pkg/gcp"
-	//"github.com/cisco/arc/pkg/azure"
 )
 
 type database struct {
-	*resource.Resources
 	*config.Database
-	arc *arc
+	databaseService  *databaseService
+	providerDatabase resource.ProviderDatabase
 }
 
-// newDatabase is the constructor for a database service object. It returns a non-nil error upon failure.
-func newDatabase(arc *arc, cfg *config.Database) (*database, error) {
-	if cfg == nil {
-		return nil, nil
+func newDatabase(cfg *config.Database, dbs *databaseService, p provider.DatabaseService) (resource.Database, error) {
+	if cfg.Name() == "" {
+		return nil, fmt.Errorf("The 'database' element is missing from the database configuration")
 	}
-	log.Debug("Initializing Database")
+	if cfg.Engine() == "" {
+		return nil, fmt.Errorf("The 'engine' element is missing from the database configuration")
+	}
+	if cfg.InstanceType() == "" {
+		return nil, fmt.Errorf("The 'type' element is missing from the database configuration")
+	}
+	if cfg.SubnetGroup() == "" {
+		return nil, fmt.Errorf("The 'subnet_group' element is missing from the database configuration")
+	}
+	if cfg.SecurityGroups() == nil {
+		return nil, fmt.Errorf("The 'security_groups' element is missing from the database configuration")
+	}
 
-	// Validate the config.Database object.
-	if cfg.Provider == nil {
-		return nil, fmt.Errorf("The provider element is missing from the database configuration")
-	}
+	log.Debug("Initializing Database %q", cfg.Name())
 
 	db := &database{
-		Resources: resource.NewResources(),
-		Database:  cfg,
-		arc:       arc,
+		Database:        cfg,
+		databaseService: dbs,
 	}
 
-	vendor := cfg.Provider.Vendor
 	var err error
-	// var p provider.Database
-
-	switch vendor {
-	case "mock":
-		_, err = mock.NewDatabaseProvider(cfg)
-	case "aws":
-		_, err = aws.NewDatabaseProvider(cfg)
-	//case "azure":
-	//	p, err = azure.NewDatabaseProvider(cfg)
-	//case "gcp":
-	//	p, err = gcp.NewDatabaseProvider(cfg)
-	default:
-		err = fmt.Errorf("Unknown vendor %q", vendor)
-	}
+	db.providerDatabase, err = p.NewDatabase(cfg, db.databaseService.providerDatabaseService)
 	if err != nil {
 		return nil, err
 	}
@@ -89,17 +78,14 @@ func newDatabase(arc *arc, cfg *config.Database) (*database, error) {
 	return db, nil
 }
 
-// Arc satisfies the resource.Database interface and provides access
-// to database's parent.
-func (db *database) Arc() resource.Arc {
-	return db.arc
-}
-
-// Route satisfies the embedded resource.Resource interface in resource.Database.
-// Database does not directly terminate a request so only handles load and info
-// requests from it's parent.  All other commands are routed to arc's children.
+// Route satisfies the resource.Database interface.
 func (db *database) Route(req *route.Request) route.Response {
-	log.Route(req, "Database")
+	log.Route(req, "Database %q", db.Name())
+
+	if req.Top() != "" {
+		db.Help()
+		return route.FAIL
+	}
 
 	// Skip if the test flag is set
 	if req.TestFlag() {
@@ -110,19 +96,118 @@ func (db *database) Route(req *route.Request) route.Response {
 	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Load:
-		return db.RouteInOrder(req)
+		if err := db.Load(); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Create:
+		if err := db.Create(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Destroy:
+		if err := db.Destroy(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Provision:
+		if err := db.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Audit:
+		if err := db.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+	case route.Info:
+		db.Info()
+	case route.Config:
+		db.Print()
+	case route.Help:
+		db.Help()
 	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
+		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		return route.FAIL
 	}
-	return route.FAIL
+	return route.OK
 }
 
-func (db *database) info(req *route.Request) {
-	if db.Destroyed() {
-		return
+// Load satisfies the resource.Database interface.
+func (db *database) Load() error {
+	return db.providerDatabase.Load()
+}
+
+// Create satisfies the resource.Database interface.
+func (db *database) Create(flags ...string) error {
+	return db.providerDatabase.Create(flags...)
+}
+
+// Created satisfies the resource.Database interface.
+func (db *database) Created() bool {
+	return db.providerDatabase.Created()
+}
+
+// Destroy satisfies the resource.Database interface.
+func (db *database) Destroy(flags ...string) error {
+	return db.providerDatabase.Destroy(flags...)
+}
+
+// Destroyed satisfies the resource.Database interface.
+func (db *database) Destroyed() bool {
+	return db.providerDatabase.Destroyed()
+}
+
+// Provision satisfies the resource.Database interface.
+func (db *database) Provision(flags ...string) error {
+	return db.providerDatabase.Provision(flags...)
+}
+
+// Audit satisfies the resource.Database interface.
+func (db *database) Audit(flags ...string) error {
+	auditSession := "Database"
+	found := false
+	for _, v := range flags {
+		if v == auditSession {
+			found = true
+			break
+		}
 	}
-	msg.Info("Database")
-	msg.IndentInc()
-	db.RouteInOrder(req)
-	msg.IndentDec()
+	if !found {
+		flags = append(flags, auditSession)
+	}
+	err := aaa.NewAudit("Database")
+	if err != nil {
+		return err
+	}
+	return db.providerDatabase.Audit(flags...)
+}
+
+// Info satisfies the resource.Database interface.
+func (db *database) Info() {
+	db.providerDatabase.Info()
+}
+
+// Id satisfies the resource.Database interface.
+func (db *database) Id() string {
+	return db.providerDatabase.Id()
+}
+
+// Help satisfies the resource.Database interface.
+func (db *database) Help() {
+	commands := []help.Command{
+		{route.Create.String(), fmt.Sprintf("create %s database instance", db.Name())},
+		{route.Destroy.String(), fmt.Sprintf("destroy %s database instance", db.Name())},
+		{route.Provision.String(), fmt.Sprintf("update %s database instance", db.Name())},
+		{route.Audit.String(), fmt.Sprintf("audit %s database instance", db.Name())},
+		{route.Info.String(), fmt.Sprintf("provide information about allocated %s database instance", db.Name())},
+		{route.Config.String(), fmt.Sprintf("provide the %s database instance configuration", db.Name())},
+		{route.Help.String(), "provide this help"},
+	}
+	help.Print(fmt.Sprintf("db %s", db.Name()), commands)
+}
+
+// DatabaseService satisfies the resource.Database interface.
+func (db *database) DatabaseService() resource.DatabaseService {
+	return db.databaseService
 }

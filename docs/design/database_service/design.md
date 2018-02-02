@@ -7,3 +7,4 @@ to manage these resources.
 
 1. [CLI](cli.md)
 2. [Config File](config.md)
+3. [Testing](testing.md)

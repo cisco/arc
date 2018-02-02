@@ -24,7 +24,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package provider
+package mock
 
-type Database interface {
+type dberr struct {
+	string
+}
+
+func (e dberr) Error() string {
+	return "mock " + e.string + " failed"
 }

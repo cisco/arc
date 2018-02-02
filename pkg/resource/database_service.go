@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,31 +26,49 @@
 
 package resource
 
-// StaticArc provides the interface to the static portion of the
-// arc resource tree. This information is provided via config file
-// and is implemented config.Arc.
-type StaticArc interface {
-	Name() string
-	Title() string
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
+// StaticDatabaseService provides the interface to the static portion of the
+// database service. This information is provided via config file and is implemented
+// by config.DatabaseService.
+type StaticDatabaseService interface {
+	config.Printer
 }
 
-// Arc provides the resource interface used for the common arc object
-// implemented in the arc package. It contains an Run method used to
-// start application processing. It also contains DataCenter and Dns
-// methods used to access it's children.
-type Arc interface {
-	Resource
-	StaticArc
+// DynamicDatabaseService provides access to the dynamic portion of the database service.
+type DynamicDatabaseService interface {
+	Loader
+	Auditor
+	Informer
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+// DatabaseService provides the resource interface used for the database service
+// object implemented in the arc package.
+type DatabaseService interface {
+	route.Router
+	StaticDatabaseService
+	DynamicDatabaseService
+	Provisioner
+	Helper
 
-	// DataCenter provides access to Arc's child datacenter service.
+	// Arc provides access to DataCenter's parent.
+	Arc() Arc
+
+	// Find returns the database with the given name.
+	Find(string) Database
+
+	// DataCenter provides access to the datacenter with which this database service is associated.
 	DataCenter() DataCenter
 
-	// DatabaseService provides access to Arc's child database service.
-	DatabaseService() DatabaseService
+	// Associate creates a relationship between the database service and the datacenter. Some providers
+	// require that the database reside on a datacenter network.
+	Associate(DataCenter)
+}
 
-	// Dns provides access to Arc's child dns service.
-	Dns() Dns
+// ProviderDatabaseService provides a resource interface for the provider supplied database service.
+type ProviderDatabaseService interface {
+	DynamicDatabaseService
 }

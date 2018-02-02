@@ -24,55 +24,41 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package aws
+package provider
 
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
-
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseProvider struct {
-	rds    *rds.RDS
-	name   string
-	region string
+// DatabaseService is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type DatabaseService interface {
+	NewDatabaseService(*config.DatabaseService) (resource.ProviderDatabaseService, error)
+	NewDatabase(*config.Database, resource.ProviderDatabaseService) (resource.ProviderDatabase, error)
 }
 
-func NewDatabaseProvider(cfg *config.Database) (provider.Database, error) {
-	log.Debug("Initializing AWS Database Provider")
+// DatabaseServiceCtor is the function signature for the provider's database service constructor.
+type DatabaseServiceCtor func(*config.DatabaseService) (DatabaseService, error)
 
-	name := cfg.Provider.Data["account"]
-	if name == "" {
-		return nil, fmt.Errorf("AWS Database provider/data config requires an 'account' field, being the aws account name.")
-	}
-	region := cfg.Provider.Data["region"]
-	if region == "" {
-		return nil, fmt.Errorf("AWS Database provider/data config requires a 'region' field, being the aws region.")
-	}
+var dbsCtors map[string]DatabaseServiceCtor = map[string]DatabaseServiceCtor{}
 
-	opts := session.Options{
-		Config: aws.Config{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			Region: aws.String(region),
-		},
-		Profile:           name,
-		SharedConfigState: session.SharedConfigEnable,
-	}
+// RegisterDatabaseService is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the arc package. This function is called in the
+// packages' init() function.
+func RegisterDatabaseService(vendor string, ctor DatabaseServiceCtor) {
+	dbsCtors[vendor] = ctor
+}
 
-	sess, err := session.NewSessionWithOptions(opts)
-	if err != nil {
-		return nil, err
+// NewDatabaseService is the provider agnostic constructor used by pkg/arc.
+func NewDatabaseService(cfg *config.DatabaseService) (DatabaseService, error) {
+	vendor := cfg.Provider.Vendor
+	ctor := dbsCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}
-
-	return &databaseProvider{
-		rds:    rds.New(sess),
-		name:   name,
-		region: region,
-	}, nil
+	return ctor(cfg)
 }

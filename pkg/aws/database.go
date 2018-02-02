@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,30 +24,63 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package aws
 
-// Destroyer provides the ability to destroy the resource with the cloud provider and to see
-// if the resource has been destroyed.
-type Destroyer interface {
+import (
+	"fmt"
 
-	// Destroy asks the provider to deallocate this resource.
-	Destroy(flags ...string) error
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/resource"
+)
 
-	// Destroyed indicated that the underlying resource has not been created
-	// with the cloud provider. With a composite resource, destruction may
-	// only be true if all the contained resources have been destroyed.
-	Destroyed() bool
+type database struct {
+	*config.Database
+	dbs *databaseService
 }
 
-// DestroyOverride allows the destroy methods of the class to be overridden by a derived class.
-type DestroyOverride interface {
+func newDatabase(cfg *config.Database, d resource.ProviderDatabaseService, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
+	dbs, ok := d.(*databaseService)
+	if !ok {
+		return nil, fmt.Errorf("Internal Error: aws/database.go, type assert for ProviderDatabaseService parameter failed.")
+	}
+	db := &database{
+		Database: cfg,
+		dbs:      dbs,
+	}
+	return db, nil
+}
 
-	// PreDestroy executes before the object being destroyed with the cloud provider.
-	PreDestroy(flags ...string) error
+func (db *database) Load() error {
+	return nil
+}
 
-	// MidDestroy asks the provider to deallocate the resource.
-	MidDestroy(flags ...string) error
+func (db *database) Create(flags ...string) error {
+	return nil
+}
 
-	// PostDestroy executes after to the object being destroyed with the cloud provider.
-	PostDestroy(flags ...string) error
+func (db *database) Created() bool {
+	return false
+}
+
+func (db *database) Destroy(flags ...string) error {
+	return nil
+}
+
+func (db *database) Provision(flags ...string) error {
+	return nil
+}
+
+func (db *database) Destroyed() bool {
+	return true
+}
+
+func (db *database) Audit(flags ...string) error {
+	return nil
+}
+
+func (db *database) Info() {
+}
+
+func (db *database) Id() string {
+	return ""
 }

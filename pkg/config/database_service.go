@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,30 +24,26 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-// Destroyer provides the ability to destroy the resource with the cloud provider and to see
-// if the resource has been destroyed.
-type Destroyer interface {
+import "github.com/cisco/arc/pkg/msg"
 
-	// Destroy asks the provider to deallocate this resource.
-	Destroy(flags ...string) error
-
-	// Destroyed indicated that the underlying resource has not been created
-	// with the cloud provider. With a composite resource, destruction may
-	// only be true if all the contained resources have been destroyed.
-	Destroyed() bool
+// The configuration of the database_service object.
+type DatabaseService struct {
+	Provider  *Provider   `json:"provider"`
+	Databases []*Database `json:"databases"`
 }
 
-// DestroyOverride allows the destroy methods of the class to be overridden by a derived class.
-type DestroyOverride interface {
-
-	// PreDestroy executes before the object being destroyed with the cloud provider.
-	PreDestroy(flags ...string) error
-
-	// MidDestroy asks the provider to deallocate the resource.
-	MidDestroy(flags ...string) error
-
-	// PostDestroy executes after to the object being destroyed with the cloud provider.
-	PostDestroy(flags ...string) error
+// Print provides a user friendly way to view the configuration of the database service.
+// This is a deep print.
+func (dbs *DatabaseService) Print() {
+	msg.Info("Database Service Config")
+	msg.IndentInc()
+	if dbs.Provider != nil {
+		dbs.Provider.Print()
+	}
+	for _, db := range dbs.Databases {
+		db.Print()
+	}
+	msg.IndentDec()
 }

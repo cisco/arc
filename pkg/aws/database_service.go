@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,30 +24,29 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package aws
 
-// Destroyer provides the ability to destroy the resource with the cloud provider and to see
-// if the resource has been destroyed.
-type Destroyer interface {
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/resource"
+)
 
-	// Destroy asks the provider to deallocate this resource.
-	Destroy(flags ...string) error
-
-	// Destroyed indicated that the underlying resource has not been created
-	// with the cloud provider. With a composite resource, destruction may
-	// only be true if all the contained resources have been destroyed.
-	Destroyed() bool
+type databaseService struct {
 }
 
-// DestroyOverride allows the destroy methods of the class to be overridden by a derived class.
-type DestroyOverride interface {
+func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
+	dbs := &databaseService{}
 
-	// PreDestroy executes before the object being destroyed with the cloud provider.
-	PreDestroy(flags ...string) error
+	return dbs, nil
+}
 
-	// MidDestroy asks the provider to deallocate the resource.
-	MidDestroy(flags ...string) error
+func (dbs *databaseService) Load() error {
+	return nil
+}
 
-	// PostDestroy executes after to the object being destroyed with the cloud provider.
-	PostDestroy(flags ...string) error
+func (dbs *databaseService) Audit(flags ...string) error {
+	return nil
+}
+
+func (dbs *databaseService) Info() {
 }

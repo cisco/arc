@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,30 +24,49 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package mock
 
-// Destroyer provides the ability to destroy the resource with the cloud provider and to see
-// if the resource has been destroyed.
-type Destroyer interface {
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/msg"
+	"github.com/cisco/arc/pkg/resource"
+)
 
-	// Destroy asks the provider to deallocate this resource.
-	Destroy(flags ...string) error
-
-	// Destroyed indicated that the underlying resource has not been created
-	// with the cloud provider. With a composite resource, destruction may
-	// only be true if all the contained resources have been destroyed.
-	Destroyed() bool
+type databaseService struct {
+	*config.DatabaseService
+	opt options
 }
 
-// DestroyOverride allows the destroy methods of the class to be overridden by a derived class.
-type DestroyOverride interface {
+func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
+	log.Info("Initializing Mock Database Service")
+	dbs := &databaseService{
+		DatabaseService: cfg,
+		opt:             options{p.Provider.Data},
+	}
+	if dbs.opt.err("dbs.New") {
+		return nil, dberr{"dbs.New"}
+	}
+	return dbs, nil
+}
 
-	// PreDestroy executes before the object being destroyed with the cloud provider.
-	PreDestroy(flags ...string) error
+func (dbs *databaseService) Load() error {
+	log.Info("Loading Mock Database Service")
+	if dbs.opt.err("dbs.Load") {
+		return dberr{"dbs.Load"}
+	}
+	return nil
+}
 
-	// MidDestroy asks the provider to deallocate the resource.
-	MidDestroy(flags ...string) error
+func (dbs *databaseService) Audit(flags ...string) error {
+	msg.Info("Auditing Mock DatabaseService")
+	if dbs.opt.err("dbs.Audit") {
+		return dberr{"dbs.Audit"}
+	}
+	return nil
+}
 
-	// PostDestroy executes after to the object being destroyed with the cloud provider.
-	PostDestroy(flags ...string) error
+func (dbs *databaseService) Info() {
+	msg.Info("Mock DatabaseService")
+	msg.Detail("...")
 }
