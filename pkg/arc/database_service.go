@@ -44,7 +44,7 @@ type databaseService struct {
 	arc                     resource.Arc
 	dc                      resource.DataCenter
 	providerDatabaseService resource.ProviderDatabaseService
-	database                []resource.Database
+	databases               []resource.Database
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
@@ -79,7 +79,7 @@ func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databas
 		if err != nil {
 			return nil, err
 		}
-		dbs.database = append(dbs.database, db)
+		dbs.databases = append(dbs.databases, db)
 	}
 
 	return dbs, nil
@@ -144,7 +144,7 @@ func (dbs *databaseService) Load() error {
 	if err := dbs.providerDatabaseService.Load(); err != nil {
 		return err
 	}
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if err := db.Load(); err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func (dbs *databaseService) Load() error {
 // Provision satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Provision(flags ...string) error {
 	log.Info("Provisioning database service")
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if err := db.Provision(flags...); err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func (dbs *databaseService) Audit(flags ...string) error {
 	if err := dbs.providerDatabaseService.Audit(flags...); err != nil {
 		return err
 	}
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if err := db.Audit(flags...); err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (dbs *databaseService) Info() {
 	msg.Info("Database Service")
 	msg.IndentInc()
 	dbs.providerDatabaseService.Info()
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		db.Info()
 	}
 	msg.IndentDec()
@@ -217,7 +217,7 @@ func (dbs *databaseService) Arc() resource.Arc {
 
 // Find satisfies the resource.DatabaseService interface. It returns the database with the given name.
 func (dbs *databaseService) Find(name string) resource.Database {
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if db.Name() == name {
 			return db
 		}
@@ -238,7 +238,7 @@ func (dbs *databaseService) DataCenter() resource.DataCenter {
 // Created is required since the parent of this object, Arc, wants to treat it like a resource.Resource.
 func (dbs *databaseService) Created() bool {
 	// All database instances must be created to consider it created.
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if !db.Created() {
 			return false
 		}
@@ -249,7 +249,7 @@ func (dbs *databaseService) Created() bool {
 // Destroyed is required since the parent of this object, Arc, wants to treat it like a resource.Resource.
 func (dbs *databaseService) Destroyed() bool {
 	// All database instances must be destroyed to consider it destroyed.
-	for _, db := range dbs.database {
+	for _, db := range dbs.databases {
 		if !db.Destroyed() {
 			return false
 		}

@@ -27,11 +27,14 @@
 package aws
 
 import (
+	"github.com/aws/aws-sdk-go/service/rds"
+
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 type databaseService struct {
+	rds *rds.RDS
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
