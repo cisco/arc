@@ -189,8 +189,8 @@ func (dbs *databaseService) Info() {
 		return
 	}
 	msg.Info("Database Service")
-	msg.IndentInc()
 	dbs.providerDatabaseService.Info()
+	msg.IndentInc()
 	for _, db := range dbs.databases {
 		db.Info()
 	}
