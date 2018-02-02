@@ -27,29 +27,29 @@
 package aws
 
 import (
-	"github.com/aws/aws-sdk-go/service/rds"
-
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 type databaseService struct {
-	rds *rds.RDS
+	databaseCache *databaseCache
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	dbs := &databaseService{}
-
-	return dbs, nil
+	return &databaseService{
+		databaseCache: newDatabaseCache(p.rds),
+	}, nil
 }
 
 func (dbs *databaseService) Load() error {
-	return nil
+	return dbs.databaseCache.load()
 }
 
 func (dbs *databaseService) Audit(flags ...string) error {
-	return nil
+	return dbs.databaseCache.audit(flags...)
 }
 
 func (dbs *databaseService) Info() {
+	msg.Detail("%-20s\t%d", "cache size", len(dbs.databaseCache.cache))
 }
