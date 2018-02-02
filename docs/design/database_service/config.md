@@ -58,7 +58,7 @@ For a mock vendor, the data section is not required.
 
 ## databases
 
-Since a datacenter can most multi database instances, the database element is an array of database elements.
+Since a datacenter can host multiple database instances, the database element is an array of database elements.
 
 ### database
 
