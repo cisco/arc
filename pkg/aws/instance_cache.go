@@ -75,7 +75,7 @@ func newInstanceCache(c *compute) (*instanceCache, error) {
 			}
 
 			for _, inst := range res.Instances {
-				if i == nil {
+				if inst == nil {
 					log.Verbose("Skipping instance %+v", inst)
 					continue
 				}
