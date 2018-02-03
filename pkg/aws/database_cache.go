@@ -76,11 +76,11 @@ func (c *databaseCache) load() error {
 			log.Debug("Caching database instance %s", id)
 			c.cache[id] = &databaseCacheEntry{deployed: db}
 
-			if resp.Marker != nil {
-				marker = resp.Marker
-			} else {
-				done = true
-			}
+		}
+		if resp.Marker != nil {
+			marker = resp.Marker
+		} else {
+			done = true
 		}
 	}
 	return nil
