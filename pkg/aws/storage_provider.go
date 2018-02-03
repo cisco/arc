@@ -39,22 +39,22 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type accountProvider struct {
-	s3     map[string]*s3.S3
+type storageProvider struct {
 	name   string
 	number string
+	s3     map[string]*s3.S3
 }
 
-func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
-	log.Debug("Initializing AWS Account")
+func newStorageProvider(cfg *config.Storage) (provider.Storage, error) {
+	log.Debug("Initializing AWS Storage")
 
 	name := cfg.Provider.Data["account"]
 	if name == "" {
-		return nil, fmt.Errorf("AWS Account provider/data config requires an 'account' field, being the aws account name.")
+		return nil, fmt.Errorf("AWS Storage provider/data config requires an 'account' field, being the aws account name.")
 	}
 	number := cfg.Provider.Data["number"]
 	if number == "" {
-		return nil, fmt.Errorf("AWS Account provider/data config requires a 'number' field, being the aws account number.")
+		return nil, fmt.Errorf("AWS Storage provider/data config requires a 'number' field, being the aws account number.")
 	}
 
 	regions := map[string]string{}
@@ -66,12 +66,12 @@ func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
 		}
 	}
 
-	a := &accountProvider{
+	p := &storageProvider{
 		name:   name,
 		number: number,
 	}
 
-	a.s3 = map[string]*s3.S3{}
+	p.s3 = map[string]*s3.S3{}
 
 	for region := range regions {
 		opts := session.Options{
@@ -87,16 +87,20 @@ func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
 			return nil, err
 		}
 
-		a.s3[region] = s3.New(sess)
+		p.s3[region] = s3.New(sess)
 	}
 
-	return a, nil
+	return p, nil
 }
 
-func (a *accountProvider) NewStorage(cfg *config.Storage) (resource.ProviderStorage, error) {
-	return newStorage(cfg, a.s3)
+func (p *storageProvider) NewStorage(cfg *config.Storage) (resource.ProviderStorage, error) {
+	return newStorage(cfg, p.s3)
 }
 
-func (a *accountProvider) NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error) {
-	return newBucket(b, cfg, a)
+func (p *storageProvider) NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error) {
+	return newBucket(b, cfg, p)
+}
+
+func init() {
+	provider.RegisterStorage("aws", newStorageProvider)
 }

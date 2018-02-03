@@ -41,14 +41,14 @@ import (
 type storage struct {
 	*resource.Resources
 	*config.Storage
-	account         *account
-	buckets         *buckets
-	bucketSets      *bucketSets
+	amp             *amp
+	buckets         []resource.Bucket
+	bucketSets      []resource.BucketSet
 	providerStorage resource.ProviderStorage
 }
 
 // newStorage is the constructor for a storage object. It returns a non-nil error upon failure.
-func newStorage(account *account, prov provider.Account, cfg *config.Storage) (*storage, error) {
+func newStorage(amp *amp, cfg *config.Storage) (*storage, error) {
 	log.Debug("Initializing Storage")
 
 	// Validate the config.Storage object.
@@ -59,39 +59,47 @@ func newStorage(account *account, prov provider.Account, cfg *config.Storage) (*
 	s := &storage{
 		Resources: resource.NewResources(),
 		Storage:   cfg,
-		account:   account,
+		amp:       amp,
 	}
 
-	var err error
+	prov, err := provider.NewStorage(cfg)
+	if err != nil {
+		return nil, err
+	}
 	s.providerStorage, err = prov.NewStorage(cfg)
 	if err != nil {
 		return nil, err
 	}
-
-	s.buckets, err = newBuckets(s, prov, cfg.Buckets)
-	if err != nil {
-		return nil, err
+	for _, conf := range cfg.Buckets {
+		bucket, err := newBucket(conf, s, prov)
+		if err != nil {
+			return nil, err
+		}
+		s.buckets = append(s.buckets, bucket)
 	}
-	s.Append(s.buckets)
-
-	s.bucketSets, err = newBucketSets(s, prov, cfg.BucketSets)
-	if err != nil {
-		return nil, err
-	}
-	s.Append(s.bucketSets)
 
 	return s, nil
 }
 
-// Account satisfies the resource.Storage interface and provides access
+// Amp satisfies the resource.Storage interface and provides access
 // to storage's parent.
-func (s *storage) Account() resource.Account {
-	return s.account
+func (s *storage) Amp() resource.Amp {
+	return s.amp
+}
+
+// Find returns the bucket with the given name.
+func (s *storage) Find(name string) resource.Bucket {
+	for _, bkt := range s.buckets {
+		if name == bkt.Name() {
+			return bkt
+		}
+	}
+	return nil
 }
 
 // Buckets satisfies the resource.Storage interface and provides access
 // to storage's children.
-func (s *storage) Buckets() resource.Buckets {
+func (s *storage) Buckets() []resource.Bucket {
 	return s.buckets
 }
 
@@ -111,23 +119,25 @@ func (s *storage) Route(req *route.Request) route.Response {
 		break
 	case "bucket":
 		req.Pop()
-		bucket := s.Buckets().Find(req.Top())
+		bucket := s.Find(req.Top())
 		if bucket == nil {
 			msg.Error("Unknown bucket %q.", req.Top())
 			return route.FAIL
 		}
 		return bucket.Route(req)
 	case "bucket_set":
-		req.Pop()
-		if req.Top() == "" {
-			return s.bucketSets.Route(req)
-		}
-		bucketSet := s.bucketSets.Find(req.Top())
-		if bucketSet == nil {
-			msg.Error("Unknown bucket set %q.", req.Top())
-			return route.FAIL
-		}
-		return bucketSet.Route(req)
+		/*
+			req.Pop()
+			if req.Top() == "" {
+				return s.bucketSets.Route(req)
+			}
+			bucketSet := s.bucketSets.Find(req.Top())
+			if bucketSet == nil {
+				msg.Error("Unknown bucket set %q.", req.Top())
+				return route.FAIL
+			}
+			return bucketSet.Route(req)
+		*/
 	}
 
 	// Skip if the test flag is set
@@ -189,8 +199,13 @@ func (s *storage) Audit(flags ...string) error {
 	if err := s.providerStorage.Audit(flags...); err != nil {
 		return err
 	}
-	if err := s.buckets.Audit(flags...); err != nil {
-		return err
+	for _, b := range s.buckets {
+		if err := b.Audit(flags...); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (s *storage) Help() {
 }

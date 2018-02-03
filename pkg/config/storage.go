@@ -26,7 +26,38 @@
 
 package config
 
+import "github.com/cisco/arc/pkg/msg"
+
 type Storage struct {
-	Buckets    *Buckets    `json:"buckets"`
-	BucketSets *BucketSets `json:"bucket_sets"`
+	Provider      *Provider    `json:"provider"`
+	SecurityTags_ SecurityTags `json:"security_tags"`
+	Buckets       []*Bucket    `json:"buckets"`
+	BucketSets    []*BucketSet `json:"bucket_sets"`
+}
+
+func (s *Storage) SecurityTags() SecurityTags {
+	return s.SecurityTags_
+}
+
+// Print provides a user friendly way to view the entire storage configuration.
+func (s *Storage) Print() {
+	msg.Info("Storage Config")
+	msg.IndentInc()
+	if s.Provider != nil {
+		s.Provider.Print()
+	}
+	if s.SecurityTags_ != nil {
+		s.SecurityTags_.Print()
+	}
+	if s.Buckets != nil {
+		for _, b := range s.Buckets {
+			b.Print()
+		}
+	}
+	if s.BucketSets != nil {
+		for _, bs := range s.BucketSets {
+			bs.Print()
+		}
+	}
+	msg.IndentDec()
 }

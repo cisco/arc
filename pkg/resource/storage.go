@@ -26,7 +26,14 @@
 
 package resource
 
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 type StaticStorage interface {
+	SecurityTags() config.SecurityTags
+	config.Printer
 }
 
 type DynamicStorage interface {
@@ -39,14 +46,19 @@ type DynamicStorage interface {
 // access its parent object.
 
 type Storage interface {
-	Resource
+	route.Router
 	StaticStorage
 	DynamicStorage
 
-	// Account provides access to Storage's parent object.
-	Account() Account
+	// Amp provides access to Storage's parent object.
+	Amp() Amp
+
+	// Find returns the bucket with the given name.
+	Find(string) Bucket
+
 	// Bucket provides access to Storage's children Buckets.
-	Buckets() Buckets
+	Buckets() []Bucket
+
 	// ProviderStorage provides access to the provider storage object.
 	ProviderStorage() ProviderStorage
 }

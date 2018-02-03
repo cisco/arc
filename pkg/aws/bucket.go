@@ -42,7 +42,7 @@ import (
 
 type bucket struct {
 	*config.Bucket
-	provider *accountProvider
+	provider *storageProvider
 	s3       *s3.S3
 
 	storage *storage
@@ -52,7 +52,7 @@ type bucket struct {
 	arn    *arn
 }
 
-func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *accountProvider) (resource.ProviderBucket, error) {
+func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *storageProvider) (resource.ProviderBucket, error) {
 	log.Debug("Initializing AWS Bucket %q", cfg.Name())
 
 	b := &bucket{
@@ -219,6 +219,9 @@ func (b *bucket) Create(flags ...string) error {
 	return nil
 }
 
+func (b *bucket) Load() error {
+	return nil
+}
 func (b *bucket) Destroy(flags ...string) error {
 	msg.Info("Bucket Deletion: %s", b.Name())
 	msg.Detail("Bucket Region: %s", b.Region())
@@ -230,6 +233,7 @@ func (b *bucket) Destroy(flags ...string) error {
 		return err
 	}
 	msg.Detail("Bucket deleted: %s", b.Name())
+	b.clear()
 	return nil
 }
 

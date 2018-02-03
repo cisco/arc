@@ -43,14 +43,14 @@ import (
 type amp struct {
 	*resource.Resources
 	*config.Amp
-	account *account
+	storage *storage
 }
 
 func New(cfg *config.Amp) (*amp, error) {
 	log.Info("Initializing Amp: %q", cfg.Name())
 
-	if cfg.Account == nil {
-		return nil, fmt.Errorf("The account element is missing from the amp configuration.")
+	if cfg.Storage == nil {
+		return nil, fmt.Errorf("The storage element is missing from the amp configuration.")
 	}
 
 	a := &amp{
@@ -59,10 +59,11 @@ func New(cfg *config.Amp) (*amp, error) {
 	a.header()
 	var err error
 
-	a.account, err = newAccount(a, cfg.Account)
+	a.storage, err = newStorage(a, cfg.Storage)
 	if err != nil {
 		return nil, err
 	}
+	a.Append(a.storage)
 	return a, nil
 }
 
@@ -109,8 +110,8 @@ func (a *amp) Run() (int, error) {
 	return 0, nil
 }
 
-func (a *amp) Account() resource.Account {
-	return a.account
+func (a *amp) Storage() resource.Storage {
+	return a.storage
 }
 
 func (a *amp) Route(req *route.Request) route.Response {
@@ -121,9 +122,35 @@ func (a *amp) Route(req *route.Request) route.Response {
 	case "":
 		break
 	case "storage":
-		return a.account.storage.Route(req.Pop())
+		return a.storage.Route(req.Pop())
 	case "bucket", "bucket_set":
-		return a.account.storage.Route(req)
+		return a.storage.Route(req)
+	case "key_management":
+		// return a.account.keyManagement.Route(req.Pop())
+	case "key", "encryption_key":
+		// return a.account.keyManagement.Route(req)
+	default:
+		Help()
+		return route.FAIL
+	}
+
+	// Skip if the test flag is set
+	if req.TestFlag() {
+		msg.Detail("Test. Skipping...")
+		return route.OK
+	}
+
+	switch req.Command() {
+	case route.Load:
+		return a.RouteInOrder(req)
+	case route.Info:
+	case route.Config:
+	case route.Audit:
+	case route.Help:
+		Help()
+	default:
+		Help()
+		return route.FAIL
 	}
 	return route.OK
 }

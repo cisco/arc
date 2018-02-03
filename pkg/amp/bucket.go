@@ -39,11 +39,11 @@ import (
 
 type bucket struct {
 	*config.Bucket
-	storage        resource.Storage
+	storage        *storage
 	providerBucket resource.ProviderBucket
 }
 
-func newBucket(s *storage, prov provider.Account, cfg *config.Bucket) (*bucket, error) {
+func newBucket(cfg *config.Bucket, s *storage, prov provider.Storage) (resource.Bucket, error) {
 	log.Debug("Initializing Bucket, %q", cfg.Name())
 	b := &bucket{
 		Bucket:  cfg,
@@ -89,8 +89,9 @@ func (b *bucket) Route(req *route.Request) route.Response {
 	case route.Config:
 		b.Print()
 		return route.OK
+	default:
+		panic("Internal Error: Unknown command " + req.Command().String())
 	}
-	return b.providerBucket.Route(req)
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -182,7 +183,7 @@ func (b *bucket) SetTags(t map[string]string) error {
 
 func (b *bucket) createSecurityTags() error {
 	tags := map[string]string{}
-	for k, v := range b.Storage().Account().SecurityTags() {
+	for k, v := range b.Storage().SecurityTags() {
 		tags[k] = v
 	}
 	for k, v := range b.SecurityTags() {
@@ -196,4 +197,11 @@ func (b *bucket) Info() {
 		return
 	}
 	b.ProviderBucket().Info()
+}
+
+func (b *bucket) Help() {
+}
+
+func (b *bucket) Load() error {
+	return nil
 }
