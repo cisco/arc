@@ -42,7 +42,7 @@ import (
 type databaseService struct {
 	*config.DatabaseService
 	arc                     resource.Arc
-	dc                      resource.DataCenter
+	network                 resource.Network
 	providerDatabaseService resource.ProviderDatabaseService
 	databases               []resource.Database
 }
@@ -226,13 +226,8 @@ func (dbs *databaseService) Find(name string) resource.Database {
 }
 
 // Associate satisfies the resource.DatabaseService interface.
-func (dbs *databaseService) Associate(dc resource.DataCenter) {
-	dbs.dc = dc
-}
-
-// DataCenter satisfies the resource.DatabaseService interface.
-func (dbs *databaseService) DataCenter() resource.DataCenter {
-	return dbs.dc
+func (dbs *databaseService) Associate(net resource.ProviderNetwork) {
+	dbs.network = net
 }
 
 // Created is required since the parent of this object, Arc, wants to treat it like a resource.Resource.

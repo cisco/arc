@@ -60,12 +60,8 @@ type DatabaseService interface {
 	// Find returns the database with the given name.
 	Find(string) Database
 
-	// DataCenter provides access to the datacenter with which this database service is associated.
-	DataCenter() DataCenter
-
-	// Associate creates a relationship between the database service and the datacenter. Some providers
-	// require that the database reside on a datacenter network.
-	Associate(DataCenter)
+	// Associate creates a relationship between the database service and the network.
+	Associate(Network) error
 }
 
 // ProviderDatabaseService provides a resource interface for the provider supplied database service.

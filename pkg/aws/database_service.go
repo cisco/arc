@@ -27,6 +27,8 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
@@ -34,6 +36,7 @@ import (
 
 type databaseService struct {
 	databaseCache *databaseCache
+	network       *network
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
@@ -52,4 +55,13 @@ func (dbs *databaseService) Audit(flags ...string) error {
 
 func (dbs *databaseService) Info() {
 	msg.Detail("%-20s\t%d", "cache size", len(dbs.databaseCache.cache))
+}
+
+func (dbs *databaseService) Associate(net resource.ProviderNetwork) error {
+	n, ok := net.(*network)
+	if !ok {
+		return fmt.Errorf("Internal Error: aws/database_service.go, type assert for ProviderNetwork parameter failed.")
+	}
+	dbs.network = n
+	return nil
 }

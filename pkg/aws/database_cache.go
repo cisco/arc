@@ -40,14 +40,14 @@ type databaseCacheEntry struct {
 
 type databaseCache struct {
 	rds   *rds.RDS
-	cache map[string]*databaseCacheEntry
+	cache map[string]databaseCacheEntry
 }
 
 func newDatabaseCache(rds *rds.RDS) *databaseCache {
 	log.Debug("Initializaing AWS Database Cache")
 	return &databaseCache{
 		rds:   rds,
-		cache: map[string]*databaseCacheEntry{},
+		cache: map[string]databaseCacheEntry{},
 	}
 }
 
@@ -74,8 +74,7 @@ func (c *databaseCache) load() error {
 			}
 			id := *db.DBInstanceIdentifier
 			log.Debug("Caching database instance %s", id)
-			c.cache[id] = &databaseCacheEntry{deployed: db}
-
+			c.cache[id] = databaseCacheEntry{deployed: db}
 		}
 		if resp.Marker != nil {
 			marker = resp.Marker
@@ -87,16 +86,21 @@ func (c *databaseCache) load() error {
 }
 
 func (c *databaseCache) find(db *database) *rds.DBInstance {
-	e := c.cache[db.Id()]
-	if e == nil {
+	e, ok := c.cache[db.Id()]
+	if !ok {
 		return nil
 	}
 	e.configured = db
 	return e.deployed
 }
 
+func (c *databaseCache) add(db *database) {
+	log.Debug("Adding %s to database instance cache.", db.Id())
+	c.cache[db.Id()] = databaseCacheEntry{deployed: db.db, configured: db}
+}
+
 func (c *databaseCache) remove(db *database) {
-	log.Debug("Deleting $s from database instance cache", db.Id())
+	log.Debug("Removing %s from database instance cache", db.Id())
 	delete(c.cache, db.Id())
 }
 

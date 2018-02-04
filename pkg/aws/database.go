@@ -29,13 +29,22 @@ package aws
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/rds"
+
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 type database struct {
 	*config.Database
+	rds *rds.RDS
 	dbs *databaseService
+	// subnetGroup *dbSubnetGroup
+
+	db *rds.DBInstance
+	id string
 }
 
 func newDatabase(cfg *config.Database, d resource.ProviderDatabaseService, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
@@ -43,23 +52,88 @@ func newDatabase(cfg *config.Database, d resource.ProviderDatabaseService, p *da
 	if !ok {
 		return nil, fmt.Errorf("Internal Error: aws/database.go, type assert for ProviderDatabaseService parameter failed.")
 	}
+
 	db := &database{
 		Database: cfg,
+		rds:      p.rds,
 		dbs:      dbs,
 	}
+
+	/*
+		s, err := newDbSubGroup(dbs, cfg.SubnetGroup())
+		if err != nil {
+			return nil, err
+		}
+		db.subnetGroup = s
+	*/
+
 	return db, nil
 }
 
+func (db *database) set(dbi *rds.DBInstance) {
+	if dbi == nil || dbi.DBInstanceIdentifier == nil {
+		return
+	}
+	db.db = dbi
+	db.id = *dbi.DBInstanceIdentifier
+}
+
 func (db *database) Load() error {
+	db.set(db.dbs.databaseCache.find(db))
 	return nil
 }
 
 func (db *database) Create(flags ...string) error {
-	return nil
+	msg.Info("Database Creation: %s %s", db.Name())
+	if db.Created() {
+		msg.Detail("Database exists, skipping...")
+		return nil
+	}
+
+	if db.dbs.network == nil {
+		return fmt.Errorf("Network not associate with database service.")
+	}
+
+	param := &rds.CreateDBInstanceInput{
+		CopyTagsToSnapshot:   aws.Bool(true),
+		DBInstanceClass:      aws.String(db.InstanceType()),
+		DBInstanceIdentifier: aws.String(db.Name()),
+		DBName:               aws.String(db.Name()),
+		// DBSubnetGroupName:    aws.String(db.subnetGroup),
+		Engine:           aws.String(db.Engine()),
+		MultiAZ:          aws.Bool(true),
+		StorageEncrypted: aws.Bool(true),
+	}
+	if db.Version() != "" {
+		param.EngineVersion = aws.String(db.Version())
+	}
+	if db.StorageIops() > 0 {
+		param.Iops = aws.Int64(int64(db.StorageIops()))
+	}
+	if db.MasterUserName() != "" {
+		param.MasterUsername = aws.String(db.MasterUserName())
+	}
+	if db.MasterPassword() != "" {
+		param.MasterUserPassword = aws.String(db.MasterPassword())
+	}
+	if db.Port() > 0 {
+		param.Port = aws.Int64(int64(db.Port()))
+	}
+	if db.StorageType() != "" {
+		if db.StorageIops() > 0 {
+			param.StorageType = aws.String("io1")
+		} else {
+			param.StorageType = aws.String(db.StorageType())
+		}
+	}
+
+	// VpcSecurityGroupIds
+
+	return db.Load()
 }
 
 func (db *database) Created() bool {
-	return false
+	return db.db != nil
 }
 
 func (db *database) Destroy(flags ...string) error {
@@ -71,10 +145,11 @@ func (db *database) Provision(flags ...string) error {
 }
 
 func (db *database) Destroyed() bool {
-	return true
+	return db.db == nil
 }
 
 func (db *database) Audit(flags ...string) error {
+	// TODO
 	return nil
 }
 
@@ -82,5 +157,5 @@ func (db *database) Info() {
 }
 
 func (db *database) Id() string {
-	return ""
+	return db.id
 }
