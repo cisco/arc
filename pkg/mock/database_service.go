@@ -27,8 +27,6 @@
 package mock
 
 import (
-	"fmt"
-
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
@@ -71,16 +69,4 @@ func (dbs *databaseService) Audit(flags ...string) error {
 func (dbs *databaseService) Info() {
 	msg.Info("Mock DatabaseService")
 	msg.Detail("...")
-}
-
-func (dbs *databaseService) Associate(net resource.ProviderNetwork) error {
-	msg.Info("Mock Associate")
-	if dbs.opt.err("dbs.Assocaite") {
-		return dberr{"dbs.Associate"}
-	}
-	_, ok := net.(*network)
-	if !ok {
-		return fmt.Errorf("Internal Error: mock/database_service.go, type assert for ProviderNetwork parameter failed.")
-	}
-	return nil
 }

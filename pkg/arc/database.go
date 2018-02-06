@@ -39,6 +39,9 @@ import (
 	"github.com/cisco/arc/pkg/route"
 )
 
+type databaseParams struct {
+}
+
 type database struct {
 	*config.Database
 	databaseService  *databaseService
@@ -69,8 +72,36 @@ func newDatabase(cfg *config.Database, dbs *databaseService, p provider.Database
 		databaseService: dbs,
 	}
 
+	// Need to build up the database parameters. First we will gather the list of subnets
+	// that the database instance will use.
+	subnets := []resource.ProviderSubnet{}
+	subnetGroup := db.databaseService.Arc().DataCenter().Network().SubnetGroups().Find(cfg.SubnetGroup())
+	if subnetGroup == nil {
+		return nil, fmt.Errorf("Creating database %s, unable to find subnet group %s.", db.Name(), cfg.SubnetGroup())
+	}
+	for _, s := range subnetGroup.Subnets() {
+		subnets = append(subnets, s.ProviderSubnet())
+	}
+
+	// Need to build up the database parameters. Second we will gather the list of security groups
+	// that the database instance will use.
+	secgroups := []resource.ProviderSecurityGroup{}
+	for _, secgroupName := range cfg.SecurityGroups() {
+		secgroup := db.databaseService.Arc().DataCenter().Network().SecurityGroups().Find(secgroupName)
+		if secgroup == nil {
+			return nil, fmt.Errorf("Creating database %s, unable to find security group %s.", db.Name(), secgroupName)
+		}
+		secgroups = append(secgroups, secgroup)
+	}
+
+	params := resource.DatabaseParams{
+		DatabaseService: dbs,
+		Subnets:         subnets,
+		SecurityGroups:  secgroups,
+	}
+
 	var err error
-	db.providerDatabase, err = p.NewDatabase(cfg, db.databaseService.providerDatabaseService)
+	db.providerDatabase, err = p.NewDatabase(cfg, params)
 	if err != nil {
 		return nil, err
 	}
@@ -210,4 +241,9 @@ func (db *database) Help() {
 // DatabaseService satisfies the resource.Database interface.
 func (db *database) DatabaseService() resource.DatabaseService {
 	return db.databaseService
+}
+
+// ProviderDatabase allows access to the provider's database object.
+func (db *database) ProviderDatabase() resource.ProviderDatabase {
+	return db.providerDatabase
 }

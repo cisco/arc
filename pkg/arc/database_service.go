@@ -42,7 +42,6 @@ import (
 type databaseService struct {
 	*config.DatabaseService
 	arc                     resource.Arc
-	network                 resource.Network
 	providerDatabaseService resource.ProviderDatabaseService
 	databases               []resource.Database
 }
@@ -225,9 +224,9 @@ func (dbs *databaseService) Find(name string) resource.Database {
 	return nil
 }
 
-// Associate satisfies the resource.DatabaseService interface.
-func (dbs *databaseService) Associate(net resource.ProviderNetwork) {
-	dbs.network = net
+// ProviderDatabaseSerivces allows access to the provider's database service object.
+func (dbs *databaseService) ProviderDatabaseService() resource.ProviderDatabaseService {
+	return dbs.providerDatabaseService
 }
 
 // Created is required since the parent of this object, Arc, wants to treat it like a resource.Resource.

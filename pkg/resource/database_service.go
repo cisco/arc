@@ -45,6 +45,11 @@ type DynamicDatabaseService interface {
 	Informer
 }
 
+// ProviderDatabaseService provides a resource interface for the provider supplied database service.
+type ProviderDatabaseService interface {
+	DynamicDatabaseService
+}
+
 // DatabaseService provides the resource interface used for the database service
 // object implemented in the arc package.
 type DatabaseService interface {
@@ -60,11 +65,6 @@ type DatabaseService interface {
 	// Find returns the database with the given name.
 	Find(string) Database
 
-	// Associate creates a relationship between the database service and the network.
-	Associate(Network) error
-}
-
-// ProviderDatabaseService provides a resource interface for the provider supplied database service.
-type ProviderDatabaseService interface {
-	DynamicDatabaseService
+	// ProviderDatabaseSerivces allows access to the provider's database service object.
+	ProviderDatabaseService() ProviderDatabaseService
 }

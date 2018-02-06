@@ -87,6 +87,11 @@ type DynamicDatabase interface {
 	Id() string
 }
 
+// ProviderDatabase provides a resource interface for the provider supplied database instance.
+type ProviderDatabase interface {
+	DynamicDatabase
+}
+
 // Database provides the resource interface used for the common subnet group
 // object implemented in the arc package.
 type Database interface {
@@ -97,9 +102,14 @@ type Database interface {
 
 	// DatabaseService provides access to the database's parent.
 	DatabaseService() DatabaseService
+
+	// ProviderDatabase allows access to the provider's database object.
+	ProviderDatabase() ProviderDatabase
 }
 
-// ProviderDatabase provides a resource interface for the provider supplied database instance.
-type ProviderDatabase interface {
-	DynamicDatabase
+// DatabaseParams collects provider resources necessary to create the provider database instance.
+type DatabaseParams struct {
+	DatabaseService ProviderDatabaseService
+	Subnets         []ProviderSubnet
+	SecurityGroups  []ProviderSecurityGroup
 }

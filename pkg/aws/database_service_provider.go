@@ -82,8 +82,8 @@ func (p *databaseServiceProvider) NewDatabaseService(cfg *config.DatabaseService
 	return newDatabaseService(cfg, p)
 }
 
-func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService) (resource.ProviderDatabase, error) {
-	return newDatabase(cfg, dbs, p)
+func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, params resource.DatabaseParams) (resource.ProviderDatabase, error) {
+	return newDatabase(cfg, params, p)
 }
 
 func init() {

@@ -40,32 +40,39 @@ import (
 type database struct {
 	*config.Database
 	rds *rds.RDS
-	dbs *databaseService
-	// subnetGroup *dbSubnetGroup
+
+	dbs         *databaseService
+	subnetGroup *dbSubnetGroup
+	secgroups   []*string
 
 	db *rds.DBInstance
-	id string
 }
 
-func newDatabase(cfg *config.Database, d resource.ProviderDatabaseService, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
-	dbs, ok := d.(*databaseService)
-	if !ok {
-		return nil, fmt.Errorf("Internal Error: aws/database.go, type assert for ProviderDatabaseService parameter failed.")
-	}
-
+func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
 	db := &database{
 		Database: cfg,
 		rds:      p.rds,
-		dbs:      dbs,
 	}
 
-	/*
-		s, err := newDbSubGroup(dbs, cfg.SubnetGroup())
-		if err != nil {
-			return nil, err
+	dbs, ok := params.DatabaseService.(*databaseService)
+	if !ok {
+		return nil, fmt.Errorf("Internal Error: aws/database.go, type assert for DatabaseService parameter failed.")
+	}
+	db.dbs = dbs
+
+	for _, secgroup := range params.SecurityGroups {
+		s, ok := secgroup.(*securityGroup)
+		if !ok {
+			return nil, fmt.Errorf("Internal Error: aws/database.go, type assert for SecurityGroups parameter failed.")
 		}
-		db.subnetGroup = s
-	*/
+		db.secgroups = append(db.secgroups, aws.String(s.Id()))
+	}
+
+	dbsg, err := newDBSubnetGroup(cfg, params, p)
+	if err != nil {
+		return nil, err
+	}
+	db.subnetGroup = dbsg
 
 	return db, nil
 }
@@ -75,7 +82,6 @@ func (db *database) set(dbi *rds.DBInstance) {
 		return
 	}
 	db.db = dbi
-	db.id = *dbi.DBInstanceIdentifier
 }
 
 func (db *database) Load() error {
@@ -84,14 +90,10 @@ func (db *database) Load() error {
 }
 
 func (db *database) Create(flags ...string) error {
-	msg.Info("Database Creation: %s %s", db.Name())
+	msg.Info("Database Creation: %s", db.Name())
 	if db.Created() {
 		msg.Detail("Database exists, skipping...")
 		return nil
-	}
-
-	if db.dbs.network == nil {
-		return fmt.Errorf("Network not associate with database service.")
 	}
 
 	param := &rds.CreateDBInstanceInput{
@@ -99,10 +101,11 @@ func (db *database) Create(flags ...string) error {
 		DBInstanceClass:      aws.String(db.InstanceType()),
 		DBInstanceIdentifier: aws.String(db.Name()),
 		DBName:               aws.String(db.Name()),
-		// DBSubnetGroupName:    aws.String(db.subnetGroup),
-		Engine:           aws.String(db.Engine()),
-		MultiAZ:          aws.Bool(true),
-		StorageEncrypted: aws.Bool(true),
+		DBSubnetGroupName:    aws.String(db.subnetGroup.name()),
+		Engine:               aws.String(db.Engine()),
+		MultiAZ:              aws.Bool(true),
+		StorageEncrypted:     aws.Bool(true),
+		VpcSecurityGroupIds:  db.secgroups,
 	}
 	if db.Version() != "" {
 		param.EngineVersion = aws.String(db.Version())
@@ -126,8 +129,6 @@ func (db *database) Create(flags ...string) error {
 			param.StorageType = aws.String(db.StorageType())
 		}
 	}
-
-	// VpcSecurityGroupIds
 
 	return db.Load()
 }
@@ -157,5 +158,8 @@ func (db *database) Info() {
 }
 
 func (db *database) Id() string {
-	return db.id
+	if db.db.DBInstanceIdentifier == nil {
+		return ""
+	}
+	return *db.db.DBInstanceIdentifier
 }

@@ -38,7 +38,7 @@ import (
 // concrete implementations of these methods.
 type DatabaseService interface {
 	NewDatabaseService(*config.DatabaseService) (resource.ProviderDatabaseService, error)
-	NewDatabase(*config.Database, resource.ProviderDatabaseService) (resource.ProviderDatabase, error)
+	NewDatabase(*config.Database, resource.DatabaseParams) (resource.ProviderDatabase, error)
 }
 
 // DatabaseServiceCtor is the function signature for the provider's database service constructor.

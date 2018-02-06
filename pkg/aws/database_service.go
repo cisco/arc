@@ -27,41 +27,44 @@
 package aws
 
 import (
-	"fmt"
-
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 type databaseService struct {
-	databaseCache *databaseCache
-	network       *network
+	databaseCache      *databaseCache
+	dbSubnetGroupCache *dbSubnetGroupCache
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
 	return &databaseService{
-		databaseCache: newDatabaseCache(p.rds),
+		databaseCache:      newDatabaseCache(p.rds),
+		dbSubnetGroupCache: newDBSubnetGroupCache(p.rds),
 	}, nil
 }
 
 func (dbs *databaseService) Load() error {
-	return dbs.databaseCache.load()
+	if err := dbs.databaseCache.load(); err != nil {
+		return err
+	}
+	if err := dbs.dbSubnetGroupCache.load(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (dbs *databaseService) Audit(flags ...string) error {
-	return dbs.databaseCache.audit(flags...)
+	if err := dbs.databaseCache.audit(flags...); err != nil {
+		return err
+	}
+	if err := dbs.dbSubnetGroupCache.audit(flags...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (dbs *databaseService) Info() {
-	msg.Detail("%-20s\t%d", "cache size", len(dbs.databaseCache.cache))
-}
-
-func (dbs *databaseService) Associate(net resource.ProviderNetwork) error {
-	n, ok := net.(*network)
-	if !ok {
-		return fmt.Errorf("Internal Error: aws/database_service.go, type assert for ProviderNetwork parameter failed.")
-	}
-	dbs.network = n
-	return nil
+	msg.Detail("%-20s\t%d", "database cache size", len(dbs.databaseCache.cache))
+	msg.Detail("%-20s\t%d", "dbSubnetGroup cache size", len(dbs.dbSubnetGroupCache.cache))
 }
