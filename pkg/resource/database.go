@@ -40,6 +40,10 @@ type StaticDatabase interface {
 	// Name of the configured database instance. Required.
 	Name() string
 
+	// DBName is The name of the database to create when the DB instance is created.
+	// If not set the name will be used. Optional.
+	DBName() string
+
 	// Engine used by the database instance. Required.
 	Engine() string
 
@@ -87,6 +91,11 @@ type DynamicDatabase interface {
 	Id() string
 }
 
+// ProviderDatabase provides a resource interface for the provider supplied database instance.
+type ProviderDatabase interface {
+	DynamicDatabase
+}
+
 // Database provides the resource interface used for the common subnet group
 // object implemented in the arc package.
 type Database interface {
@@ -97,9 +106,14 @@ type Database interface {
 
 	// DatabaseService provides access to the database's parent.
 	DatabaseService() DatabaseService
+
+	// ProviderDatabase allows access to the provider's database object.
+	ProviderDatabase() ProviderDatabase
 }
 
-// ProviderDatabase provides a resource interface for the provider supplied database instance.
-type ProviderDatabase interface {
-	DynamicDatabase
+// DatabaseParams collects provider resources necessary to create the provider database instance.
+type DatabaseParams struct {
+	DatabaseService ProviderDatabaseService
+	Subnets         []ProviderSubnet
+	SecurityGroups  []ProviderSecurityGroup
 }

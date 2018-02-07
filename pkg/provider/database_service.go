@@ -33,14 +33,6 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
-// DatabaseService is an abstract factory. It provides the methods that will
-// create the provider resources. Vendor implementations will provide the
-// concrete implementations of these methods.
-type DatabaseService interface {
-	NewDatabaseService(*config.DatabaseService) (resource.ProviderDatabaseService, error)
-	NewDatabase(*config.Database, resource.ProviderDatabaseService) (resource.ProviderDatabase, error)
-}
-
 // DatabaseServiceCtor is the function signature for the provider's database service constructor.
 type DatabaseServiceCtor func(*config.DatabaseService) (DatabaseService, error)
 
@@ -53,8 +45,20 @@ func RegisterDatabaseService(vendor string, ctor DatabaseServiceCtor) {
 	dbsCtors[vendor] = ctor
 }
 
+// DatabaseService is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type DatabaseService interface {
+	NewDatabaseService(*config.DatabaseService) (resource.ProviderDatabaseService, error)
+	NewDatabase(*config.Database, resource.DatabaseParams) (resource.ProviderDatabase, error)
+}
+
 // NewDatabaseService is the provider agnostic constructor used by pkg/arc.
 func NewDatabaseService(cfg *config.DatabaseService) (DatabaseService, error) {
+	// Validate the config.DatabaseService object.
+	if cfg.Provider == nil {
+		return nil, fmt.Errorf("The provider element is missing from the database_service configuration")
+	}
 	vendor := cfg.Provider.Vendor
 	ctor := dbsCtors[vendor]
 	if ctor == nil {

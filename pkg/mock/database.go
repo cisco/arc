@@ -38,7 +38,7 @@ type database struct {
 	opt options
 }
 
-func newDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
+func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
 	log.Info("Initializing Mock Database %q", cfg.Name())
 	db := &database{
 		Database: cfg,

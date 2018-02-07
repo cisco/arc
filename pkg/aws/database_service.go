@@ -33,23 +33,38 @@ import (
 )
 
 type databaseService struct {
-	databaseCache *databaseCache
+	databaseCache      *databaseCache
+	dbSubnetGroupCache *dbSubnetGroupCache
 }
 
 func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
 	return &databaseService{
-		databaseCache: newDatabaseCache(p.rds),
+		databaseCache:      newDatabaseCache(p.rds),
+		dbSubnetGroupCache: newDBSubnetGroupCache(p.rds),
 	}, nil
 }
 
 func (dbs *databaseService) Load() error {
-	return dbs.databaseCache.load()
+	if err := dbs.databaseCache.load(); err != nil {
+		return err
+	}
+	if err := dbs.dbSubnetGroupCache.load(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (dbs *databaseService) Audit(flags ...string) error {
-	return dbs.databaseCache.audit(flags...)
+	if err := dbs.databaseCache.audit(flags...); err != nil {
+		return err
+	}
+	if err := dbs.dbSubnetGroupCache.audit(flags...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (dbs *databaseService) Info() {
-	msg.Detail("%-20s\t%d", "cache size", len(dbs.databaseCache.cache))
+	msg.Detail("%-40s\t%d", "database cache size", len(dbs.databaseCache.cache))
+	msg.Detail("%-40s\t%d", "dbSubnetGroup cache size", len(dbs.dbSubnetGroupCache.cache))
 }

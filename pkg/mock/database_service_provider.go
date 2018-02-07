@@ -33,6 +33,10 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
+func init() {
+	provider.RegisterDatabaseService("mock", newDatabaseServiceProvider)
+}
+
 type databaseServiceProvider struct {
 	*config.Provider
 }
@@ -49,10 +53,6 @@ func (p *databaseServiceProvider) NewDatabaseService(cfg *config.DatabaseService
 	return newDatabaseService(cfg, p)
 }
 
-func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, dbs resource.ProviderDatabaseService) (resource.ProviderDatabase, error) {
-	return newDatabase(cfg, dbs, p)
-}
-
-func init() {
-	provider.RegisterDatabaseService("mock", newDatabaseServiceProvider)
+func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, params resource.DatabaseParams) (resource.ProviderDatabase, error) {
+	return newDatabase(cfg, params, p)
 }

@@ -27,8 +27,6 @@
 package arc
 
 import (
-	"fmt"
-
 	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/help"
@@ -42,7 +40,6 @@ import (
 type databaseService struct {
 	*config.DatabaseService
 	arc                     resource.Arc
-	dc                      resource.DataCenter
 	providerDatabaseService resource.ProviderDatabaseService
 	databases               []resource.Database
 }
@@ -53,11 +50,6 @@ func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databas
 		return nil, nil
 	}
 	log.Debug("Initializing Database Service")
-
-	// Validate the config.DatabaseService object.
-	if cfg.Provider == nil {
-		return nil, fmt.Errorf("The provider element is missing from the database_service configuration")
-	}
 
 	dbs := &databaseService{
 		DatabaseService: cfg,
@@ -140,7 +132,7 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 
 // Load satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Load() error {
-	log.Info("Loading database service")
+	log.Info("Loading Database Service")
 	if err := dbs.providerDatabaseService.Load(); err != nil {
 		return err
 	}
@@ -225,14 +217,9 @@ func (dbs *databaseService) Find(name string) resource.Database {
 	return nil
 }
 
-// Associate satisfies the resource.DatabaseService interface.
-func (dbs *databaseService) Associate(dc resource.DataCenter) {
-	dbs.dc = dc
-}
-
-// DataCenter satisfies the resource.DatabaseService interface.
-func (dbs *databaseService) DataCenter() resource.DataCenter {
-	return dbs.dc
+// ProviderDatabaseSerivces allows access to the provider's database service object.
+func (dbs *databaseService) ProviderDatabaseService() resource.ProviderDatabaseService {
+	return dbs.providerDatabaseService
 }
 
 // Created is required since the parent of this object, Arc, wants to treat it like a resource.Resource.

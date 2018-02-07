@@ -45,6 +45,11 @@ type DynamicDatabaseService interface {
 	Informer
 }
 
+// ProviderDatabaseService provides a resource interface for the provider supplied database service.
+type ProviderDatabaseService interface {
+	DynamicDatabaseService
+}
+
 // DatabaseService provides the resource interface used for the database service
 // object implemented in the arc package.
 type DatabaseService interface {
@@ -60,15 +65,6 @@ type DatabaseService interface {
 	// Find returns the database with the given name.
 	Find(string) Database
 
-	// DataCenter provides access to the datacenter with which this database service is associated.
-	DataCenter() DataCenter
-
-	// Associate creates a relationship between the database service and the datacenter. Some providers
-	// require that the database reside on a datacenter network.
-	Associate(DataCenter)
-}
-
-// ProviderDatabaseService provides a resource interface for the provider supplied database service.
-type ProviderDatabaseService interface {
-	DynamicDatabaseService
+	// ProviderDatabaseSerivces allows access to the provider's database service object.
+	ProviderDatabaseService() ProviderDatabaseService
 }

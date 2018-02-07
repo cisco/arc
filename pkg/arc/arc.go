@@ -90,12 +90,6 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.dns.associate(a.datacenter)
 	}
 
-	// Associate database service to datacenter service, since the database service
-	// depends on datacenter's networking.
-	if a.datacenter != nil && a.databaseService != nil {
-		a.databaseService.Associate(a.datacenter)
-	}
-
 	return a, nil
 }
 

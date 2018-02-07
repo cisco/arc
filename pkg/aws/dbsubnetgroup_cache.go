@@ -33,55 +33,54 @@ import (
 	"github.com/cisco/arc/pkg/log"
 )
 
-type databaseCacheEntry struct {
-	deployed   *rds.DBInstance
-	configured *database
+type dbSubnetGroupCacheEntry struct {
+	deployed   *rds.DBSubnetGroup
+	configured *dbSubnetGroup
 }
 
-type databaseCache struct {
+type dbSubnetGroupCache struct {
 	rds     *rds.RDS
-	cache   map[string]databaseCacheEntry
-	unnamed []*rds.DBInstance
+	cache   map[string]dbSubnetGroupCacheEntry
+	unnamed []*rds.DBSubnetGroup
 }
 
-func newDatabaseCache(rds *rds.RDS) *databaseCache {
-	log.Debug("Initializaing AWS Database Cache")
-	return &databaseCache{
+func newDBSubnetGroupCache(rds *rds.RDS) *dbSubnetGroupCache {
+	log.Debug("Initializaing AWS DBSubnetGroup Cache")
+	return &dbSubnetGroupCache{
 		rds:   rds,
-		cache: map[string]databaseCacheEntry{},
+		cache: map[string]dbSubnetGroupCacheEntry{},
 	}
 }
 
-func (c *databaseCache) load() error {
-	log.Debug("Loading AWS Database Cache")
+func (c *dbSubnetGroupCache) load() error {
+	log.Debug("Loading AWS DBSubnetGroup Cache")
 
 	var marker *string
 	done := false
 
 	for !done {
-		params := &rds.DescribeDBInstancesInput{
+		params := &rds.DescribeDBSubnetGroupsInput{
 			Marker:     marker,
 			MaxRecords: aws.Int64(100),
 		}
-		resp, err := c.rds.DescribeDBInstances(params)
+		resp, err := c.rds.DescribeDBSubnetGroups(params)
 		if err != nil {
 			return err
 		}
 
-		log.Debug("Load AWS DBInstances: %d", len(resp.DBInstances))
-		for _, db := range resp.DBInstances {
-			if db == nil {
-				log.Verbose("Skipping due to nil db")
+		log.Debug("Loading AWS DBSubnetGroups: %d", len(resp.DBSubnetGroups))
+		for _, sg := range resp.DBSubnetGroups {
+			if sg == nil {
 				continue
 			}
-			if db.DBInstanceIdentifier == nil {
-				log.Verbose("Unnamed DBInstance\n%+v", *db)
-				c.unnamed = append(c.unnamed, db)
+			if sg.DBSubnetGroupName == nil {
+				log.Verbose("Unnamed AWS DBSubnetGroup\n%+v", *sg)
+				c.unnamed = append(c.unnamed, sg)
 				continue
 			}
-			id := *db.DBInstanceIdentifier
-			log.Debug("Caching AWS DBInstance %q", id)
-			c.cache[id] = databaseCacheEntry{deployed: db}
+			name := *sg.DBSubnetGroupName
+			log.Debug("Caching AWS DBSubnetGroup %q", name)
+			c.cache[name] = dbSubnetGroupCacheEntry{deployed: sg}
 		}
 		if resp.Marker != nil {
 			marker = resp.Marker
@@ -92,26 +91,26 @@ func (c *databaseCache) load() error {
 	return nil
 }
 
-func (c *databaseCache) find(db *database) *rds.DBInstance {
-	e, ok := c.cache[db.Name()]
+func (c *dbSubnetGroupCache) find(sg *dbSubnetGroup) *rds.DBSubnetGroup {
+	e, ok := c.cache[sg.name()]
 	if !ok {
 		return nil
 	}
-	e.configured = db
+	e.configured = sg
 	return e.deployed
 }
 
-func (c *databaseCache) add(db *database) {
-	log.Debug("Adding %q to database instance cache.", db.Name())
-	c.cache[db.Name()] = databaseCacheEntry{deployed: db.db, configured: db}
+func (c *dbSubnetGroupCache) add(sg *dbSubnetGroup) {
+	log.Debug("Adding %q to database subnet group cache.", sg.name())
+	c.cache[sg.name()] = dbSubnetGroupCacheEntry{deployed: sg.sg, configured: sg}
 }
 
-func (c *databaseCache) remove(db *database) {
-	log.Debug("Removing %q from database instance cache", db.Name())
-	delete(c.cache, db.Name())
+func (c *dbSubnetGroupCache) remove(sg *dbSubnetGroup) {
+	log.Debug("Removing %q from database subnet group cache", sg.name())
+	delete(c.cache, sg.name())
 }
 
-func (c *databaseCache) audit(flags ...string) error {
+func (c *dbSubnetGroupCache) audit(flags ...string) error {
 	// TODO
 	return nil
 }
