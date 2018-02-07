@@ -45,7 +45,12 @@ type storageProvider struct {
 	s3     map[string]*s3.S3
 }
 
-func newStorageProvider(cfg *config.Storage) (provider.Storage, error) {
+func init() {
+	fmt.Println("Registered AWS as a provider")
+	provider.RegisterStorage("aws", newStorageProvider)
+}
+
+func newStorageProvider(cfg *config.Amp) (provider.Storage, error) {
 	log.Debug("Initializing AWS Storage")
 
 	name := cfg.Provider.Data["account"]
@@ -59,7 +64,7 @@ func newStorageProvider(cfg *config.Storage) (provider.Storage, error) {
 
 	regions := map[string]string{}
 
-	for _, bucket := range *cfg.Storage.Buckets {
+	for _, bucket := range cfg.Storage.Buckets {
 		if region := regions[bucket.Region()]; region == "" {
 			log.Debug("Region %q", region)
 			regions[bucket.Region()] = cfg.Provider.Data["account"]
@@ -99,8 +104,4 @@ func (p *storageProvider) NewStorage(cfg *config.Storage) (resource.ProviderStor
 
 func (p *storageProvider) NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error) {
 	return newBucket(b, cfg, p)
-}
-
-func init() {
-	provider.RegisterStorage("aws", newStorageProvider)
 }

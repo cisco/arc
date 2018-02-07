@@ -142,7 +142,7 @@ func (a *amp) Route(req *route.Request) route.Response {
 
 	switch req.Command() {
 	case route.Load:
-		return a.RouteInOrder(req)
+		return a.storage.Route(req)
 	case route.Info:
 	case route.Config:
 	case route.Audit:

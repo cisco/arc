@@ -36,6 +36,8 @@ import (
 	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 	"github.com/cisco/arc/pkg/route"
+
+	_ "github.com/cisco/arc/pkg/aws"
 )
 
 type storage struct {
@@ -62,7 +64,7 @@ func newStorage(amp *amp, cfg *config.Storage) (*storage, error) {
 		amp:       amp,
 	}
 
-	prov, err := provider.NewStorage(cfg)
+	prov, err := provider.NewStorage(amp.Amp)
 	if err != nil {
 		return nil, err
 	}
@@ -169,19 +171,18 @@ func (s *storage) Route(req *route.Request) route.Response {
 }
 
 func (s *storage) info(req *route.Request) {
-	if s.Destroyed() {
-		return
-	}
 	msg.Info("Storage")
 	msg.IndentInc()
-	s.RouteInOrder(req)
+	for _, b := range s.buckets {
+		b.Route(req)
+	}
+	for _, bs := range s.bucketSets {
+		bs.Route(req)
+	}
 	msg.IndentDec()
 }
 
 func (s *storage) config(req *route.Request) {
-	if s.Destroyed() {
-		return
-	}
 	msg.Info("Storage")
 	msg.IndentInc()
 	s.RouteInOrder(req)

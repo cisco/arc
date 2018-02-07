@@ -33,7 +33,7 @@ import (
 
 type StaticBucketSet interface {
 	Name() string
-	Buckets() *config.Buckets
+	Buckets() *[]config.Bucket
 }
 
 // DynamicBucketReplicationSet provides the interface to the dynamic portion of the bucket replication set.
@@ -55,5 +55,5 @@ type BucketSet interface {
 	StaticBucketSet
 	DynamicBucketSet
 
-	BucketSets() BucketSets
+	BucketSets() []*BucketSet
 }

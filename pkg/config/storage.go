@@ -29,7 +29,6 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type Storage struct {
-	Provider      *Provider    `json:"provider"`
 	SecurityTags_ SecurityTags `json:"security_tags"`
 	Buckets       []*Bucket    `json:"buckets"`
 	BucketSets    []*BucketSet `json:"bucket_sets"`
@@ -43,9 +42,6 @@ func (s *Storage) SecurityTags() SecurityTags {
 func (s *Storage) Print() {
 	msg.Info("Storage Config")
 	msg.IndentInc()
-	if s.Provider != nil {
-		s.Provider.Print()
-	}
 	if s.SecurityTags_ != nil {
 		s.SecurityTags_.Print()
 	}

@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/resource"
 )
 
@@ -43,7 +44,7 @@ type Storage interface {
 }
 
 // StorageCtor is the function signature for the provider's storage constructor.
-type StorageCtor func(*config.Storage) (Storage, error)
+type StorageCtor func(*config.Amp) (Storage, error)
 
 var storCtors map[string]StorageCtor = map[string]StorageCtor{}
 
@@ -55,9 +56,12 @@ func RegisterStorage(vendor string, ctor StorageCtor) {
 }
 
 // NewStorage is the provider agnostic constructor used by pkg/amp.
-func NewStorage(cfg *config.Storage) (Storage, error) {
+func NewStorage(cfg *config.Amp) (Storage, error) {
 	vendor := cfg.Provider.Vendor
 	ctor := storCtors[vendor]
+	for k, v := range storCtors {
+		log.Debug("%q | %+v", k, v)
+	}
 	if ctor == nil {
 		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}

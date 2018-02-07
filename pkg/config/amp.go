@@ -39,6 +39,7 @@ import (
 type Amp struct {
 	Name_         string         `json:"name"`
 	Notifications *Notifications `json:"notifications"`
+	Provider      *Provider      `json:"provider"`
 	Storage       *Storage       `json:"storage"`
 }
 
@@ -62,6 +63,9 @@ func (a *Amp) Name() string {
 
 func (a *Amp) PrintLocal() {
 	msg.Detail("%-20s\t%s", "name", a.Name())
+	if a.Provider != nil {
+		a.Provider.Print()
+	}
 }
 
 func (a *Amp) Print() {

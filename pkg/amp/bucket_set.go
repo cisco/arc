@@ -40,25 +40,24 @@ import (
 type bucketSet struct {
 	*resource.Resources
 	*config.BucketSet
-	bucketSets resource.BucketSets
+	bucketSets []resource.BucketSet
 
-	buckets *buckets
+	buckets []resource.Bucket
 }
 
-func newBucketSet(bs *bucketSets, prov provider.Account, cfg *config.BucketSet) (*bucketSet, error) {
+func newBucketSet(cfg *config.BucketSet, s *storage, prov provider.Storage) (*bucketSet, error) {
 	log.Debug("Initializing Bucket Set, %q", cfg.Name())
 	b := &bucketSet{
-		BucketSet:  cfg,
-		bucketSets: bs,
+		BucketSet: cfg,
 	}
 
-	bkts, err := newBuckets(bs.Storage().(*storage), prov, cfg.Buckets())
-	if err != nil {
-		return nil, err
+	for _, conf := range cfg.Buckets() {
+		bucket, err := newBucket(conf, s, prov)
+		if err != nil {
+			return nil, err
+		}
+		b.buckets = append(b.buckets, bucket)
 	}
-
-	b.buckets = bkts
-	b.Append(bkts)
 	return b, nil
 }
 
@@ -103,7 +102,7 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
 // It delegates the call to the provider's bucket.
 func (b *bucketSet) Created() bool {
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if bkt.Created() == false {
 			return false
 		}
@@ -114,7 +113,7 @@ func (b *bucketSet) Created() bool {
 // Destroyed satisfies the embedded resource.Resource interaface in resource.Bucket.
 // It delegates the call to the provider's bucket.
 func (b *bucketSet) Destroyed() bool {
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if bkt.Destroyed() == false {
 			return false
 		}
@@ -122,7 +121,7 @@ func (b *bucketSet) Destroyed() bool {
 	return true
 }
 
-func (b *bucketSet) BucketSets() resource.BucketSets {
+func (b *bucketSet) BucketSets() []resource.BucketSet {
 	return b.bucketSets
 }
 
@@ -130,7 +129,7 @@ func (b *bucketSet) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Audit(flags...); err != nil {
 			return err
 		}
@@ -143,12 +142,12 @@ func (b *bucketSet) Create(flags ...string) error {
 		msg.Detail("Bucket Set exists, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Create(flags...); err != nil {
 			return err
 		}
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.EnableReplication(); err != nil {
 			return err
 		}
@@ -161,7 +160,7 @@ func (b *bucketSet) Destroy(flags ...string) error {
 		msg.Detail("Bucket Set does not exist, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Destroy(flags...); err != nil {
 			return err
 		}
@@ -174,7 +173,7 @@ func (b *bucketSet) Provision(flags ...string) error {
 		msg.Detail("Bucket Set does not exist, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Provision(flags...); err != nil {
 			return err
 		}
@@ -189,7 +188,7 @@ func (b *bucketSet) Info() {
 	msg.Info("Bucket Set")
 	msg.Detail("%-20s\t%s", "name", b.Name())
 	msg.IndentInc()
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		bkt.Info()
 	}
 	msg.IndentDec()
