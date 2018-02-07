@@ -68,18 +68,18 @@ func (c *dbSubnetGroupCache) load() error {
 			return err
 		}
 
-		log.Debug("Load DBSubnetGroups: %d", len(resp.DBSubnetGroups))
+		log.Debug("Loading DBSubnetGroups: %d", len(resp.DBSubnetGroups))
 		for _, sg := range resp.DBSubnetGroups {
 			if sg == nil {
 				continue
 			}
 			if sg.DBSubnetGroupName == nil {
-				log.Verbose("\t\t%+v", *sg)
+				log.Verbose("Unnamed DBSubnetGroup\n%+v", *sg)
 				c.unnamed = append(c.unnamed, sg)
+				continue
 			}
-
 			name := *sg.DBSubnetGroupName
-			log.Debug("Caching database subnet group %s", name)
+			log.Debug("Caching DBSubnetGroup: %s", name)
 			c.cache[name] = dbSubnetGroupCacheEntry{deployed: sg}
 		}
 		if resp.Marker != nil {

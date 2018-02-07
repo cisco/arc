@@ -39,6 +39,10 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
+func init() {
+	provider.RegisterDatabaseService("aws", newDatabaseServiceProvider)
+}
+
 type databaseServiceProvider struct {
 	rds     *rds.RDS
 	account string
@@ -84,8 +88,4 @@ func (p *databaseServiceProvider) NewDatabaseService(cfg *config.DatabaseService
 
 func (p *databaseServiceProvider) NewDatabase(cfg *config.Database, params resource.DatabaseParams) (resource.ProviderDatabase, error) {
 	return newDatabase(cfg, params, p)
-}
-
-func init() {
-	provider.RegisterDatabaseService("aws", newDatabaseServiceProvider)
 }

@@ -39,8 +39,9 @@ type databaseCacheEntry struct {
 }
 
 type databaseCache struct {
-	rds   *rds.RDS
-	cache map[string]databaseCacheEntry
+	rds     *rds.RDS
+	cache   map[string]databaseCacheEntry
+	unnamed []*rds.DBInstance
 }
 
 func newDatabaseCache(rds *rds.RDS) *databaseCache {
@@ -69,7 +70,13 @@ func (c *databaseCache) load() error {
 
 		log.Debug("Load DBInstances: %d", len(resp.DBInstances))
 		for _, db := range resp.DBInstances {
-			if db == nil || db.DBInstanceIdentifier == nil {
+			if db == nil {
+				log.Verbose("Skipping due to nil db")
+				continue
+			}
+			if db.DBInstanceIdentifier == nil {
+				log.Verbose("Unnamed DBInstance\n%+v", *db)
+				c.unnamed = append(c.unnamed, db)
 				continue
 			}
 			id := *db.DBInstanceIdentifier
@@ -86,7 +93,7 @@ func (c *databaseCache) load() error {
 }
 
 func (c *databaseCache) find(db *database) *rds.DBInstance {
-	e, ok := c.cache[db.Id()]
+	e, ok := c.cache[db.Name()]
 	if !ok {
 		return nil
 	}
@@ -95,13 +102,13 @@ func (c *databaseCache) find(db *database) *rds.DBInstance {
 }
 
 func (c *databaseCache) add(db *database) {
-	log.Debug("Adding %s to database instance cache.", db.Id())
-	c.cache[db.Id()] = databaseCacheEntry{deployed: db.db, configured: db}
+	log.Debug("Adding %s to database instance cache.", db.Name())
+	c.cache[db.Name()] = databaseCacheEntry{deployed: db.db, configured: db}
 }
 
 func (c *databaseCache) remove(db *database) {
-	log.Debug("Removing %s from database instance cache", db.Id())
-	delete(c.cache, db.Id())
+	log.Debug("Removing %s from database instance cache", db.Name())
+	delete(c.cache, db.Name())
 }
 
 func (c *databaseCache) audit(flags ...string) error {

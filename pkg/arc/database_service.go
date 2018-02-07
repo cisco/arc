@@ -27,8 +27,6 @@
 package arc
 
 import (
-	"fmt"
-
 	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/help"
@@ -52,11 +50,6 @@ func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databas
 		return nil, nil
 	}
 	log.Debug("Initializing Database Service")
-
-	// Validate the config.DatabaseService object.
-	if cfg.Provider == nil {
-		return nil, fmt.Errorf("The provider element is missing from the database_service configuration")
-	}
 
 	dbs := &databaseService{
 		DatabaseService: cfg,

@@ -65,6 +65,6 @@ func (dbs *databaseService) Audit(flags ...string) error {
 }
 
 func (dbs *databaseService) Info() {
-	msg.Detail("%-20s\t%d", "database cache size", len(dbs.databaseCache.cache))
-	msg.Detail("%-20s\t%d", "dbSubnetGroup cache size", len(dbs.dbSubnetGroupCache.cache))
+	msg.Detail("%-40s\t%d", "database cache size", len(dbs.databaseCache.cache))
+	msg.Detail("%-40s\t%d", "dbSubnetGroup cache size", len(dbs.dbSubnetGroupCache.cache))
 }

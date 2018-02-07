@@ -74,8 +74,25 @@ func newDatabase(cfg *config.Database, dbs *databaseService, p provider.Database
 
 	// Need to build up the database parameters. First we will gather the list of subnets
 	// that the database instance will use.
+	dc := db.databaseService.Arc().DataCenter()
+	if dc == nil {
+		return nil, fmt.Errorf("The database service requires the datacenter service to be defined in the configuration.")
+	}
+	net := dc.Network()
+	if net == nil {
+		return nil, fmt.Errorf("The database service requires the datacenter service to define a network in the configuration.")
+	}
+	subnetGroups := net.SubnetGroups()
+	if subnetGroups == nil {
+		return nil, fmt.Errorf("The database service requires the datacenter service to define subnet groups in the configuration.")
+	}
+	securityGroups := net.SecurityGroups()
+	if securityGroups == nil {
+		return nil, fmt.Errorf("The database service requires the datacenter service to define security groups in the configuration.")
+	}
+
 	subnets := []resource.ProviderSubnet{}
-	subnetGroup := db.databaseService.Arc().DataCenter().Network().SubnetGroups().Find(cfg.SubnetGroup())
+	subnetGroup := subnetGroups.Find(cfg.SubnetGroup())
 	if subnetGroup == nil {
 		return nil, fmt.Errorf("Creating database %s, unable to find subnet group %s.", db.Name(), cfg.SubnetGroup())
 	}
@@ -87,15 +104,15 @@ func newDatabase(cfg *config.Database, dbs *databaseService, p provider.Database
 	// that the database instance will use.
 	secgroups := []resource.ProviderSecurityGroup{}
 	for _, secgroupName := range cfg.SecurityGroups() {
-		secgroup := db.databaseService.Arc().DataCenter().Network().SecurityGroups().Find(secgroupName)
+		secgroup := securityGroups.Find(secgroupName)
 		if secgroup == nil {
 			return nil, fmt.Errorf("Creating database %s, unable to find security group %s.", db.Name(), secgroupName)
 		}
-		secgroups = append(secgroups, secgroup)
+		secgroups = append(secgroups, secgroup.ProviderSecurityGroup())
 	}
 
 	params := resource.DatabaseParams{
-		DatabaseService: dbs,
+		DatabaseService: db.databaseService.ProviderDatabaseService(),
 		Subnets:         subnets,
 		SecurityGroups:  secgroups,
 	}
@@ -216,6 +233,10 @@ func (db *database) Audit(flags ...string) error {
 
 // Info satisfies the resource.Database interface.
 func (db *database) Info() {
+	if db.Destroyed() {
+		return
+	}
+	msg.Info("Database Instance")
 	db.providerDatabase.Info()
 }
 

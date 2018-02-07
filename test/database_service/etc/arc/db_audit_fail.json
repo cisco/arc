@@ -2,6 +2,37 @@
   "name": "db_audit_fail",
   "title": "mock db",
 
+  "datacenter": {
+    "provider": { "vendor": "mock" },
+    "network": {
+      "cidr": "192.168.0.0/16",
+
+      "subnet_groups": [
+        {
+          "subnet": "postgres",
+          "cidr":   "192.168.4.0/24",
+          "access": "local"
+        }
+      ],
+
+      "security_groups": [
+        {
+          "security_group": "postgres",
+          "rules": [
+            {
+              "description": "postgres",
+              "directions":  [ "ingress" ],
+              "remotes":     [ "cidr:local" ],
+              "protocols":   [ "tcp" ],
+              "ports":       [ "5432" ]
+            }
+          ]
+        }
+      ]
+
+    }
+  },
+
   "database_service": {
     "provider": {
       "vendor": "mock",

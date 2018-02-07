@@ -31,6 +31,7 @@ import "github.com/cisco/arc/pkg/msg"
 // Database represents the configuration of a database instance resource.
 type Database struct {
 	Name_           string   `json:"database"`
+	DBName_         string   `json:"dbname"`
 	Engine_         string   `json:"engine"`
 	Version_        string   `json:"version"`
 	Type_           string   `json:"type"`
@@ -50,6 +51,10 @@ type Database struct {
 
 func (db *Database) Name() string {
 	return db.Name_
+}
+
+func (db *Database) DBName() string {
+	return db.DBName_
 }
 
 func (db *Database) Engine() string {
@@ -100,13 +105,16 @@ func (db *Database) MasterPassword() string {
 func (db *Database) PrintLocal() {
 	msg.Info("Database Config")
 	msg.Detail("%-20s\t%s", "name", db.Name())
+	if db.DBName() != "" {
+		msg.Detail("%-20s\t%s", "dbname", db.DBName())
+	}
 	msg.Detail("%-20s\t%s", "engine", db.Engine())
 	if db.Version() != "" {
 		msg.Detail("%-20s\t%s", "version", db.Version())
 	}
 	msg.Detail("%-20s\t%s", "type", db.InstanceType())
 	if db.Port() > 0 {
-		msg.Detail("%-20s\t%d", "type", db.Port())
+		msg.Detail("%-20s\t%d", "port", db.Port())
 	}
 	msg.Detail("%-20s\t%s", "subnet", db.SubnetGroup())
 	groups, sep := "", ""

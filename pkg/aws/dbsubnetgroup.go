@@ -38,17 +38,17 @@ import (
 )
 
 type dbSubnetGroup struct {
-	rds *rds.RDS
-
+	rds     *rds.RDS
 	dbs     *databaseService
 	subnets []*subnet
-
-	sg *rds.DBSubnetGroup
+	sg      *rds.DBSubnetGroup
+	name_   string
 }
 
 func newDBSubnetGroup(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (*dbSubnetGroup, error) {
 	sg := &dbSubnetGroup{
-		rds: p.rds,
+		rds:   p.rds,
+		name_: cfg.Name() + "-subnet_group",
 	}
 
 	for _, sub := range params.Subnets {
@@ -58,7 +58,6 @@ func newDBSubnetGroup(cfg *config.Database, params resource.DatabaseParams, p *d
 		}
 		sg.subnets = append(sg.subnets, s)
 	}
-
 	if sg.subnets == nil {
 		return nil, fmt.Errorf("Creating AWS DBSubnetGroup for database %s, but no subnets found.", cfg.Name())
 	}
@@ -83,7 +82,7 @@ func (sg *dbSubnetGroup) load() error {
 }
 
 func (sg *dbSubnetGroup) create() error {
-	msg.Info("DB Subnet Group Creation: %s", sg.name())
+	msg.Info("DBSubnetGroup Creation: %s", sg.name())
 	if sg.created() {
 		msg.Detail("DBSubnetGroup exists, skipping...")
 		return nil
@@ -99,7 +98,6 @@ func (sg *dbSubnetGroup) create() error {
 		DBSubnetGroupName:        aws.String(sg.subnets[0].GroupName()),
 		SubnetIds:                subnetIds,
 	}
-
 	resp, err := sg.rds.CreateDBSubnetGroup(params)
 	if err != nil {
 		return err
@@ -115,7 +113,7 @@ func (sg *dbSubnetGroup) created() bool {
 }
 
 func (sg *dbSubnetGroup) destroy(flags ...string) error {
-	msg.Info("DB Subnet Group Destruction: %s", sg.name())
+	msg.Info("DBSubnetGroup Destruction: %s", sg.name())
 	if sg.destroyed() {
 		msg.Detail("DBSubnetGroup does not exist, skipping...")
 		return nil
@@ -142,14 +140,17 @@ func (sg *dbSubnetGroup) info() {
 		return
 	}
 	msg.Info("AWS DBSubnetGroup: %s", sg.name())
-	if sg.sg.DBSubnetGroupArn != nil {
-		msg.Detail("%-20s\t%s", "arn", *sg.sg.DBSubnetGroupArn)
+	if sg.sg.DBSubnetGroupName != nil {
+		msg.Detail("%-20s\t%s", "name", *sg.sg.DBSubnetGroupName)
 	}
 	if sg.sg.DBSubnetGroupDescription != nil {
 		msg.Detail("%-20s\t%s", "description", *sg.sg.DBSubnetGroupDescription)
 	}
-	if sg.sg.DBSubnetGroupDescription != nil {
-		msg.Detail("%-20s\t%s", "status", *sg.sg.DBSubnetGroupDescription)
+	if sg.sg.DBSubnetGroupArn != nil {
+		msg.Detail("%-20s\t%s", "arn", *sg.sg.DBSubnetGroupArn)
+	}
+	if sg.sg.SubnetGroupStatus != nil {
+		msg.Detail("%-20s\t%s", "status", *sg.sg.SubnetGroupStatus)
 	}
 	if sg.sg.VpcId != nil {
 		msg.Detail("%-20s\t%s", "vpc", *sg.sg.VpcId)
@@ -164,8 +165,5 @@ func (sg *dbSubnetGroup) info() {
 }
 
 func (sg *dbSubnetGroup) name() string {
-	if sg.sg == nil {
-		return ""
-	}
-	return *sg.sg.DBSubnetGroupName
+	return sg.name_
 }

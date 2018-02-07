@@ -40,6 +40,10 @@ type StaticDatabase interface {
 	// Name of the configured database instance. Required.
 	Name() string
 
+	// DBName is The name of the database to create when the DB instance is created.
+	// If not set the name will be used. Optional.
+	DBName() string
+
 	// Engine used by the database instance. Required.
 	Engine() string
 

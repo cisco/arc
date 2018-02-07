@@ -39,13 +39,11 @@ import (
 
 type database struct {
 	*config.Database
-	rds *rds.RDS
-
+	rds         *rds.RDS
 	dbs         *databaseService
 	subnetGroup *dbSubnetGroup
 	secgroups   []*string
-
-	db *rds.DBInstance
+	db          *rds.DBInstance
 }
 
 func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
@@ -84,6 +82,10 @@ func (db *database) set(dbi *rds.DBInstance) {
 	db.db = dbi
 }
 
+func (db *database) clear() {
+	db.db = nil
+}
+
 func (db *database) Load() error {
 	db.set(db.dbs.databaseCache.find(db))
 	return nil
@@ -96,41 +98,54 @@ func (db *database) Create(flags ...string) error {
 		return nil
 	}
 
-	param := &rds.CreateDBInstanceInput{
-		CopyTagsToSnapshot:   aws.Bool(true),
+	params := &rds.CreateDBInstanceInput{
 		DBInstanceClass:      aws.String(db.InstanceType()),
 		DBInstanceIdentifier: aws.String(db.Name()),
 		DBName:               aws.String(db.Name()),
 		DBSubnetGroupName:    aws.String(db.subnetGroup.name()),
 		Engine:               aws.String(db.Engine()),
 		MultiAZ:              aws.Bool(true),
+		PubliclyAccessible:   aws.Bool(false),
 		StorageEncrypted:     aws.Bool(true),
 		VpcSecurityGroupIds:  db.secgroups,
 	}
+	if db.DBName() != "" {
+		params.DBName = aws.String(db.DBName())
+	}
 	if db.Version() != "" {
-		param.EngineVersion = aws.String(db.Version())
+		params.EngineVersion = aws.String(db.Version())
 	}
 	if db.StorageIops() > 0 {
-		param.Iops = aws.Int64(int64(db.StorageIops()))
+		params.Iops = aws.Int64(int64(db.StorageIops()))
 	}
 	if db.MasterUserName() != "" {
-		param.MasterUsername = aws.String(db.MasterUserName())
+		params.MasterUsername = aws.String(db.MasterUserName())
 	}
 	if db.MasterPassword() != "" {
-		param.MasterUserPassword = aws.String(db.MasterPassword())
+		params.MasterUserPassword = aws.String(db.MasterPassword())
 	}
 	if db.Port() > 0 {
-		param.Port = aws.Int64(int64(db.Port()))
+		params.Port = aws.Int64(int64(db.Port()))
 	}
 	if db.StorageType() != "" {
+		if db.StorageSize() > 0 {
+			params.AllocatedStorage = aws.Int64(int64(db.StorageSize()))
+		}
 		if db.StorageIops() > 0 {
-			param.StorageType = aws.String("io1")
+			params.StorageType = aws.String("io1")
+			params.Iops = aws.Int64(int64(db.StorageIops()))
 		} else {
-			param.StorageType = aws.String(db.StorageType())
+			params.StorageType = aws.String(db.StorageType())
 		}
 	}
+	resp, err := db.rds.CreateDBInstance(params)
+	if err != nil {
+		return err
+	}
+	db.set(resp.DBInstance)
+	db.dbs.databaseCache.add(db)
 
-	return db.Load()
+	return nil
 }
 
 func (db *database) Created() bool {
@@ -138,15 +153,32 @@ func (db *database) Created() bool {
 }
 
 func (db *database) Destroy(flags ...string) error {
-	return nil
-}
+	msg.Info("Database Destruction: %s", db.Name())
+	if db.Destroyed() {
+		msg.Detail("Database does not exist, skipping...")
+		return nil
+	}
 
-func (db *database) Provision(flags ...string) error {
+	params := &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier: aws.String(db.Name()),
+	}
+	_, err := db.rds.DeleteDBInstance(params)
+	if err != nil {
+		return err
+	}
+	db.clear()
+	db.dbs.databaseCache.remove(db)
+
 	return nil
 }
 
 func (db *database) Destroyed() bool {
 	return db.db == nil
+}
+
+func (db *database) Provision(flags ...string) error {
+	// TODO
+	return nil
 }
 
 func (db *database) Audit(flags ...string) error {
@@ -155,10 +187,57 @@ func (db *database) Audit(flags ...string) error {
 }
 
 func (db *database) Info() {
+	if db.Destroyed() {
+		return
+	}
+	if db.db.DBInstanceIdentifier != nil {
+		msg.Detail("%-20s\t%s", "database", *db.db.DBInstanceIdentifier)
+	}
+	if db.db.DBName != nil {
+		msg.Detail("%-20s\t%s", "db name", *db.db.DBName)
+	}
+	if db.db.DBInstanceArn != nil {
+		msg.Detail("%-20s\t%s", "arn", *db.db.DBInstanceArn)
+	}
+	if db.db.DbiResourceId != nil {
+		msg.Detail("%-20s\t%s", "resource id", *db.db.DbiResourceId)
+	}
+	if db.db.DBInstanceStatus != nil {
+		msg.Detail("%-20s\t%s", "status", *db.db.DBInstanceStatus)
+	}
+	if db.db.Engine != nil {
+		msg.Detail("%-20s\t%s", "engine", *db.db.Engine)
+	}
+	if db.db.EngineVersion != nil {
+		msg.Detail("%-20s\t%s", "version", *db.db.EngineVersion)
+	}
+	if db.db.DbInstancePort != nil && *db.db.DbInstancePort > 0 {
+		msg.Detail("%-20s\t%d", "port", *db.db.DbInstancePort)
+	}
+	if db.db.InstanceCreateTime != nil {
+		msg.Detail("%-20s\t%s", "created", *db.db.InstanceCreateTime)
+	}
+	if db.db.StorageType != nil {
+		msg.Detail("%-20s\t%s", "storage type", *db.db.StorageType)
+	}
+	if db.db.AllocatedStorage != nil && *db.db.AllocatedStorage > 0 {
+		msg.Detail("%-20s\t%d", "storage size", *db.db.AllocatedStorage)
+	}
+	if db.db.Iops != nil && *db.db.Iops > 0 {
+		msg.Detail("%-20s\t%d", "storage iops", *db.db.Iops)
+	}
+	if db.db.DBSubnetGroup != nil && db.db.DBSubnetGroup.DBSubnetGroupName != nil {
+		msg.Detail("%-20s\t%s", "subnet group", *db.db.DBSubnetGroup.DBSubnetGroupName)
+	}
+	for _, sg := range db.db.VpcSecurityGroups {
+		if sg.VpcSecurityGroupId != nil {
+			msg.Detail("%-20s\t%s", "security group", *sg.VpcSecurityGroupId)
+		}
+	}
 }
 
 func (db *database) Id() string {
-	if db.db.DBInstanceIdentifier == nil {
+	if db.Destroyed() || db.db.DBInstanceIdentifier == nil {
 		return ""
 	}
 	return *db.db.DBInstanceIdentifier
