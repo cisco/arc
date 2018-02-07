@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
@@ -46,9 +47,12 @@ type dbSubnetGroup struct {
 }
 
 func newDBSubnetGroup(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (*dbSubnetGroup, error) {
+	name := cfg.Name() + "-subnet-group"
+	log.Debug("Initializing AWS DBSubnetGroup %q", name)
+
 	sg := &dbSubnetGroup{
 		rds:   p.rds,
-		name_: cfg.Name() + "-subnet_group",
+		name_: name,
 	}
 
 	for _, sub := range params.Subnets {

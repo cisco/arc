@@ -45,7 +45,7 @@ type dbSubnetGroupCache struct {
 }
 
 func newDBSubnetGroupCache(rds *rds.RDS) *dbSubnetGroupCache {
-	log.Debug("Initializaing AWS DB Subnet Group Cache")
+	log.Debug("Initializaing AWS DBSubnetGroup Cache")
 	return &dbSubnetGroupCache{
 		rds:   rds,
 		cache: map[string]dbSubnetGroupCacheEntry{},
@@ -53,7 +53,7 @@ func newDBSubnetGroupCache(rds *rds.RDS) *dbSubnetGroupCache {
 }
 
 func (c *dbSubnetGroupCache) load() error {
-	log.Debug("Loading AWS DB Subnet Group Cache")
+	log.Debug("Loading AWS DBSubnetGroup Cache")
 
 	var marker *string
 	done := false
@@ -68,18 +68,18 @@ func (c *dbSubnetGroupCache) load() error {
 			return err
 		}
 
-		log.Debug("Loading DBSubnetGroups: %d", len(resp.DBSubnetGroups))
+		log.Debug("Loading AWS DBSubnetGroups: %d", len(resp.DBSubnetGroups))
 		for _, sg := range resp.DBSubnetGroups {
 			if sg == nil {
 				continue
 			}
 			if sg.DBSubnetGroupName == nil {
-				log.Verbose("Unnamed DBSubnetGroup\n%+v", *sg)
+				log.Verbose("Unnamed AWS DBSubnetGroup\n%+v", *sg)
 				c.unnamed = append(c.unnamed, sg)
 				continue
 			}
 			name := *sg.DBSubnetGroupName
-			log.Debug("Caching DBSubnetGroup: %s", name)
+			log.Debug("Caching AWS DBSubnetGroup %q", name)
 			c.cache[name] = dbSubnetGroupCacheEntry{deployed: sg}
 		}
 		if resp.Marker != nil {
@@ -101,12 +101,12 @@ func (c *dbSubnetGroupCache) find(sg *dbSubnetGroup) *rds.DBSubnetGroup {
 }
 
 func (c *dbSubnetGroupCache) add(sg *dbSubnetGroup) {
-	log.Debug("Adding %s to database subnet group cache.", sg.name())
+	log.Debug("Adding %q to database subnet group cache.", sg.name())
 	c.cache[sg.name()] = dbSubnetGroupCacheEntry{deployed: sg.sg, configured: sg}
 }
 
 func (c *dbSubnetGroupCache) remove(sg *dbSubnetGroup) {
-	log.Debug("Removing %s from database subnet group cache", sg.name())
+	log.Debug("Removing %q from database subnet group cache", sg.name())
 	delete(c.cache, sg.name())
 }
 

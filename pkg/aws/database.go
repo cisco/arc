@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
@@ -47,6 +48,8 @@ type database struct {
 }
 
 func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databaseServiceProvider) (resource.ProviderDatabase, error) {
+	log.Debug("Initializing AWS Database Instance %q", cfg.Name())
+
 	db := &database{
 		Database: cfg,
 		rds:      p.rds,
@@ -210,6 +213,9 @@ func (db *database) Info() {
 	}
 	if db.db.EngineVersion != nil {
 		msg.Detail("%-20s\t%s", "version", *db.db.EngineVersion)
+	}
+	if db.db.DBInstanceClass != nil {
+		msg.Detail("%-20s\t%s", "type", *db.db.DBInstanceClass)
 	}
 	if db.db.DbInstancePort != nil && *db.db.DbInstancePort > 0 {
 		msg.Detail("%-20s\t%d", "port", *db.db.DbInstancePort)

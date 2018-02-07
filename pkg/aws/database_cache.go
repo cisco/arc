@@ -68,7 +68,7 @@ func (c *databaseCache) load() error {
 			return err
 		}
 
-		log.Debug("Load DBInstances: %d", len(resp.DBInstances))
+		log.Debug("Load AWS DBInstances: %d", len(resp.DBInstances))
 		for _, db := range resp.DBInstances {
 			if db == nil {
 				log.Verbose("Skipping due to nil db")
@@ -80,7 +80,7 @@ func (c *databaseCache) load() error {
 				continue
 			}
 			id := *db.DBInstanceIdentifier
-			log.Debug("Caching database instance %s", id)
+			log.Debug("Caching AWS DBInstance %q", id)
 			c.cache[id] = databaseCacheEntry{deployed: db}
 		}
 		if resp.Marker != nil {
@@ -102,12 +102,12 @@ func (c *databaseCache) find(db *database) *rds.DBInstance {
 }
 
 func (c *databaseCache) add(db *database) {
-	log.Debug("Adding %s to database instance cache.", db.Name())
+	log.Debug("Adding %q to database instance cache.", db.Name())
 	c.cache[db.Name()] = databaseCacheEntry{deployed: db.db, configured: db}
 }
 
 func (c *databaseCache) remove(db *database) {
-	log.Debug("Removing %s from database instance cache", db.Name())
+	log.Debug("Removing %q from database instance cache", db.Name())
 	delete(c.cache, db.Name())
 }
 

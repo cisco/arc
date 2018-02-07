@@ -132,7 +132,7 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 
 // Load satisfies the resource.DatabaseService interface.
 func (dbs *databaseService) Load() error {
-	log.Info("Loading database service")
+	log.Info("Loading Database Service")
 	if err := dbs.providerDatabaseService.Load(); err != nil {
 		return err
 	}
