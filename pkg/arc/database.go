@@ -175,7 +175,7 @@ func (db *database) Route(req *route.Request) route.Response {
 	case route.Help:
 		db.Help()
 	default:
-		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		db.Help()
 		return route.FAIL
 	}
 	return route.OK
@@ -188,7 +188,16 @@ func (db *database) Load() error {
 
 // Create satisfies the resource.Database interface.
 func (db *database) Create(flags ...string) error {
-	return db.providerDatabase.Create(flags...)
+	msg.Info("Database Creation: %s", db.Name())
+	if db.Created() {
+		msg.Detail("Database exists, skipping...")
+		return nil
+	}
+	if err := db.providerDatabase.Create(flags...); err != nil {
+		return err
+	}
+	msg.Detail("Created %s", db.Id())
+	return nil
 }
 
 // Created satisfies the resource.Database interface.
@@ -198,7 +207,17 @@ func (db *database) Created() bool {
 
 // Destroy satisfies the resource.Database interface.
 func (db *database) Destroy(flags ...string) error {
-	return db.providerDatabase.Destroy(flags...)
+	msg.Info("Database Destruction: %s", db.Name())
+	if db.Destroyed() {
+		msg.Detail("Database does not exist, skipping...")
+		return nil
+	}
+	id := db.Id()
+	if err := db.providerDatabase.Destroy(flags...); err != nil {
+		return err
+	}
+	msg.Detail("Destroyed %s", id)
+	return nil
 }
 
 // Destroyed satisfies the resource.Database interface.
@@ -208,11 +227,25 @@ func (db *database) Destroyed() bool {
 
 // Provision satisfies the resource.Database interface.
 func (db *database) Provision(flags ...string) error {
-	return db.providerDatabase.Provision(flags...)
+	msg.Info("Database Provision: %s", db.Name())
+	if db.Destroyed() {
+		msg.Detail("Database does not exist, skipping...")
+		return nil
+	}
+	if err := db.providerDatabase.Provision(flags...); err != nil {
+		return err
+	}
+	msg.Detail("Provisioned %s", db.Id())
+	return nil
 }
 
 // Audit satisfies the resource.Database interface.
 func (db *database) Audit(flags ...string) error {
+	msg.Info("Database Audit: %s", db.Name())
+	if db.Destroyed() {
+		msg.Detail("Database does not exist, skipping...")
+		return nil
+	}
 	auditSession := "Database"
 	found := false
 	for _, v := range flags {
@@ -228,7 +261,11 @@ func (db *database) Audit(flags ...string) error {
 	if err != nil {
 		return err
 	}
-	return db.providerDatabase.Audit(flags...)
+	if err := db.providerDatabase.Audit(flags...); err != nil {
+		return err
+	}
+	msg.Detail("Audited %s", db.Id())
+	return nil
 }
 
 // Info satisfies the resource.Database interface.

@@ -36,7 +36,7 @@
   "database_service": {
     "provider": {
       "vendor": "mock",
-      "data":   { "db.Audit": "error" }
+      "data":   { "db.Audit": "error", "db.Destroyed": "false" }
     },
     "databases": [
       {

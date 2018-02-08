@@ -91,14 +91,15 @@ func (db *database) clear() {
 
 func (db *database) Load() error {
 	db.set(db.dbs.databaseCache.find(db))
+	if err := db.subnetGroup.load(); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (db *database) Create(flags ...string) error {
-	msg.Info("Database Creation: %s", db.Name())
-	if db.Created() {
-		msg.Detail("Database exists, skipping...")
-		return nil
+	if err := db.subnetGroup.create(); err != nil {
+		return err
 	}
 
 	params := &rds.CreateDBInstanceInput{
@@ -156,14 +157,16 @@ func (db *database) Created() bool {
 }
 
 func (db *database) Destroy(flags ...string) error {
-	msg.Info("Database Destruction: %s", db.Name())
 	if db.Destroyed() {
-		msg.Detail("Database does not exist, skipping...")
+		if err := db.subnetGroup.destroy(); err != nil {
+			return err
+		}
 		return nil
 	}
 
 	params := &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(db.Name()),
+		SkipFinalSnapshot:    aws.Bool(true),
 	}
 	_, err := db.rds.DeleteDBInstance(params)
 	if err != nil {
@@ -171,6 +174,10 @@ func (db *database) Destroy(flags ...string) error {
 	}
 	db.clear()
 	db.dbs.databaseCache.remove(db)
+
+	if err := db.subnetGroup.destroy(); err != nil {
+		return err
+	}
 
 	return nil
 }
