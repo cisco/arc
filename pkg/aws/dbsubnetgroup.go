@@ -55,6 +55,12 @@ func newDBSubnetGroup(cfg *config.Database, params resource.DatabaseParams, p *d
 		name_: name,
 	}
 
+	dbs, ok := params.DatabaseService.(*databaseService)
+	if !ok {
+		return nil, fmt.Errorf("Internal Error: aws/dbSubnetGroup.go, type assert for DatabaseService parameter failed.")
+	}
+	sg.dbs = dbs
+
 	for _, sub := range params.Subnets {
 		s, ok := sub.(*subnet)
 		if !ok {
@@ -86,9 +92,9 @@ func (sg *dbSubnetGroup) load() error {
 }
 
 func (sg *dbSubnetGroup) create() error {
-	msg.Info("DBSubnetGroup Creation: %s", sg.name())
+	msg.Info("AWS DBSubnetGroup Creation: %s", sg.name())
 	if sg.created() {
-		msg.Detail("DBSubnetGroup exists, skipping...")
+		msg.Detail("AWS DBSubnetGroup exists, skipping...")
 		return nil
 	}
 
@@ -98,8 +104,8 @@ func (sg *dbSubnetGroup) create() error {
 	}
 
 	params := &rds.CreateDBSubnetGroupInput{
-		DBSubnetGroupDescription: aws.String(sg.subnets[0].GroupName()),
-		DBSubnetGroupName:        aws.String(sg.subnets[0].GroupName()),
+		DBSubnetGroupDescription: aws.String(sg.name()),
+		DBSubnetGroupName:        aws.String(sg.name()),
 		SubnetIds:                subnetIds,
 	}
 	resp, err := sg.rds.CreateDBSubnetGroup(params)
@@ -109,6 +115,7 @@ func (sg *dbSubnetGroup) create() error {
 	sg.set(resp.DBSubnetGroup)
 	sg.dbs.dbSubnetGroupCache.add(sg)
 
+	msg.Detail("Created %s", sg.name())
 	return nil
 }
 
@@ -132,6 +139,7 @@ func (sg *dbSubnetGroup) destroy(flags ...string) error {
 	sg.clear()
 	sg.dbs.dbSubnetGroupCache.remove(sg)
 
+	msg.Detail("Destroyed %s", sg.name())
 	return nil
 }
 

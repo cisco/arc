@@ -124,7 +124,7 @@ func (dbs *databaseService) Route(req *route.Request) route.Response {
 	case route.Help:
 		dbs.Help()
 	default:
-		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		dbs.Help()
 		return route.FAIL
 	}
 	return route.OK
