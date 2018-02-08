@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -38,8 +39,8 @@ import (
 )
 
 type bucketSet struct {
-	*resource.Resources
 	*config.BucketSet
+	storage    *storage
 	bucketSets []resource.BucketSet
 
 	buckets []resource.Bucket
@@ -59,6 +60,10 @@ func newBucketSet(cfg *config.BucketSet, s *storage, prov provider.Storage) (*bu
 		b.buckets = append(b.buckets, bucket)
 	}
 	return b, nil
+}
+
+func (b *bucketSet) Storage() resource.Storage {
+	return b.storage
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -92,11 +97,26 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Audit:
+		if err := b.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Info:
 		b.Info()
 		return route.OK
+	case route.Config:
+		b.Print()
+		return route.OK
+	case route.Help:
+		b.Help()
+		return route.OK
+	default:
+		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		b.Help()
+		return route.FAIL
 	}
-	return b.RouteInOrder(req)
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -192,4 +212,25 @@ func (b *bucketSet) Info() {
 		bkt.Info()
 	}
 	msg.IndentDec()
+}
+
+func (b *bucketSet) Help() {
+	var header string = "\namp is a tool for managing account resources.\n\n" +
+		"Usage:\n\n" +
+		"  amp <account> %s <command>\n\n" +
+		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
+		"The commands are:\n\n"
+	commands := []help.Command{
+		{route.Create.String(), fmt.Sprintf("create bucket set %s", b.Name())},
+		{route.Destroy.String(), fmt.Sprintf("destroy bucket set %s", b.Name())},
+		{route.Provision.String(), fmt.Sprintf("update the tags for buckets in  %s", b.Name())},
+		{route.Audit.String(), fmt.Sprintf("audit bucket set %s", b.Name())},
+		{route.Info.String(), "show information about allocated bucket set"},
+		{route.Config.String(), "show the configuration for the given bucket set"},
+		{route.Help.String(), "show this help"},
+	}
+	fmt.Printf(header, "bucket")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
 }

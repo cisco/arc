@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -83,14 +84,25 @@ func (b *bucket) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Audit:
+		if err := b.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Info:
 		b.Info()
 		return route.OK
 	case route.Config:
 		b.Print()
 		return route.OK
+	case route.Help:
+		b.Help()
+		return route.OK
 	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
+		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		b.Help()
+		return route.FAIL
 	}
 }
 
@@ -183,7 +195,7 @@ func (b *bucket) SetTags(t map[string]string) error {
 
 func (b *bucket) createSecurityTags() error {
 	tags := map[string]string{}
-	for k, v := range b.Storage().SecurityTags() {
+	for k, v := range b.Storage().Amp().SecurityTags() {
 		tags[k] = v
 	}
 	for k, v := range b.SecurityTags() {
@@ -200,8 +212,26 @@ func (b *bucket) Info() {
 }
 
 func (b *bucket) Help() {
+	var header string = "\namp is a tool for managing account resources.\n\n" +
+		"Usage:\n\n" +
+		"  amp <account> %s <command>\n\n" +
+		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
+		"The commands are:\n\n"
+	commands := []help.Command{
+		{route.Create.String(), fmt.Sprintf("create bucket %s", b.Name())},
+		{route.Destroy.String(), fmt.Sprintf("destroy bucket %s", b.Name())},
+		{route.Provision.String(), fmt.Sprintf("update the tags for %s", b.Name())},
+		{route.Audit.String(), fmt.Sprintf("audit bucket %s", b.Name())},
+		{route.Info.String(), "show information about allocated bucket"},
+		{route.Config.String(), "show the configuration for the given bucket"},
+		{route.Help.String(), "show this help"},
+	}
+	fmt.Printf(header, "bucket")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
 }
 
 func (b *bucket) Load() error {
-	return nil
+	return b.providerBucket.Load()
 }

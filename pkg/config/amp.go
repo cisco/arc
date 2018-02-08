@@ -40,6 +40,7 @@ type Amp struct {
 	Name_         string         `json:"name"`
 	Notifications *Notifications `json:"notifications"`
 	Provider      *Provider      `json:"provider"`
+	SecurityTags_ SecurityTags   `json:"security_tags"`
 	Storage       *Storage       `json:"storage"`
 }
 
@@ -61,10 +62,17 @@ func (a *Amp) Name() string {
 	return a.Name_
 }
 
+func (a *Amp) SecurityTags() SecurityTags {
+	return a.SecurityTags_
+}
+
 func (a *Amp) PrintLocal() {
 	msg.Detail("%-20s\t%s", "name", a.Name())
 	if a.Provider != nil {
 		a.Provider.Print()
+	}
+	if a.SecurityTags_ != nil {
+		a.SecurityTags_.Print()
 	}
 }
 

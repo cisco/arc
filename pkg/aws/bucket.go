@@ -206,6 +206,9 @@ func (b *bucket) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
+	if err := b.Load(); err != nil {
+		return err
+	}
 	msg.Detail("Bucket created: %s", b.Name())
 	err = b.enableVersioning()
 	if err != nil {
@@ -220,6 +223,23 @@ func (b *bucket) Create(flags ...string) error {
 }
 
 func (b *bucket) Load() error {
+	if b.bucket != nil {
+		log.Debug("Skipping Bucket load, cached...")
+		return nil
+	}
+	params := &s3.ListBucketsInput{}
+	resp, err := b.s3.ListBuckets(params)
+	if err != nil {
+		return err
+	}
+	for _, bucket := range resp.Buckets {
+		if aws.StringValue(bucket.Name) == b.Name() {
+			b.bucket = bucket
+		}
+	}
+	if b.bucket == nil {
+		return fmt.Errorf("Could not find bucket on AWS")
+	}
 	return nil
 }
 func (b *bucket) Destroy(flags ...string) error {

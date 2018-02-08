@@ -32,7 +32,6 @@ import (
 )
 
 type StaticStorage interface {
-	SecurityTags() config.SecurityTags
 	config.Printer
 }
 
@@ -53,8 +52,11 @@ type Storage interface {
 	// Amp provides access to Storage's parent object.
 	Amp() Amp
 
-	// Find returns the bucket with the given name.
-	Find(string) Bucket
+	// FindBucket returns the bucket with the given name.
+	FindBucket(string) Bucket
+
+	// FindBucketSet returns the bucket set with the given name.
+	FindBucketSet(string) BucketSet
 
 	// Bucket provides access to Storage's children Buckets.
 	Buckets() []Bucket

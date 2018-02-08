@@ -31,6 +31,7 @@ import (
 
 	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -80,6 +81,14 @@ func newStorage(amp *amp, cfg *config.Storage) (*storage, error) {
 		s.buckets = append(s.buckets, bucket)
 	}
 
+	for _, conf := range cfg.BucketSets {
+		bucketSet, err := newBucketSet(conf, s, prov)
+		if err != nil {
+			return nil, err
+		}
+		s.bucketSets = append(s.bucketSets, bucketSet)
+	}
+
 	return s, nil
 }
 
@@ -89,11 +98,21 @@ func (s *storage) Amp() resource.Amp {
 	return s.amp
 }
 
-// Find returns the bucket with the given name.
-func (s *storage) Find(name string) resource.Bucket {
+// FindBucket returns the bucket with the given name.
+func (s *storage) FindBucket(name string) resource.Bucket {
 	for _, bkt := range s.buckets {
 		if name == bkt.Name() {
 			return bkt
+		}
+	}
+	return nil
+}
+
+// Find returns the bucket with the given name.
+func (s *storage) FindBucketSet(name string) resource.BucketSet {
+	for _, bs := range s.bucketSets {
+		if name == bs.Name() {
+			return bs
 		}
 	}
 	return nil
@@ -121,25 +140,28 @@ func (s *storage) Route(req *route.Request) route.Response {
 		break
 	case "bucket":
 		req.Pop()
-		bucket := s.Find(req.Top())
+		bucket := s.FindBucket(req.Top())
 		if bucket == nil {
 			msg.Error("Unknown bucket %q.", req.Top())
 			return route.FAIL
 		}
+		if req.Command() == route.Audit {
+			aaa.NewAudit("Bucket")
+		}
+		req.Flags().Append("Bucket")
 		return bucket.Route(req)
 	case "bucket_set":
-		/*
-			req.Pop()
-			if req.Top() == "" {
-				return s.bucketSets.Route(req)
-			}
-			bucketSet := s.bucketSets.Find(req.Top())
-			if bucketSet == nil {
-				msg.Error("Unknown bucket set %q.", req.Top())
-				return route.FAIL
-			}
-			return bucketSet.Route(req)
-		*/
+		req.Pop()
+		bucketSet := s.FindBucketSet(req.Top())
+		if bucketSet == nil {
+			msg.Error("Unknown bucket set %q.", req.Top())
+			return route.FAIL
+		}
+		if req.Command() == route.Audit {
+			aaa.NewAudit("Bucket Set")
+		}
+		req.Flags().Append("Bucket Set")
+		return bucketSet.Route(req)
 	}
 
 	// Skip if the test flag is set
@@ -161,24 +183,35 @@ func (s *storage) Route(req *route.Request) route.Response {
 	case route.Provision:
 		return s.RouteInOrder(req)
 	case route.Audit:
-		if err := s.Audit("Bucket"); err != nil {
+		if err := s.Audit("Bucket", "Bucket Set"); err != nil {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Help:
+		s.Help()
+		return route.OK
+	default:
+		msg.Error("Internal Error: amp/storage.go Unknown command " + req.Command().String())
+		s.Help()
+		return route.FAIL
 	}
-	msg.Error("Internal Error: amp/storage.go. Unknown command %s", req.Command())
-	return route.FAIL
 }
 
 func (s *storage) info(req *route.Request) {
 	msg.Info("Storage")
 	msg.IndentInc()
+	msg.Info("Buckets")
+	msg.IndentInc()
 	for _, b := range s.buckets {
 		b.Route(req)
 	}
+	msg.IndentDec()
+	msg.Info("Bucket Sets")
+	msg.IndentInc()
 	for _, bs := range s.bucketSets {
 		bs.Route(req)
 	}
+	msg.IndentDec()
 	msg.IndentDec()
 }
 
@@ -193,20 +226,42 @@ func (s *storage) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
-	err := aaa.NewAudit(flags[0])
-	if err != nil {
-		return err
+	for _, v := range flags {
+		err := aaa.NewAudit(v)
+		if err != nil {
+			return err
+		}
 	}
-	if err := s.providerStorage.Audit(flags...); err != nil {
+	if err := s.providerStorage.Audit("Bucket"); err != nil {
 		return err
 	}
 	for _, b := range s.buckets {
-		if err := b.Audit(flags...); err != nil {
+		if err := b.Audit("Bucket"); err != nil {
 			return err
+		}
+	}
+	for _, bs := range s.bucketSets {
+		if err := bs.Audit("Bucket Set"); err != nil {
 		}
 	}
 	return nil
 }
 
 func (s *storage) Help() {
+	var header string = "\namp is a tool for managing account resources.\n\n" +
+		"Usage:\n\n" +
+		"  amp <account> %s <command>\n\n" +
+		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
+		"The commands are:\n\n"
+	commands := []help.Command{
+		{route.Provision.String(), "update the storage"},
+		{route.Audit.String(), "audit the storage"},
+		{route.Info.String(), "show information about allocated storage"},
+		{route.Config.String(), "show the configuration for the given storage"},
+		{route.Help.String(), "show this help"},
+	}
+	fmt.Printf(header, "storage")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
 }
