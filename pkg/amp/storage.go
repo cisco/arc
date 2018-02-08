@@ -254,11 +254,11 @@ func (s *storage) Help() {
 		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
 		"The commands are:\n\n"
 	commands := []help.Command{
-		{route.Provision.String(), "update the storage"},
-		{route.Audit.String(), "audit the storage"},
-		{route.Info.String(), "show information about allocated storage"},
-		{route.Config.String(), "show the configuration for the given storage"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Provision.String(), Desc: "update the storage"},
+		{Name: route.Audit.String(), Desc: "audit the storage"},
+		{Name: route.Info.String(), Desc: "show information about allocated storage"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given storage"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	fmt.Printf(header, "storage")
 	for _, v := range commands {

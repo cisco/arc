@@ -171,18 +171,18 @@ Usage:
   The resources are:
 `
 	resources := []help.Command{
-		{"storage", "manage storage"},
-		{"bucket 'name'", "manage named bucket"},
-		{"bucket_set 'name'", "manage named bucket"},
+		{Name: "storage", Desc: "manage storage"},
+		{Name: "bucket 'name'", Desc: "manage named bucket"},
+		{Name: "bucket_set 'name'", Desc: "manage named bucket"},
 	}
 	fmt.Printf(header)
 	for _, v := range resources {
 		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
 	}
 	commands := []help.Command{
-		{route.Info.String(), "show information about allocation amp resources"},
-		{route.Config.String(), "show the amp configuration for the given account"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Info.String(), Desc: "show information about allocation amp resources"},
+		{Name: route.Config.String(), Desc: "show the amp configuration for the given account"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	fmt.Printf("The commands are:\n\n")
 	for _, v := range commands {

@@ -221,13 +221,13 @@ func (b *bucketSet) Help() {
 		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
 		"The commands are:\n\n"
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create bucket set %s", b.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy bucket set %s", b.Name())},
-		{route.Provision.String(), fmt.Sprintf("update the tags for buckets in  %s", b.Name())},
-		{route.Audit.String(), fmt.Sprintf("audit bucket set %s", b.Name())},
-		{route.Info.String(), "show information about allocated bucket set"},
-		{route.Config.String(), "show the configuration for the given bucket set"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create bucket set %s", b.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy bucket set %s", b.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update the tags for buckets in  %s", b.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit bucket set %s", b.Name())},
+		{Name: route.Info.String(), Desc: "show information about allocated bucket set"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given bucket set"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	fmt.Printf(header, "bucket")
 	for _, v := range commands {

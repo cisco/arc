@@ -218,13 +218,13 @@ func (b *bucket) Help() {
 		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
 		"The commands are:\n\n"
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create bucket %s", b.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy bucket %s", b.Name())},
-		{route.Provision.String(), fmt.Sprintf("update the tags for %s", b.Name())},
-		{route.Audit.String(), fmt.Sprintf("audit bucket %s", b.Name())},
-		{route.Info.String(), "show information about allocated bucket"},
-		{route.Config.String(), "show the configuration for the given bucket"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create bucket %s", b.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy bucket %s", b.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update the tags for %s", b.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit bucket %s", b.Name())},
+		{Name: route.Info.String(), Desc: "show information about allocated bucket"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given bucket"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	fmt.Printf(header, "bucket")
 	for _, v := range commands {
