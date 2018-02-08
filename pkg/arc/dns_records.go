@@ -171,12 +171,12 @@ func (d *dnsRecords) Route(req *route.Request) route.Response {
 func (d *dnsRecords) help() {
 	t := strings.ToLower(d.Type())
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create all dns %s records", t)},
-		{route.Destroy.String(), fmt.Sprintf("destroy all dns %s records", t)},
-		{"'name'", fmt.Sprintf("manage named dns %s record", t)},
-		{route.Config.String(), fmt.Sprintf("show the dns %s records configuration", t)},
-		{route.Info.String(), fmt.Sprintf("show information about allocated dns %s records", t)},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create all dns %s records", t)},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy all dns %s records", t)},
+		{Name: "'name'", Desc: fmt.Sprintf("manage named dns %s record", t)},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("show the dns %s records configuration", t)},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated dns %s records", t)},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print(fmt.Sprintf("dns %s", t), commands)
 }

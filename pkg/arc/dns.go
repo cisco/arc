@@ -241,15 +241,15 @@ func (d *dns) Audit(flags ...string) error {
 
 func (d *dns) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create all dns records"},
-		{route.Destroy.String(), "destroy all dns records"},
-		{"a", "manage dns a records"},
-		{"a 'name'", "manage named dns a record"},
-		{"cname", "manage dns cname records"},
-		{"cname 'name'", "manage named dns cname record"},
-		{route.Config.String(), "show the dns configuration"},
-		{route.Info.String(), "show information about allocated dns resource"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create all dns records"},
+		{Name: route.Destroy.String(), Desc: "destroy all dns records"},
+		{Name: "a", Desc: "manage dns a records"},
+		{Name: "a 'name'", Desc: "manage named dns a record"},
+		{Name: "cname", Desc: "manage dns cname records"},
+		{Name: "cname 'name'", Desc: "manage named dns cname record"},
+		{Name: route.Config.String(), Desc: "show the dns configuration"},
+		{Name: route.Info.String(), Desc: "show information about allocated dns resource"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("dns", commands)
 }

@@ -192,12 +192,12 @@ func (dbs *databaseService) Info() {
 // Help satisfies resource.DatabaseService.
 func (dbs *databaseService) Help() {
 	commands := []help.Command{
-		{"'name'", "manage named database instance"},
-		{route.Provision.String(), "update the database service"},
-		{route.Audit.String(), "audit the database service"},
-		{route.Info.String(), "show information about allocated database service"},
-		{route.Config.String(), "show the configuration for the given database service"},
-		{route.Help.String(), "show this help"},
+		{Name: "'name'", Desc: "manage named database instance"},
+		{Name: route.Provision.String(), Desc: "update the database service"},
+		{Name: route.Audit.String(), Desc: "audit the database service"},
+		{Name: route.Info.String(), Desc: "show information about allocated database service"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given database service"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("db", commands)
 }

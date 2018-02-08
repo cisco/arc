@@ -163,11 +163,11 @@ func (k *keypair) Load() error {
 
 func (k *keypair) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create the keypair"},
-		{route.Destroy.String(), "destroy the keypair"},
-		{route.Config.String(), "provide the configuration for the keypair"},
-		{route.Info.String(), "provide information about the keypair"},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: "create the keypair"},
+		{Name: route.Destroy.String(), Desc: "destroy the keypair"},
+		{Name: route.Config.String(), Desc: "provide the configuration for the keypair"},
+		{Name: route.Info.String(), Desc: "provide information about the keypair"},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	help.Print("keypair", commands)
 }

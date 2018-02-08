@@ -214,9 +214,8 @@ func (d *dataCenter) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Audit:
 		return d.RouteInOrder(req)
-	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
 	}
+	msg.Error("Internal Error: arc/datacenter.go. Unknown command %s", req.Command())
 	return route.FAIL
 }
 

@@ -122,7 +122,7 @@ func (i *Instance) setupUsers(commands []command.Command) ([]command.Command, er
 	for _, name := range i.Teams() {
 		team := users.Teams[name]
 		if team == nil {
-			return commands, fmt.Errorf("Unknown Team %1", name)
+			return commands, fmt.Errorf("Unknown Team %s", name)
 		}
 		commands = append(commands,
 			command.Command{

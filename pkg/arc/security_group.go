@@ -141,13 +141,13 @@ func (s *securityGroup) Load() error {
 
 func (s *securityGroup) help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s security group", s.Name())},
-		{route.Audit.String(), fmt.Sprintf("audit %s security groups", s.Name())},
-		{route.Provision.String(), fmt.Sprintf("update %s security groups", s.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s security group", s.Name())},
-		{route.Config.String(), fmt.Sprintf("show the %s security group configuration", s.Name())},
-		{route.Info.String(), fmt.Sprintf("show information about allocated i%s security group", s.Name())},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s security group", s.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit %s security groups", s.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update %s security groups", s.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s security group", s.Name())},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("show the %s security group configuration", s.Name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated i%s security group", s.Name())},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print(fmt.Sprintf("secgroup %s", s.Name()), commands)
 }

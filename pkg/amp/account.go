@@ -57,7 +57,7 @@ func newAccount(amp *amp, cfg *config.Account) (*account, error) {
 	if cfg.Provider == nil {
 		return nil, fmt.Errorf("The provider element is missing from the account configuration")
 	}
-	if cfg.SecurityTags == nil {
+	if cfg.SecurityTags() == nil {
 		return nil, fmt.Errorf("The security tags element is missing from the account configuration")
 	}
 	if cfg.Storage == nil {
@@ -138,9 +138,8 @@ func (a *account) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Audit:
 		return a.RouteInOrder(req)
-	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
 	}
+	msg.Error("Internal Error: amp/account.go. Unknown command %s", req.Command())
 	return route.FAIL
 }
 

@@ -116,7 +116,7 @@ func (c *bucketCache) audit(flags ...string) error {
 		a.Audit(aaa.Deployed, "\r")
 		for i, v := range c.unnamed {
 			u := "\t" + strings.Replace(fmt.Sprintf("%+v", v), "\n", "\n\t", -1)
-			m := fmt.Sprintf("Unnamed Bucket %d - Bucket Name: %q", i+1, *v.Name, u)
+			m := fmt.Sprintf("Unnamed Bucket %d - Bucket Name: %q %s", i+1, *v.Name, u)
 			a.Audit(aaa.Deployed, m)
 		}
 	}

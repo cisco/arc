@@ -321,18 +321,18 @@ func podHelp(n string) {
 		name = " " + n
 	}
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create%s pod", name)},
-		{route.Provision.String(), fmt.Sprintf("provision%s pod", name)},
-		{route.Provision.String() + " users", fmt.Sprintf("update%s pod users", name)},
-		{route.Start.String(), fmt.Sprintf("start%s pod", name)},
-		{route.Stop.String(), fmt.Sprintf("stop%s pod", name)},
-		{route.Restart.String(), fmt.Sprintf("restart%s pod", name)},
-		{route.Replace.String(), fmt.Sprintf("replace%s pod", name)},
-		{route.Audit.String(), fmt.Sprintf("audit%s pod", name)},
-		{route.Destroy.String(), fmt.Sprintf("destroy%s pod", name)},
-		{route.Config.String(), fmt.Sprintf("provide the%s pod configuration", name)},
-		{route.Info.String(), fmt.Sprintf("provide information about allocated%s pod", name)},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create%s pod", name)},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("provision%s pod", name)},
+		{Name: route.Provision.String() + " users", Desc: fmt.Sprintf("update%s pod users", name)},
+		{Name: route.Start.String(), Desc: fmt.Sprintf("start%s pod", name)},
+		{Name: route.Stop.String(), Desc: fmt.Sprintf("stop%s pod", name)},
+		{Name: route.Restart.String(), Desc: fmt.Sprintf("restart%s pod", name)},
+		{Name: route.Replace.String(), Desc: fmt.Sprintf("replace%s pod", name)},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit%s pod", name)},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy%s pod", name)},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("provide the%s pod configuration", name)},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("provide information about allocated%s pod", name)},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	if name == "" {
 		name = " [name]"

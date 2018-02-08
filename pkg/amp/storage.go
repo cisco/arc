@@ -153,9 +153,8 @@ func (s *storage) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
-	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
 	}
+	msg.Error("Internal Error: amp/storage.go. Unknown command %s", req.Command())
 	return route.FAIL
 }
 

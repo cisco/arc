@@ -230,22 +230,22 @@ func (a *arc) Route(req *route.Request) route.Response {
 // Help provides the command line help for the arc command.
 func Help() {
 	commands := []help.Command{
-		{"network", "manage network"},
-		{"subnet", "manage subnet groups"},
-		{"subnet 'name'", "manage named subnet group"},
-		{"secgroup", "manage security groups"},
-		{"secgroup 'name'", "manage named security group"},
-		{"compute", "manage compute"},
-		{"keypair", "manage keypair"},
-		{"cluster 'name'", "manage named cluster"},
-		{"pod 'name'", "manage named pod"},
-		{"instance 'name'", "manage named instance"},
-		{"db", "manage database service"},
-		{"db 'name'", "manage named database service"},
-		{"dns", "manage dns"},
-		{route.Config.String(), "show the arc configuration for the given datacenter"},
-		{route.Info.String(), "show information about allocated arc resources"},
-		{route.Help.String(), "show this help"},
+		{Name: "network", Desc: "manage network"},
+		{Name: "subnet", Desc: "manage subnet groups"},
+		{Name: "subnet 'name'", Desc: "manage named subnet group"},
+		{Name: "secgroup", Desc: "manage security groups"},
+		{Name: "secgroup 'name'", Desc: "manage named security group"},
+		{Name: "compute", Desc: "manage compute"},
+		{Name: "keypair", Desc: "manage keypair"},
+		{Name: "cluster 'name'", Desc: "manage named cluster"},
+		{Name: "pod 'name'", Desc: "manage named pod"},
+		{Name: "instance 'name'", Desc: "manage named instance"},
+		{Name: "db", Desc: "manage database service"},
+		{Name: "db 'name'", Desc: "manage named database service"},
+		{Name: "dns", Desc: "manage dns"},
+		{Name: route.Config.String(), Desc: "show the arc configuration for the given datacenter"},
+		{Name: route.Info.String(), Desc: "show information about allocated arc resources"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("", commands)
 }

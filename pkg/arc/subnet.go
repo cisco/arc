@@ -108,9 +108,8 @@ func (s *subnet) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Create, route.Destroy, route.Info:
 		return s.providerSubnet.Route(req)
-	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
 	}
+	msg.Error("Internal Error: arc/subnet.go. Unknown command %s", req.Command())
 	return route.FAIL
 }
 

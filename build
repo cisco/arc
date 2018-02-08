@@ -39,6 +39,12 @@ function setup_version() {
   fi
 }
 
+function vet() {
+  printf "\n\n${title}Vetting...${clear}\n\n"
+  go vet ./...
+  printf "${time}"
+}
+
 function build() {
   printf "\n\n${title}Building...${clear}\n\n"
   set -x
@@ -96,6 +102,7 @@ function main() {
     return
   fi
   setup_version
+  time vet; printf "${clear}"
   time build; printf "${clear}"
   report_versions
   time run_unit_tests; printf "${clear}"

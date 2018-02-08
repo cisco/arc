@@ -146,11 +146,11 @@ func (s *subnetGroup) Route(req *route.Request) route.Response {
 
 func (s *subnetGroup) help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s subnet group", s.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s subnet group", s.Name())},
-		{route.Config.String(), fmt.Sprintf("show the %s subnet group configuration", s.Name())},
-		{route.Info.String(), fmt.Sprintf("show information about allocated %s subnet group", s.Name())},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s subnet group", s.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s subnet group", s.Name())},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("show the %s subnet group configuration", s.Name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated %s subnet group", s.Name())},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print(fmt.Sprintf("subnet %s", s.Name()), commands)
 }

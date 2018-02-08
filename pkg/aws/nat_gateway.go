@@ -402,10 +402,10 @@ func (n *natGateway) destroy(req *route.Request) route.Response {
 
 func (n *natGateway) help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s nat gateway", n.name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s nat gateway", n.name())},
-		{route.Info.String(), fmt.Sprintf("show information about allocated %s nat gateway", n.name())},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s nat gateway", n.name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s nat gateway", n.name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated %s nat gateway", n.name())},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("network natgateway", commands)
 }

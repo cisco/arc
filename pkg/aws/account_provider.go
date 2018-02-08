@@ -73,7 +73,7 @@ func NewAccountProvider(cfg *config.Account) (provider.Account, error) {
 
 	a.s3 = map[string]*s3.S3{}
 
-	for region, _ := range regions {
+	for region := range regions {
 		opts := session.Options{
 			Config: aws.Config{
 				CredentialsChainVerboseErrors: aws.Bool(true),

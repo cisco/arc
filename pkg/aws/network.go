@@ -151,9 +151,9 @@ func (n *network) CanRoute(req *route.Request) bool {
 
 func (n *network) HelpCommands() []help.Command {
 	return []help.Command{
-		{"vpc", "manage aws vpc"},
-		{"routetables", "manage aws routetables"},
-		{"routetable [name]", "manage named aws routetable"},
-		{"internetgateway", "manage aws internet gateway"},
+		{Name: "vpc", Desc: "manage aws vpc"},
+		{Name: "routetables", Desc: "manage aws routetables"},
+		{Name: "routetable [name]", Desc: "manage named aws routetable"},
+		{Name: "internetgateway", Desc: "manage aws internet gateway"},
 	}
 }

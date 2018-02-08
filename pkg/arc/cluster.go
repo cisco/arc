@@ -215,18 +215,18 @@ func (c *Cluster) routeReverseToChildren(req *route.Request) route.Response {
 
 func (c *Cluster) help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s cluster", c.Name())},
-		{route.Provision.String(), fmt.Sprintf("provision %s cluster", c.Name())},
-		{route.Provision.String() + " users", fmt.Sprintf("update %s cluster users", c.Name())},
-		{route.Start.String(), fmt.Sprintf("start %s cluster", c.Name())},
-		{route.Stop.String(), fmt.Sprintf("stop %s cluster", c.Name())},
-		{route.Restart.String(), fmt.Sprintf("restart %s cluster", c.Name())},
-		{route.Replace.String(), fmt.Sprintf("replace %s cluster", c.Name())},
-		{route.Audit.String(), fmt.Sprintf("audit %s cluster", c.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s cluster", c.Name())},
-		{route.Config.String(), fmt.Sprintf("provide the %s cluster configuration", c.Name())},
-		{route.Info.String(), fmt.Sprintf("provide information about allocated %s cluster", c.Name())},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s cluster", c.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("provision %s cluster", c.Name())},
+		{Name: route.Provision.String() + " users", Desc: fmt.Sprintf("update %s cluster users", c.Name())},
+		{Name: route.Start.String(), Desc: fmt.Sprintf("start %s cluster", c.Name())},
+		{Name: route.Stop.String(), Desc: fmt.Sprintf("stop %s cluster", c.Name())},
+		{Name: route.Restart.String(), Desc: fmt.Sprintf("restart %s cluster", c.Name())},
+		{Name: route.Replace.String(), Desc: fmt.Sprintf("replace %s cluster", c.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit %s cluster", c.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s cluster", c.Name())},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("provide the %s cluster configuration", c.Name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("provide information about allocated %s cluster", c.Name())},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	help.Print(fmt.Sprintf("cluster %s", c.Name()), commands)
 }

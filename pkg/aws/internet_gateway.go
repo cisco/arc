@@ -263,10 +263,10 @@ func (i *internetGateway) destroy(req *route.Request) route.Response {
 
 func (i *internetGateway) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create internet gateway"},
-		{route.Destroy.String(), "destroy internet gateway"},
-		{route.Info.String(), "show information about allocated internet gateway"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create internet gateway"},
+		{Name: route.Destroy.String(), Desc: "destroy internet gateway"},
+		{Name: route.Info.String(), Desc: "show information about allocated internet gateway"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("network internetgateway", commands)
 }

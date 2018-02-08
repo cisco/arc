@@ -190,10 +190,10 @@ func (c *clusters) Audit(flags ...string) error {
 
 func (c *clusters) help() {
 	commands := []help.Command{
-		{"'name'", "manage named cluster"},
-		{route.Config.String(), "provide the clusters configuration"},
-		{route.Info.String(), "provide information about allocated clusters"},
-		{route.Help.String(), "provide this help"},
+		{Name: "'name'", Desc: "manage named cluster"},
+		{Name: route.Config.String(), Desc: "provide the clusters configuration"},
+		{Name: route.Info.String(), Desc: "provide information about allocated clusters"},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	help.Print("cluster", commands)
 }
