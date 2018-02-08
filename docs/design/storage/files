@@ -1,0 +1,17 @@
+pkg/config/amp.go
+pkg/config/storage.go
+pkg/config/bucket.go
+pkg/config/bucket_set.go
+pkg/resource/amp.go
+pkg/resource/account.go
+pkg/resource/storage.go
+pkg/resource/bucket.go
+pkg/resource/bucket_set.go
+pkg/aws/storage_provider.go
+pkg/amp/amp.go
+pkg/amp/storage.go
+pkg/amp/bucket.go
+pkg/amp/bucket_set.go
+pkg/aws/storage.go
+pkg/aws/bucket.go
+pkg/aws/bucket_cache.go
