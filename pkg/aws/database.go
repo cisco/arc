@@ -101,6 +101,9 @@ func (db *database) Create(flags ...string) error {
 	if err := db.subnetGroup.create(); err != nil {
 		return err
 	}
+	if db.db != nil {
+		return nil
+	}
 
 	params := &rds.CreateDBInstanceInput{
 		DBInstanceClass:      aws.String(db.InstanceType()),
@@ -153,11 +156,11 @@ func (db *database) Create(flags ...string) error {
 }
 
 func (db *database) Created() bool {
-	return db.db != nil
+	return db.db != nil && db.subnetGroup.created()
 }
 
 func (db *database) Destroy(flags ...string) error {
-	if db.Destroyed() {
+	if db.db == nil {
 		if err := db.subnetGroup.destroy(); err != nil {
 			return err
 		}
@@ -183,7 +186,7 @@ func (db *database) Destroy(flags ...string) error {
 }
 
 func (db *database) Destroyed() bool {
-	return db.db == nil
+	return db.db == nil && db.subnetGroup.destroyed()
 }
 
 func (db *database) Provision(flags ...string) error {
@@ -197,7 +200,7 @@ func (db *database) Audit(flags ...string) error {
 }
 
 func (db *database) Info() {
-	if db.Destroyed() {
+	if db.db == nil {
 		return
 	}
 	if db.db.DBInstanceIdentifier != nil {
@@ -250,7 +253,7 @@ func (db *database) Info() {
 }
 
 func (db *database) Id() string {
-	if db.Destroyed() || db.db.DBInstanceIdentifier == nil {
+	if db.Destroyed() || db.db == nil || db.db.DBInstanceIdentifier == nil {
 		return ""
 	}
 	return *db.db.DBInstanceIdentifier
