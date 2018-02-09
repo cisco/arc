@@ -100,6 +100,7 @@ Here is an example of an account's storage that has one bucket "sample-bucket", 
             "Destination": "sample-replicated-bucket-us-east-1"
           }
         ]
+      }
     ]
   }
 }
