@@ -190,6 +190,17 @@ func (db *database) Create(flags ...string) error {
 	db.set(resp.DBInstance)
 	db.dbs.databaseCache.add(db)
 
+	reloaded := msg.Wait(
+		fmt.Sprintf("Waiting for AWS DBInstance %q to become available", db.Name()),
+		"",
+		600,
+		func() bool { return db.State() == "available" },
+		db.reload,
+	)
+	if !reloaded {
+		return fmt.Errorf("Failed to load AWS DBInstance %q.", db.Name())
+	}
+
 	return nil
 }
 
