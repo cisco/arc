@@ -41,7 +41,7 @@ type databaseService struct {
 	*config.DatabaseService
 	arc                     resource.Arc
 	providerDatabaseService resource.ProviderDatabaseService
-	databases               []resource.Database
+	databases               []*database
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
