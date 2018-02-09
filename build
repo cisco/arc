@@ -39,10 +39,18 @@ function setup_version() {
   fi
 }
 
+function check_format() {
+  printf "\n\n${title}Checking format for $1...${clear}\n"
+  if [ $(gofmt -l -s $1 | wc -l) -gt 0 ]; then
+    gofmt -l -s ./pkg
+    echo "Formatting errors. Exiting"
+    exit 1
+  fi
+}
+
 function vet() {
-  printf "\n\n${title}Vetting...${clear}\n\n"
+  printf "\n\n${title}Vetting...${clear}\n"
   go vet ./...
-  printf "${time}"
 }
 
 function build() {
@@ -102,7 +110,9 @@ function main() {
     return
   fi
   setup_version
-  time vet; printf "${clear}"
+  check_format ./pkg
+  check_format ./cmd
+  vet
   time build; printf "${clear}"
   report_versions
   time run_unit_tests; printf "${clear}"

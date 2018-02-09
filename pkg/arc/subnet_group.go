@@ -89,7 +89,7 @@ func newSubnetGroup(n *network, prov provider.DataCenter, cfg *config.SubnetGrou
 	return s, nil
 }
 
-// Subnets satifies the resource.SubnetGroup interface and provide
+// Subnets satisfies the resource.SubnetGroup interface and provide
 // access to the child subnets of the subnet group.
 func (s *subnetGroup) Subnets() map[string]resource.Subnet {
 	return s.subnets
