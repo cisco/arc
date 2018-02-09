@@ -45,18 +45,18 @@ const (
 )
 
 var c2s = map[Command][]string{
-	Load:      []string{"load"},
-	Help:      []string{"help"},
-	Config:    []string{"config"},
-	Info:      []string{"info", "show", "list"},
-	Create:    []string{"create"},
-	Provision: []string{"provision", "refresh", "update"},
-	Start:     []string{"start"},
-	Stop:      []string{"stop"},
-	Restart:   []string{"restart", "reboot"},
-	Replace:   []string{"replace", "upgrade"},
-	Destroy:   []string{"destroy", "delete", "nuke"},
-	Audit:     []string{"audit"},
+	Load:      {"load"},
+	Help:      {"help"},
+	Config:    {"config"},
+	Info:      {"info", "show", "list"},
+	Create:    {"create"},
+	Provision: {"provision", "refresh", "update"},
+	Start:     {"start"},
+	Stop:      {"stop"},
+	Restart:   {"restart", "reboot"},
+	Replace:   {"replace", "upgrade"},
+	Destroy:   {"destroy", "delete", "nuke"},
+	Audit:     {"audit"},
 }
 
 var s2c = map[string]Command{

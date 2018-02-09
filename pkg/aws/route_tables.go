@@ -132,11 +132,11 @@ func (r *routeTables) find(s string) *routeTable {
 
 func (r *routeTables) help() {
 	commands := []help.Command{
-		{"'name'", "manage named routetable"},
-		{route.Create.String(), "create all routetables"},
-		{route.Destroy.String(), "destroy all routetables"},
-		{route.Info.String(), "show information about all allocated routetables"},
-		{route.Help.String(), "show this help"},
+		{Name: "'name'", Desc: "manage named routetable"},
+		{Name: route.Create.String(), Desc: "create all routetables"},
+		{Name: route.Destroy.String(), Desc: "destroy all routetables"},
+		{Name: route.Info.String(), Desc: "show information about all allocated routetables"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("network routetable", commands)
 }

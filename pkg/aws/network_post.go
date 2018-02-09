@@ -95,7 +95,7 @@ func (n *networkPost) CanRoute(req *route.Request) bool {
 
 func (n *networkPost) HelpCommands() []help.Command {
 	return []help.Command{
-		{"natgateways", "manage aws nat gateways"},
-		{"natgateway [name]", "manage named aws natgateway"},
+		{Name: "natgateways", Desc: "manage aws nat gateways"},
+		{Name: "natgateway [name]", Desc: "manage named aws natgateway"},
 	}
 }

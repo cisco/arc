@@ -218,11 +218,11 @@ func (n *network) Route(req *route.Request) route.Response {
 func (n *network) help() {
 	providerCommands := help.Append(n.providerNetwork.HelpCommands(), n.providerNetworkPost.HelpCommands())
 	commands := []help.Command{
-		{route.Create.String(), "create all network resources"},
-		{route.Destroy.String(), "destroy all network resources"},
-		{route.Config.String(), "show the network configuration"},
-		{route.Info.String(), "show information about allocated network resource"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create all network resources"},
+		{Name: route.Destroy.String(), Desc: "destroy all network resources"},
+		{Name: route.Config.String(), Desc: "show the network configuration"},
+		{Name: route.Info.String(), Desc: "show information about allocated network resource"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	commands = help.Append(providerCommands, commands)
 	help.Print("network", commands)

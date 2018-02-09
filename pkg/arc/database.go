@@ -285,13 +285,13 @@ func (db *database) Id() string {
 // Help satisfies the resource.Database interface.
 func (db *database) Help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s database instance", db.Name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s database instance", db.Name())},
-		{route.Provision.String(), fmt.Sprintf("update %s database instance", db.Name())},
-		{route.Audit.String(), fmt.Sprintf("audit %s database instance", db.Name())},
-		{route.Info.String(), fmt.Sprintf("provide information about allocated %s database instance", db.Name())},
-		{route.Config.String(), fmt.Sprintf("provide the %s database instance configuration", db.Name())},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s database instance", db.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s database instance", db.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update %s database instance", db.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit %s database instance", db.Name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("provide information about allocated %s database instance", db.Name())},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("provide the %s database instance configuration", db.Name())},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	help.Print(fmt.Sprintf("db %s", db.Name()), commands)
 }

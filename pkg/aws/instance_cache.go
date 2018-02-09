@@ -182,7 +182,7 @@ func (c *instanceCache) audit(flags ...string) error {
 		a.Audit(aaa.Deployed, "\r")
 		for i, v := range c.unnamed {
 			u := "\t" + strings.Replace(fmt.Sprintf("%+v", v), "\n", "\n\t", -1)
-			m := fmt.Sprintf("Unnamed Instance %d - InstanceId: %s", i+1, *v.InstanceId, u)
+			m := fmt.Sprintf("Unnamed Instance %d - InstanceId: %q %s", i+1, *v.InstanceId, u)
 			a.Audit(aaa.Deployed, m)
 		}
 	}

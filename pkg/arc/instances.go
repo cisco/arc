@@ -168,18 +168,18 @@ func (i *instances) Audit(flags ...string) error {
 
 func (i *instances) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create all instances"},
-		{route.Provision.String(), "provision all instances"},
-		{route.Start.String(), "start all instances"},
-		{route.Stop.String(), "stop all instances"},
-		{route.Restart.String(), "restart all instances"},
-		{route.Replace.String(), "replace all instances"},
-		{route.Audit.String(), "audit all instances"},
-		{route.Destroy.String(), "destroy all instances"},
-		{"'name'", "manage named instance"},
-		{route.Config.String(), "provide the instances configuration"},
-		{route.Info.String(), "provide information about allocated instances"},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: "create all instances"},
+		{Name: route.Provision.String(), Desc: "provision all instances"},
+		{Name: route.Start.String(), Desc: "start all instances"},
+		{Name: route.Stop.String(), Desc: "stop all instances"},
+		{Name: route.Restart.String(), Desc: "restart all instances"},
+		{Name: route.Replace.String(), Desc: "replace all instances"},
+		{Name: route.Audit.String(), Desc: "audit all instances"},
+		{Name: route.Destroy.String(), Desc: "destroy all instances"},
+		{Name: "'name'", Desc: "manage named instance"},
+		{Name: route.Config.String(), Desc: "provide the instances configuration"},
+		{Name: route.Info.String(), Desc: "provide information about allocated instances"},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	help.Print("pods command", commands)
 }

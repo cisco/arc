@@ -179,21 +179,21 @@ func (s *securityGroups) Route(req *route.Request) route.Response {
 		s.info(req)
 		return route.OK
 	default:
-		msg.Error("Unkown secgroup command %q.", req.Command().String())
+		msg.Error("Unknown secgroup command %q.", req.Command().String())
 	}
 	return route.FAIL
 }
 
 func (s *securityGroups) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create all security groups"},
-		{route.Audit.String(), "audit all security groups"},
-		{route.Provision.String(), "update all security groups"},
-		{route.Destroy.String(), "destroy all security groups"},
-		{"'name'", "manage named security group"},
-		{route.Config.String(), "show the security groups configuration"},
-		{route.Info.String(), "show information about allocated security groups"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create all security groups"},
+		{Name: route.Audit.String(), Desc: "audit all security groups"},
+		{Name: route.Provision.String(), Desc: "update all security groups"},
+		{Name: route.Destroy.String(), Desc: "destroy all security groups"},
+		{Name: "'name'", Desc: "manage named security group"},
+		{Name: route.Config.String(), Desc: "show the security groups configuration"},
+		{Name: route.Info.String(), Desc: "show information about allocated security groups"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("secgroup", commands)
 }

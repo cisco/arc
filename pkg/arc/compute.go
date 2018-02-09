@@ -266,7 +266,7 @@ func (c *compute) Route(req *route.Request) route.Response {
 
 func (c *compute) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
-		fmt.Errorf("No flag set to find audit object")
+		return fmt.Errorf("No flag set to find audit object")
 	}
 	err := aaa.NewAudit(flags[0])
 	if err != nil {
@@ -280,9 +280,9 @@ func (c *compute) Audit(flags ...string) error {
 
 func (c *compute) help() {
 	commands := []help.Command{
-		{route.Config.String(), "show the compute configuration"},
-		{route.Info.String(), "show information about allocated compute resource"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Config.String(), Desc: "show the compute configuration"},
+		{Name: route.Info.String(), Desc: "show information about allocated compute resource"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("compute", commands)
 }

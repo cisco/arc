@@ -529,18 +529,18 @@ func instanceHelp(n string) {
 		name = " " + n
 	}
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create%s instance", name)},
-		{route.Provision.String(), fmt.Sprintf("provision%s instance", name)},
-		{route.Provision.String() + " users", fmt.Sprintf("update%s instance users", name)},
-		{route.Start.String(), fmt.Sprintf("start%s instance", name)},
-		{route.Stop.String(), fmt.Sprintf("stop%s instance", name)},
-		{route.Restart.String(), fmt.Sprintf("restart%s instance", name)},
-		{route.Replace.String(), fmt.Sprintf("replace%s instance", name)},
-		{route.Audit.String(), fmt.Sprintf("audit%s instance", name)},
-		{route.Destroy.String(), fmt.Sprintf("destroy%s instance", name)},
-		{route.Config.String(), fmt.Sprintf("provide the%s instance configuration", name)},
-		{route.Info.String(), fmt.Sprintf("provide information about allocated%s instance", name)},
-		{route.Help.String(), "provide this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create%s instance", name)},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("provision%s instance", name)},
+		{Name: route.Provision.String() + " users", Desc: fmt.Sprintf("update%s instance users", name)},
+		{Name: route.Start.String(), Desc: fmt.Sprintf("start%s instance", name)},
+		{Name: route.Stop.String(), Desc: fmt.Sprintf("stop%s instance", name)},
+		{Name: route.Restart.String(), Desc: fmt.Sprintf("restart%s instance", name)},
+		{Name: route.Replace.String(), Desc: fmt.Sprintf("replace%s instance", name)},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit%s instance", name)},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy%s instance", name)},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("provide the%s instance configuration", name)},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("provide information about allocated%s instance", name)},
+		{Name: route.Help.String(), Desc: "provide this help"},
 	}
 	if name == "" {
 		name = " [name]"

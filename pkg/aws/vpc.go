@@ -253,10 +253,10 @@ func (v *vpc) destroy(req *route.Request) route.Response {
 
 func (v *vpc) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create vpc"},
-		{route.Destroy.String(), "destroy vpc"},
-		{route.Info.String(), "show information about allocated vpc"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create vpc"},
+		{Name: route.Destroy.String(), Desc: "destroy vpc"},
+		{Name: route.Info.String(), Desc: "show information about allocated vpc"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("network vpc", commands)
 }

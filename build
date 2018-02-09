@@ -39,6 +39,25 @@ function setup_version() {
   fi
 }
 
+function check_spelling() {
+  printf "\n\n${title}Checking spelling for $1...${clear}\n"
+  misspell $1
+}
+
+function check_format() {
+  printf "\n\n${title}Checking formatting for $1...${clear}\n"
+  if [ $(gofmt -l -s $1 | wc -l) -gt 0 ]; then
+    gofmt -l -s ./pkg
+    echo "Formatting errors. Exiting"
+    exit 1
+  fi
+}
+
+function vet() {
+  printf "\n\n${title}Vetting...${clear}\n"
+  go vet ./...
+}
+
 function build() {
   printf "\n\n${title}Building...${clear}\n\n"
   set -x
@@ -96,6 +115,11 @@ function main() {
     return
   fi
   setup_version
+  check_spelling ./pkg
+  check_spelling ./cmd
+  check_format ./pkg
+  check_format ./cmd
+  vet
   time build; printf "${clear}"
   report_versions
   time run_unit_tests; printf "${clear}"

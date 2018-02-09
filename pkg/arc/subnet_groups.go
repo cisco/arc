@@ -128,12 +128,12 @@ func (s *subnetGroups) Route(req *route.Request) route.Response {
 
 func (s *subnetGroups) help() {
 	commands := []help.Command{
-		{route.Create.String(), "create all subnet groups"},
-		{route.Destroy.String(), "destroy all subnet groups"},
-		{"'name'", "manage named subnet group"},
-		{route.Config.String(), "show the subnet groups configuration"},
-		{route.Info.String(), "show information about allocated subnet groups"},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: "create all subnet groups"},
+		{Name: route.Destroy.String(), Desc: "destroy all subnet groups"},
+		{Name: "'name'", Desc: "manage named subnet group"},
+		{Name: route.Config.String(), Desc: "show the subnet groups configuration"},
+		{Name: route.Info.String(), Desc: "show information about allocated subnet groups"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("subnet", commands)
 }

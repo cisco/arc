@@ -277,7 +277,7 @@ func (s *subnet) create(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		if resp := routeTable.associate(req, s); resp != route.OK {
-			msg.Error("Failed to associate %s with %s", s.Name(), routeTable.name)
+			msg.Error("Failed to associate %s with %s", s.Name(), routeTable.name())
 			s.destroy(req)
 			return route.FAIL
 		}
@@ -305,7 +305,7 @@ func (s *subnet) destroy(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		if resp := routeTable.disassociate(req, s); resp != route.OK {
-			msg.Error("Failed to disassociate %s with %s", s.Name(), routeTable.name)
+			msg.Error("Failed to disassociate %s with %s", s.Name(), routeTable.name())
 			return route.FAIL
 		}
 	}

@@ -25,6 +25,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+go get -u github.com/client9/misspell/cmd/misspell
+
 declare -r aws_sdk_dir="vendor/github.com/aws/aws-sdk-go"
 rm -rf $aws_sdk_dir
 git submodule init $aws_sdk_dir

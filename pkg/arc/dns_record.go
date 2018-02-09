@@ -327,11 +327,11 @@ func (r *dnsRecord) help() {
 	n := r.Name()
 	t := strings.ToLower(r.Type())
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s dns %s record", n, t)},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s dns %s record", n, t)},
-		{route.Config.String(), fmt.Sprintf("show the %s dns %s record configuration", n, t)},
-		{route.Info.String(), fmt.Sprintf("show information about allocated %s dns %s record", n, t)},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s dns %s record", n, t)},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s dns %s record", n, t)},
+		{Name: route.Config.String(), Desc: fmt.Sprintf("show the %s dns %s record configuration", n, t)},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated %s dns %s record", n, t)},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print(fmt.Sprintf("dns %s %s", n, t), commands)
 }

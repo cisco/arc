@@ -73,7 +73,7 @@ func TestNewRequest(t *testing.T) {
 		t.Fatalf("Expected path, got nil\n")
 	}
 	if len(p.path) > 0 {
-		t.Error("Expected empty path, got %q\n", p.path)
+		t.Errorf("Expected empty path, got %q\n", p.path)
 	}
 	cmd := req.Command()
 	if cmd != None {
@@ -83,7 +83,7 @@ func TestNewRequest(t *testing.T) {
 		t.Errorf("Expects no flags, got %q\n", req.flags)
 	}
 	if req.TestFlag() {
-		t.Errorf("Test flag shouldn't be set\n", req.flags)
+		t.Errorf("Test flag shouldn't be set %q\n", req.flags)
 	}
 }
 
@@ -116,7 +116,7 @@ func TestCloneRequest(t *testing.T) {
 		t.Fatalf("Expected path, got nil\n")
 	}
 	if len(p.path) > 0 {
-		t.Error("Expected empty path, got %q\n", p.path)
+		t.Errorf("Expected empty path, got %q\n", p.path)
 	}
 	cmd := req.Command()
 	if cmd != Load {

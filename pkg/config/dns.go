@@ -28,7 +28,7 @@ package config
 
 import "github.com/cisco/arc/pkg/msg"
 
-// Dns configuration conatins a domain name, a subdomain, a provider record
+// Dns configuration contains a domain name, a subdomain, a provider record
 // a list of a records, and a list of cname records.
 type Dns struct {
 	DomainName_  string      `json:"domain_name"`

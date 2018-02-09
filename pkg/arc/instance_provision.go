@@ -271,7 +271,7 @@ func (i *Instance) provisionInstallPackages(req *route.Request) route.Response {
 			Dest: "Info",
 			Desc: "Installing packages",
 		},
-		command.Command{
+		{
 			Type: command.Copy,
 			Desc: "copy manifest file to the instance",
 			Src:  packagesFile,

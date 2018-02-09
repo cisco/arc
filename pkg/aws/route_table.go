@@ -269,10 +269,10 @@ func (r *routeTable) destroy(req *route.Request) route.Response {
 
 func (r *routeTable) help() {
 	commands := []help.Command{
-		{route.Create.String(), fmt.Sprintf("create %s routetable", r.name())},
-		{route.Destroy.String(), fmt.Sprintf("destroy %s routetable", r.name())},
-		{route.Info.String(), fmt.Sprintf("show information about allocated %s routetable", r.name())},
-		{route.Help.String(), "show this help"},
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create %s routetable", r.name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy %s routetable", r.name())},
+		{Name: route.Info.String(), Desc: fmt.Sprintf("show information about allocated %s routetable", r.name())},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print(fmt.Sprintf("network routetable %s", r.name()), commands)
 }

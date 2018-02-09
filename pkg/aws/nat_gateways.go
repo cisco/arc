@@ -97,11 +97,11 @@ func (n *natGateways) find(s string) *natGateway {
 
 func (n *natGateways) help() {
 	commands := []help.Command{
-		{"'name'", "manage named nat gateways"},
-		{route.Create.String(), "create all nat gateways"},
-		{route.Destroy.String(), "destroy all nat gateways"},
-		{route.Info.String(), "show information about all allocated nat gateways"},
-		{route.Help.String(), "show this help"},
+		{Name: "'name'", Desc: "manage named nat gateways"},
+		{Name: route.Create.String(), Desc: "create all nat gateways"},
+		{Name: route.Destroy.String(), Desc: "destroy all nat gateways"},
+		{Name: route.Info.String(), Desc: "show information about all allocated nat gateways"},
+		{Name: route.Help.String(), Desc: "show this help"},
 	}
 	help.Print("network natgateway", commands)
 }
