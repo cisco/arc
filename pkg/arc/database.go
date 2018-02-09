@@ -48,7 +48,7 @@ type database struct {
 	providerDatabase resource.ProviderDatabase
 }
 
-func newDatabase(cfg *config.Database, dbs *databaseService, p provider.DatabaseService) (resource.Database, error) {
+func newDatabase(cfg *config.Database, dbs *databaseService, p provider.DatabaseService) (*database, error) {
 	if cfg.Name() == "" {
 		return nil, fmt.Errorf("The 'database' element is missing from the database configuration")
 	}
