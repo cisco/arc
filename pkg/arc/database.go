@@ -282,6 +282,11 @@ func (db *database) Id() string {
 	return db.providerDatabase.Id()
 }
 
+// Status returns the state of the database instance.
+func (db *database) State() string {
+	return db.providerDatabase.State()
+}
+
 // Help satisfies the resource.Database interface.
 func (db *database) Help() {
 	commands := []help.Command{
