@@ -179,7 +179,7 @@ func (s *securityGroups) Route(req *route.Request) route.Response {
 		s.info(req)
 		return route.OK
 	default:
-		msg.Error("Unkown secgroup command %q.", req.Command().String())
+		msg.Error("Unknown secgroup command %q.", req.Command().String())
 	}
 	return route.FAIL
 }

@@ -41,7 +41,7 @@ func (d *DnsRecords) Print(s string) {
 	msg.IndentDec()
 }
 
-// DnsRecord configuration consistes of a name, a ttl, an optional pod, an access value
+// DnsRecord configuration consists of a name, a ttl, an optional pod, an access value
 // and an optional set of values. For cname records that are associated with a pod
 // the name, ttl and pod values are mandatory. If this cname needs to be associated with
 // the public ip address of an instance in the pod, the access field need to be set
@@ -108,7 +108,7 @@ func (d *DnsRecord) PrintLocal(s string) {
 	}
 }
 
-// Print provides a user firendly way to view the dns record.
+// Print provides a user friendly way to view the dns record.
 // This is a deep print.
 func (d *DnsRecord) Print(s string) {
 	d.PrintLocal(s)

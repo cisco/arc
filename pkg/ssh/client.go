@@ -47,7 +47,7 @@ type Client struct {
 }
 
 // NewClient is a the Client constructor. It connects to the running ssh-agent and
-// sets up the user name. The user name can be overriden using the SSH_USER environment
+// sets up the user name. The user name can be overridden using the SSH_USER environment
 // variable.
 func NewClient() (*Client, error) {
 	client := &Client{}
