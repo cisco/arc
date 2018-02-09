@@ -36,8 +36,7 @@ type StaticStorage interface {
 }
 
 type DynamicStorage interface {
-	// Audit identifies any buckets that have been deployed but are not in the configuration.
-	Audit(flags ...string) error
+	Auditor
 }
 
 // Storage provides the resource interface used for the common storage
@@ -46,6 +45,7 @@ type DynamicStorage interface {
 
 type Storage interface {
 	route.Router
+	Informer
 	StaticStorage
 	DynamicStorage
 
@@ -57,9 +57,6 @@ type Storage interface {
 
 	// FindBucketSet returns the bucket set with the given name.
 	FindBucketSet(string) BucketSet
-
-	// Bucket provides access to Storage's children Buckets.
-	Buckets() []Bucket
 
 	// ProviderStorage provides access to the provider storage object.
 	ProviderStorage() ProviderStorage

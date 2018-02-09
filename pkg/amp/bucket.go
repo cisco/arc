@@ -44,7 +44,7 @@ type bucket struct {
 	providerBucket resource.ProviderBucket
 }
 
-func newBucket(cfg *config.Bucket, s *storage, prov provider.Storage) (resource.Bucket, error) {
+func newBucket(cfg *config.Bucket, s *storage, prov provider.Storage) (*bucket, error) {
 	log.Debug("Initializing Bucket, %q", cfg.Name())
 	b := &bucket{
 		Bucket:  cfg,

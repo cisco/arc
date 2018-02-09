@@ -40,10 +40,9 @@ import (
 
 type bucketSet struct {
 	*config.BucketSet
-	storage    *storage
-	bucketSets []resource.BucketSet
+	storage *storage
 
-	buckets []resource.Bucket
+	buckets []*bucket
 }
 
 func newBucketSet(cfg *config.BucketSet, s *storage, prov provider.Storage) (*bucketSet, error) {
@@ -139,10 +138,6 @@ func (b *bucketSet) Destroyed() bool {
 		}
 	}
 	return true
-}
-
-func (b *bucketSet) BucketSets() []resource.BucketSet {
-	return b.bucketSets
 }
 
 func (b *bucketSet) Audit(flags ...string) error {

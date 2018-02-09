@@ -45,8 +45,8 @@ type storage struct {
 	*resource.Resources
 	*config.Storage
 	amp             *amp
-	buckets         []resource.Bucket
-	bucketSets      []resource.BucketSet
+	buckets         []*bucket
+	bucketSets      []*bucketSet
 	providerStorage resource.ProviderStorage
 }
 
@@ -118,12 +118,6 @@ func (s *storage) FindBucketSet(name string) resource.BucketSet {
 	return nil
 }
 
-// Buckets satisfies the resource.Storage interface and provides access
-// to storage's children.
-func (s *storage) Buckets() []resource.Bucket {
-	return s.buckets
-}
-
 func (s *storage) ProviderStorage() resource.ProviderStorage {
 	return s.providerStorage
 }
@@ -173,7 +167,7 @@ func (s *storage) Route(req *route.Request) route.Response {
 	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Info:
-		s.info(req)
+		s.Info()
 		return route.OK
 	case route.Config:
 		s.config(req)
@@ -197,19 +191,19 @@ func (s *storage) Route(req *route.Request) route.Response {
 	}
 }
 
-func (s *storage) info(req *route.Request) {
+func (s *storage) Info() {
 	msg.Info("Storage")
 	msg.IndentInc()
 	msg.Info("Buckets")
 	msg.IndentInc()
 	for _, b := range s.buckets {
-		b.Route(req)
+		b.Info()
 	}
 	msg.IndentDec()
 	msg.Info("Bucket Sets")
 	msg.IndentInc()
 	for _, bs := range s.bucketSets {
-		bs.Route(req)
+		bs.Info()
 	}
 	msg.IndentDec()
 	msg.IndentDec()
