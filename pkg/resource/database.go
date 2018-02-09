@@ -89,6 +89,9 @@ type DynamicDatabase interface {
 
 	// Id returns the id of the instance.
 	Id() string
+
+	// State returns the state of the database instance.
+	State() string
 }
 
 // ProviderDatabase provides a resource interface for the provider supplied database instance.

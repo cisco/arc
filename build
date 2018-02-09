@@ -39,6 +39,11 @@ function setup_version() {
   fi
 }
 
+function install_deps() {
+  printf "\n\n${title}Installing dependencies...${clear}\n\n"
+  ./install_deps
+}
+
 function check_spelling() {
   printf "\n\n${title}Checking spelling for $1...${clear}\n"
   misspell $1
@@ -62,7 +67,6 @@ function build() {
   printf "\n\n${title}Building...${clear}\n\n"
   set -x
   export BUILD_NUMBER=$(cat ./version)
-  ./install_deps
   local cmd
   for cmd in ${cmds}; do
     go generate -v ./cmd/${cmd}
@@ -115,6 +119,7 @@ function main() {
     return
   fi
   setup_version
+  install_deps
   check_spelling ./pkg
   check_spelling ./cmd
   check_format ./pkg

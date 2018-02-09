@@ -97,6 +97,44 @@ func (db *database) Load() error {
 	return nil
 }
 
+func (db *database) reload() bool {
+	if db.db == nil {
+		return false
+	}
+	log.Debug("Reloading AWS Database Instance: %q", db.Name())
+
+	var marker *string
+	done := false
+
+	for !done {
+		params := &rds.DescribeDBInstancesInput{
+			DBInstanceIdentifier: aws.String(db.Id()),
+			Marker:               marker,
+			MaxRecords:           aws.Int64(100),
+		}
+		resp, err := db.rds.DescribeDBInstances(params)
+		if err != nil {
+			return false
+		}
+
+		for _, dbi := range resp.DBInstances {
+			if dbi == nil || dbi.DBInstanceIdentifier == nil {
+				continue
+			}
+			if *dbi.DBInstanceIdentifier == db.Id() {
+				db.set(dbi)
+				return true
+			}
+		}
+		if resp.Marker != nil {
+			marker = resp.Marker
+		} else {
+			done = true
+		}
+	}
+	return false
+}
+
 func (db *database) Create(flags ...string) error {
 	if err := db.subnetGroup.create(); err != nil {
 		return err
@@ -175,6 +213,15 @@ func (db *database) Destroy(flags ...string) error {
 	if err != nil {
 		return err
 	}
+
+	msg.Wait(
+		fmt.Sprintf("Waiting for AWS DBInstance %q to be deleted", db.Name()),
+		"",
+		600,
+		func() bool { return db.State() == "deleted" },
+		db.reload,
+	)
+
 	db.clear()
 	db.dbs.databaseCache.remove(db)
 
@@ -253,8 +300,15 @@ func (db *database) Info() {
 }
 
 func (db *database) Id() string {
-	if db.Destroyed() || db.db == nil || db.db.DBInstanceIdentifier == nil {
+	if db.db == nil || db.db.DBInstanceIdentifier == nil {
 		return ""
 	}
 	return *db.db.DBInstanceIdentifier
+}
+
+func (db *database) State() string {
+	if db.db == nil || db.db.DBInstanceStatus == nil {
+		return ""
+	}
+	return *db.db.DBInstanceStatus
 }

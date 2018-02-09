@@ -112,3 +112,7 @@ func (db *database) Info() {
 func (db *database) Id() string {
 	return "db-mock-" + db.Name()
 }
+
+func (db *database) State() string {
+	return db.opt.data["db.State"]
+}

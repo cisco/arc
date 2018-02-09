@@ -31,6 +31,7 @@ import (
 )
 
 func Wait(title, err string, duration int, test, load func() bool) bool {
+	n := 1
 	if duration < 0 {
 		return false
 	}
@@ -40,9 +41,10 @@ func Wait(title, err string, duration int, test, load func() bool) bool {
 			Detail(title)
 			Raw(Tab())
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(n) * time.Second)
+		n++
 		if count > 1 {
-			if (count+2)%120 < 60 {
+			if (count-2)%120 < 60 {
 				Raw(".")
 			} else {
 				Raw("\b \b")
@@ -62,6 +64,8 @@ func Wait(title, err string, duration int, test, load func() bool) bool {
 		}
 	}
 	Raw("\n")
-	Error(err)
+	if err != "" {
+		Error(err)
+	}
 	return false
 }
