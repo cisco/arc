@@ -60,7 +60,7 @@ func New(cfg *config.Arc) (*arc, error) {
 	a.header()
 
 	var err error
-	a.datacenter, err = newDataCenter(a, cfg.DataCenter)
+	a.datacenter, err = newDataCenter(cfg.DataCenter, a)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func New(cfg *config.Arc) (*arc, error) {
 		a.Append(a.databaseService)
 	}
 
-	a.dns, err = newDns(a, cfg.Dns)
+	a.dns, err = newDns(cfg.Dns, a)
 	if err != nil {
 		return nil, err
 	}

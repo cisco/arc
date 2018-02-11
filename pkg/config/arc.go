@@ -40,6 +40,7 @@ import (
 type Arc struct {
 	Name_           string           `json:"name"`
 	Title_          string           `json:"title"`
+	Provider        *Provider        `json:"provider"`
 	Notifications   *Notifications   `json:"notifications"`
 	DataCenter      *DataCenter      `json:"datacenter"`
 	DatabaseService *DatabaseService `json:"database_service"`
@@ -82,6 +83,9 @@ func (a *Arc) PrintLocal() {
 func (a *Arc) Print() {
 	a.PrintLocal()
 	msg.IndentInc()
+	if a.Provider != nil {
+		a.Provider.Print()
+	}
 	if a.DataCenter != nil {
 		a.DataCenter.Print()
 	}

@@ -52,19 +52,24 @@ type dataCenter struct {
 }
 
 // newDataCenter is the constructor for a dataCenter object. It returns a non-nil error upon failure.
-func newDataCenter(arc *arc, cfg *config.DataCenter) (*dataCenter, error) {
+func newDataCenter(cfg *config.DataCenter, arc *arc) (*dataCenter, error) {
 	if cfg == nil {
 		return nil, nil
 	}
 	log.Debug("Initializing Datacenter")
 
 	// Validate the config.DataCenter object.
-	if cfg.Provider == nil {
+	if cfg.Provider == nil && arc.Arc.Provider == nil {
 		return nil, fmt.Errorf("The provider element is missing from the datacenter configuration")
 	}
 
 	if cfg.Network == nil && cfg.Compute != nil {
 		return nil, fmt.Errorf("The network element is missing from the datacenter configuration")
+	}
+
+	// Use the arc provider, if it exists, when the datacenter provider isn't available.
+	if cfg.Provider == nil && arc.Arc.Provider != nil {
+		cfg.Provider = arc.Arc.Provider
 	}
 
 	d := &dataCenter{

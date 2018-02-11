@@ -45,11 +45,16 @@ type databaseService struct {
 }
 
 // newDatabaseService is the constructor for a database service object. It returns a non-nil error upon failure.
-func newDatabaseService(cfg *config.DatabaseService, arc resource.Arc) (*databaseService, error) {
+func newDatabaseService(cfg *config.DatabaseService, arc *arc) (*databaseService, error) {
 	if cfg == nil {
 		return nil, nil
 	}
 	log.Debug("Initializing Database Service")
+
+	// Use the arc provider, if it exists, when the datacenter provider isn't available.
+	if cfg.Provider == nil && arc.Arc.Provider != nil {
+		cfg.Provider = arc.Arc.Provider
+	}
 
 	dbs := &databaseService{
 		DatabaseService: cfg,

@@ -56,17 +56,22 @@ type dns struct {
 }
 
 // newDns is the constructor for a dns object. It returns a non-nil error upon failure.
-func newDns(arc *arc, cfg *config.Dns) (*dns, error) {
+func newDns(cfg *config.Dns, arc *arc) (*dns, error) {
 	if cfg == nil {
 		return nil, nil
 	}
 	log.Debug("Initializing Dns")
 
-	if cfg.Provider == nil {
+	if cfg.Provider == nil && arc.Arc.Provider == nil {
 		return nil, fmt.Errorf("The provider element is missing from the dns configuration")
 	}
 	if cfg.CNameRecords == nil {
 		return nil, fmt.Errorf("The records element is missing from the dns configuration")
+	}
+
+	// Use the arc provider, if it exists, when the dns provider isn't available.
+	if cfg.Provider == nil && arc.Arc.Provider != nil {
+		cfg.Provider = arc.Arc.Provider
 	}
 
 	d := &dns{
