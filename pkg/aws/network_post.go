@@ -56,8 +56,10 @@ func newNetworkPost(net resource.Network, cfg *config.Network, c *ec2.EC2) (*net
 	if err != nil {
 		return nil, err
 	}
-	np.natGateways = natGateways
-	np.Append(natGateways)
+	if natGateways != nil {
+		np.natGateways = natGateways
+		np.Append(natGateways)
+	}
 
 	return np, nil
 }

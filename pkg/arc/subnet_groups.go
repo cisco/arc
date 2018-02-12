@@ -78,6 +78,11 @@ func (s *subnetGroups) Find(name string) resource.SubnetGroup {
 	return s.subnetGroups[name]
 }
 
+// Get provides access to SubnetGroups' children subnet groups.
+func (s *subnetGroups) Get() map[string]resource.SubnetGroup {
+	return s.subnetGroups
+}
+
 // Route satisfies the embedded resource.Resource interface in resource.SubnetGroups.
 // SubnetGroups can terminate load, create, destroy, help, config and info requests
 // in order to manage all subnet groups. All other commands are routed to

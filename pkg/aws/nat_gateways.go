@@ -44,6 +44,18 @@ type natGateways struct {
 func newNatGateways(c *ec2.EC2, n resource.Network) (*natGateways, error) {
 	log.Debug("Initializing AWS NatGateways")
 
+	natNeeded := false
+	for _, s := range n.SubnetGroups().Get() {
+		if s.Access() == "private" {
+			natNeeded = true
+			break
+		}
+	}
+	if !natNeeded {
+		log.Debug("AWS NatGateways not needed. No subnets with private access.")
+		return nil, nil
+	}
+
 	ngws := &natGateways{
 		Resources:   resource.NewResources(),
 		natGateways: map[string]*natGateway{},

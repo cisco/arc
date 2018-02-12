@@ -37,4 +37,7 @@ type SubnetGroups interface {
 
 	// Find the subnet group with the given name.
 	Find(name string) SubnetGroup
+
+	// Get provides access to SubnetGroups' children subnet groups.
+	Get() map[string]SubnetGroup
 }
