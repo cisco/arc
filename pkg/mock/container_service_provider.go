@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,36 +24,31 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package mock
 
-// StaticArc provides the interface to the static portion of the
-// arc resource tree. This information is provided via config file
-// and is implemented config.Arc.
-type StaticArc interface {
-	Name() string
-	Title() string
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/provider"
+	"github.com/cisco/arc/pkg/resource"
+)
+
+func init() {
+	provider.RegisterContainerService("mock", newContainerServiceProvider)
 }
 
-// Arc provides the resource interface used for the common arc object
-// implemented in the arc package. It contains an Run method used to
-// start application processing. It also contains DataCenter and Dns
-// methods used to access it's children.
-type Arc interface {
-	Resource
-	StaticArc
+type containerServiceProvider struct {
+	*config.Provider
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+func newContainerServiceProvider(cfg *config.ContainerService) (provider.ContainerService, error) {
+	log.Info("Initializing Mock Container Service Provider")
 
-	// DataCenter provides access to Arc's child datacenter service.
-	DataCenter() DataCenter
+	return &containerServiceProvider{
+		Provider: cfg.Provider,
+	}, nil
+}
 
-	// DatabaseService provides access to Arc's child database service.
-	DatabaseService() DatabaseService
-
-	// ContainerService provides access to Arc's child container service.
-	ContainerService() ContainerService
-
-	// Dns provides access to Arc's child dns service.
-	Dns() Dns
+func (p *containerServiceProvider) NewContainerService(cfg *config.ContainerService) (resource.ProviderContainerService, error) {
+	return newContainerService(cfg, p)
 }

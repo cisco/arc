@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,34 +26,47 @@
 
 package resource
 
-// StaticArc provides the interface to the static portion of the
-// arc resource tree. This information is provided via config file
-// and is implemented config.Arc.
-type StaticArc interface {
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
+// StaticContainerService provides the interface to the static portion of the
+// container service. This information is provided via config file and is implemented
+// by config.ContainerService.
+type StaticContainerService interface {
+	config.Printer
+
+	// Name of the container service.
 	Name() string
-	Title() string
 }
 
-// Arc provides the resource interface used for the common arc object
-// implemented in the arc package. It contains an Run method used to
-// start application processing. It also contains DataCenter and Dns
-// methods used to access it's children.
-type Arc interface {
-	Resource
-	StaticArc
+// DynamicContainerService provides access to the dynamic portion of the container service.
+type DynamicContainerService interface {
+	Loader
+	Creator
+	Destroyer
+	Provisioner
+	Auditor
+	Informer
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+// ProviderContainerService provides a resource interface for the provider supplied container service.
+type ProviderContainerService interface {
+	DynamicContainerService
+}
 
-	// DataCenter provides access to Arc's child datacenter service.
-	DataCenter() DataCenter
+// ContainerService provides the resource interface used for the container service
+// object implemented in the arc package.
+type ContainerService interface {
+	route.Router
+	StaticContainerService
+	DynamicContainerService
+	Helper
 
-	// DatabaseService provides access to Arc's child database service.
-	DatabaseService() DatabaseService
+	// Arc provides access to DataCenter's parent.
+	Arc() Arc
 
-	// ContainerService provides access to Arc's child container service.
-	ContainerService() ContainerService
-
-	// Dns provides access to Arc's child dns service.
-	Dns() Dns
+	// ProviderContainerSerivces allows access to the provider's container service object.
+	ProviderContainerService() ProviderContainerService
 }
