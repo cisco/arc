@@ -50,7 +50,7 @@ func newContainerService(cfg *config.ContainerService, arc *arc) (*containerServ
 	}
 	log.Debug("Initializing Container Service")
 
-	// Use the arc provider, if it exists, when the datacenter provider isn't available.
+	// Use the arc provider, if it exists, when the contaier service provider isn't available.
 	if cfg.Provider == nil && arc.Arc.Provider != nil {
 		cfg.Provider = arc.Arc.Provider
 	}
