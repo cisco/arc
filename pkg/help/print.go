@@ -30,11 +30,27 @@ import (
 	"fmt"
 )
 
-var header string = "\narc is a tool for managing datacenter resources.\n\n" +
-	"Usage:\n\n" +
-	"  arc [datacenter]%s [command]\n\n" +
-	"The datacenter configuration files are found in /etc/arc/[datacenter].json.\n\n" +
-	"The commands are:\n\n"
+var header string
+
+func Init(appName string) {
+	switch appName {
+	case "arc":
+		header = "\narc is a tool for managing datacenter resources.\n\n" +
+			"Usage:\n\n" +
+			"  arc [datacenter]%s [command]\n\n" +
+			"The datacenter configuration files are found in /etc/arc/[datacenter].json.\n\n"
+	case "amp":
+		header = "\namp is a tool for managing account resources.\n\n" +
+			"Usage:\n\n" +
+			"  amp <account> %s <command>\n\n" +
+			"The account configuration files are found in /etc/arc/[account].json.\n\n"
+	}
+}
+
+type Resource struct {
+	Name string
+	Desc string
+}
 
 type Command struct {
 	Name string
@@ -46,8 +62,24 @@ func Print(request string, commands []Command) {
 		request = " " + request
 	}
 	fmt.Printf(header, request)
+	fmt.Printf("The commands are:\n\n")
 	for _, cmd := range commands {
 		fmt.Printf("  %-18s %s\n", cmd.Name, cmd.Desc)
+	}
+}
+
+func PrintWithResources(request string, resources []Resource, commands []Command) {
+	if request != "" {
+		request = " " + request
+	}
+	fmt.Printf(header, request)
+	fmt.Printf("The resources are:\n\n")
+	for _, rsrc := range resources {
+		fmt.Printf(" %-18s %s\n", rsrc.Name, rsrc.Desc)
+	}
+	fmt.Printf("\nThe commands are:\n\n")
+	for _, cmd := range commands {
+		fmt.Printf(" %-18s %s\n", cmd.Name, cmd.Desc)
 	}
 }
 
