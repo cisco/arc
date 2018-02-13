@@ -101,7 +101,7 @@ func (cs *containerService) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 	case route.Destroy:
-		if err := cs.Provision(req.Flags().Get()...); err != nil {
+		if err := cs.Destroy(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
 			return route.FAIL
 		}
