@@ -66,7 +66,7 @@ amp [account_name] bucket_set [bucket_set_name] [command] [flags]
 
 where "bucket_set_name" is the name of the bucket set.
 
-The commands avaiable to a bucket set are
+The commands available to a bucket set are
 
 - **create**: Creates the bucket set and enables replication for each bucket in the bucket set. If the bucket set already exists this command will do nothing.
 - **destroy**: Destroys the bucket set. If the bucket set does not exist the command will do nothing.
