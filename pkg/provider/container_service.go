@@ -24,49 +24,44 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package provider
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseService struct {
-	*config.DatabaseService
-	opt options
+// ContainerServiceCtor is the function signature for the provider's container service constructor.
+type ContainerServiceCtor func(*config.ContainerService) (ContainerService, error)
+
+var csCtors map[string]ContainerServiceCtor = map[string]ContainerServiceCtor{}
+
+// RegisterContainerService is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the arc package. This function is called in the
+// packages' init() function.
+func RegisterContainerService(vendor string, ctor ContainerServiceCtor) {
+	csCtors[vendor] = ctor
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
-	}
-	if dbs.opt.err("dbs.New") {
-		return nil, err{"dbs.New"}
-	}
-	return dbs, nil
+// ContainerService is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type ContainerService interface {
+	NewContainerService(*config.ContainerService) (resource.ProviderContainerService, error)
 }
 
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return err{"dbs.Load"}
+// NewContainerService is the provider agnostic constructor used by pkg/arc.
+func NewContainerService(cfg *config.ContainerService) (ContainerService, error) {
+	// Validate the config.ContainerService object.
+	if cfg.Provider == nil {
+		return nil, fmt.Errorf("The provider element is missing from the container_service configuration")
 	}
-	return nil
-}
-
-func (dbs *databaseService) Audit(flags ...string) error {
-	msg.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return err{"dbs.Audit"}
+	vendor := cfg.Provider.Vendor
+	ctor := csCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}
-	return nil
-}
-
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
-	msg.Detail("...")
+	return ctor(cfg)
 }

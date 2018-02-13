@@ -38,13 +38,14 @@ import (
 // The configuration of the arc object. It has a name, a
 // datacenter element and a dns element.
 type Arc struct {
-	Name_           string           `json:"name"`
-	Title_          string           `json:"title"`
-	Provider        *Provider        `json:"provider"`
-	Notifications   *Notifications   `json:"notifications"`
-	DataCenter      *DataCenter      `json:"datacenter"`
-	DatabaseService *DatabaseService `json:"database_service"`
-	Dns             *Dns             `json:"dns"`
+	Name_            string            `json:"name"`
+	Title_           string            `json:"title"`
+	Provider         *Provider         `json:"provider"`
+	Notifications    *Notifications    `json:"notifications"`
+	DataCenter       *DataCenter       `json:"datacenter"`
+	DatabaseService  *DatabaseService  `json:"database_service"`
+	ContainerService *ContainerService `json:"container_service"`
+	Dns              *Dns              `json:"dns"`
 }
 
 func NewArc(dc string) (*Arc, error) {
@@ -91,6 +92,9 @@ func (a *Arc) Print() {
 	}
 	if a.DatabaseService != nil {
 		a.DatabaseService.Print()
+	}
+	if a.ContainerService != nil {
+		a.ContainerService.Print()
 	}
 	if a.Dns != nil {
 		a.Dns.Print()

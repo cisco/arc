@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Copyright (c) 2018, Cisco Systems
+# All rights reserved. See LICENSE file.
+#
+set -xe
+
+export ARC_ROOT="$PWD/container_service"
+
+arc cs container config
+arc cs container info
+arc cs container create
+arc cs container destroy
+arc cs container provision
+arc cs container audit
+

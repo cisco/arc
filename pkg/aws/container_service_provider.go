@@ -24,49 +24,64 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package aws
 
 import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecs"
+
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
+	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseService struct {
-	*config.DatabaseService
-	opt options
+func init() {
+	provider.RegisterContainerService("aws", newContainerServiceProvider)
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
-	}
-	if dbs.opt.err("dbs.New") {
-		return nil, err{"dbs.New"}
-	}
-	return dbs, nil
+type containerServiceProvider struct {
+	ecs     *ecs.ECS
+	account string
+	region  string
 }
 
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return err{"dbs.Load"}
+func newContainerServiceProvider(cfg *config.ContainerService) (provider.ContainerService, error) {
+	log.Debug("Initializing AWS Container Service Provider")
+
+	account := cfg.Provider.Data["account"]
+	if account == "" {
+		return nil, fmt.Errorf("AWS ContainerService provider/data config requires an 'account' field, being the aws account name.")
 	}
-	return nil
+	region := cfg.Provider.Data["region"]
+	if region == "" {
+		return nil, fmt.Errorf("AWS ContainerService provider/data config requires a 'region' field, being the aws region.")
+	}
+
+	opts := session.Options{
+		Config: aws.Config{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+			Region: aws.String(region),
+		},
+		Profile:           account,
+		SharedConfigState: session.SharedConfigEnable,
+	}
+
+	sess, err := session.NewSessionWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &containerServiceProvider{
+		ecs:     ecs.New(sess),
+		account: account,
+		region:  region,
+	}, nil
 }
 
-func (dbs *databaseService) Audit(flags ...string) error {
-	msg.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return err{"dbs.Audit"}
-	}
-	return nil
-}
-
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
-	msg.Detail("...")
+func (p *containerServiceProvider) NewContainerService(cfg *config.ContainerService) (resource.ProviderContainerService, error) {
+	return newContainerService(cfg, p)
 }

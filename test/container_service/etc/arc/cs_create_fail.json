@@ -1,0 +1,13 @@
+{
+  "name": "cs_create_fail",
+  "title": "mock container service",
+
+  "provider": {
+    "vendor": "mock",
+    "data":   { "cs.Create": "error", "cs.Created": "false" }
+  },
+
+  "container_service": {
+    "name": "test-container-service"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cs_load_fail",
+  "title": "mock container service",
+
+  "provider": {
+    "vendor": "mock",
+    "data":   { "cs.Load": "error" }
+  },
+
+  "container_service": {
+    "name": "test-container-service"
+  }
+}

@@ -33,40 +33,78 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseService struct {
-	*config.DatabaseService
+type containerService struct {
+	*config.ContainerService
 	opt options
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
+func newContainerService(cfg *config.ContainerService, p *containerServiceProvider) (resource.ProviderContainerService, error) {
+	log.Info("Initializing Mock Container Service")
+	cs := &containerService{
+		ContainerService: cfg,
+		opt:              options{p.Provider.Data},
 	}
-	if dbs.opt.err("dbs.New") {
-		return nil, err{"dbs.New"}
+	if cs.opt.err("cs.New") {
+		return nil, err{"cs.New"}
 	}
-	return dbs, nil
+	return cs, nil
 }
 
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return err{"dbs.Load"}
+func (cs *containerService) Load() error {
+	log.Info("Loading Mock Container Service")
+	if cs.opt.err("cs.Load") {
+		return err{"cs.Load"}
 	}
 	return nil
 }
 
-func (dbs *databaseService) Audit(flags ...string) error {
-	msg.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return err{"dbs.Audit"}
+func (cs *containerService) Create(flags ...string) error {
+	msg.Info("Creating Mock ContainerService")
+	if cs.opt.err("cs.Create") {
+		return err{"cs.Create"}
 	}
 	return nil
 }
 
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
+func (cs *containerService) Created() bool {
+	if cs.opt.err("cs.Created") {
+		return false
+	}
+	return true
+}
+
+func (cs *containerService) Destroy(flags ...string) error {
+	msg.Info("Destroying Mock ContainerService")
+	if cs.opt.err("cs.Destroy") {
+		return err{"cs.Destroy"}
+	}
+	return nil
+}
+
+func (cs *containerService) Destroyed() bool {
+	if cs.opt.err("cs.Destroyed") {
+		return false
+	}
+	return true
+}
+
+func (cs *containerService) Provision(flags ...string) error {
+	msg.Info("Provisioning Mock ContainerService")
+	if cs.opt.err("cs.Provision") {
+		return err{"cs.Provision"}
+	}
+	return nil
+}
+
+func (cs *containerService) Audit(flags ...string) error {
+	msg.Info("Auditing Mock ContainerService")
+	if cs.opt.err("cs.Audit") {
+		return err{"cs.Audit"}
+	}
+	return nil
+}
+
+func (cs *containerService) Info() {
+	msg.Info("Mock ContainerService")
 	msg.Detail("...")
 }
