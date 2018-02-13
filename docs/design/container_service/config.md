@@ -48,7 +48,7 @@ For an aws vendor, the following values are required:
 For a mock vendor, the data section is not required.
 
 ```json
-  "container": {
+  "container_service": {
     "provider": { "vendor": "mock" }
   }
 ```
