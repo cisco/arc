@@ -9,15 +9,15 @@ To run an arc command against all containers in a datacenter use the form
 arc [dc_name] container [command]
 ```
 
-The commands available to all containers are
+The commands available to the container service are
 
 - **create**:  Create the container service.
-- **destroy**: Destroy the tags for all container instances.
-- **update**:  Update the tags for all container instances.
-- **audit**:   Audits all container instances.
-- **info**:    Provides run time information for the container service and all its instances.
-- **config**:  Provides configuration information for the container service and all its instances.
-- **help**:    Provides help with the container command.
+- **destroy**: Destroy the container service.
+- **update**:  Update the container service.
+- **audit**:   Audits the container service.
+- **info**:    Provides run time information for the container service.
+- **config**:  Provides configuration information for the container service.
+- **help**:    Provides help with the container service command.
 
 
 For example, to run an audit command against the container service in the fictional "example-integration" datacenter, run the command
