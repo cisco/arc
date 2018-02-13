@@ -25,4 +25,3 @@ For example, to run an audit command against the container service in the fictio
 ```shell
 arc example-integration container audit
 ```
-
