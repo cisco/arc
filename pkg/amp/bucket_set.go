@@ -209,11 +209,6 @@ func (b *bucketSet) Info() {
 }
 
 func (b *bucketSet) Help() {
-	var header string = "\namp is a tool for managing account resources.\n\n" +
-		"Usage:\n\n" +
-		"  amp <account> %s <command>\n\n" +
-		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
-		"The commands are:\n\n"
 	commands := []help.Command{
 		{Name: route.Create.String(), Desc: fmt.Sprintf("create bucket set %s", b.Name())},
 		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy bucket set %s", b.Name())},
@@ -223,8 +218,5 @@ func (b *bucketSet) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given bucket set"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	fmt.Printf(header, "bucket")
-	for _, v := range commands {
-		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
-	}
+	help.Print("bucket_set", commands)
 }

@@ -157,86 +157,17 @@ func (a *amp) Route(req *route.Request) route.Response {
 }
 
 func Help() {
-
-	header := `
-	
-amp is a tool for managing account resources.
-
-Usage:
-
-  amp <account> <resource> <command>
-
-  The account configuration files are found in /etc/arc/[account].json.
-
-  The resources are:
-`
-	resources := []help.Command{
+	resources := []help.Resource{
 		{Name: "storage", Desc: "manage storage"},
 		{Name: "bucket 'name'", Desc: "manage named bucket"},
 		{Name: "bucket_set 'name'", Desc: "manage named bucket"},
-	}
-	fmt.Printf(header)
-	for _, v := range resources {
-		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
 	}
 	commands := []help.Command{
 		{Name: route.Info.String(), Desc: "show information about allocation amp resources"},
 		{Name: route.Config.String(), Desc: "show the amp configuration for the given account"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	fmt.Printf("The commands are:\n\n")
-	for _, v := range commands {
-		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
-	}
-	/*
-			amp <account> storage info
-		      prints out the information for all the buckets
-		      for the account.
-
-		    amp <account> storage config
-		      amp prints outs all the information for every bucket associated with
-		      the account from the corresponding json file.
-
-		    amp <account> storage audit
-		      amp checks for the following:
-		        -buckets that exist on the provider but don't exist in the corresponding json file.
-		        -buckets that exist in the json file but are not created with the provider.
-
-		    amp <account> bucket <bucket_name> info
-		      prints out the provider information for bucket_name.
-
-		    amp <account> storage bucket <bucket_name> info
-		      prints out the information for bucket_name.
-
-		    amp <account> bucket <bucket_name> config
-		      prints out all the information for bucket_name
-
-		    amp <account> storage bucket <bucket_name> config
-		      prints out all the information for bucket_name
-
-		    amp <account> bucket <bucket_name> create
-		      creates a bucket for bucket_name on the account using the
-		      configuration for it found in json file corresponding
-		      to the account.
-
-		    amp <account> storage bucket <bucket_name> create
-		      creates a bucket for bucket_name on the account using the
-		      configuration for it found in json file corresponding
-		      to the account.
-
-		    amp <account> bucket <bucket_name> delete
-		      deletes the bucket bucket_name.
-
-		    amp <account> storage bucket <bucket_name> delete
-		      deletes the bucket bucket_name.
-
-		    amp <account> storage update
-		      updates the tags on the buckets.
-
-		    amp <account> storage bucket <bucket_name> update
-		      updates the tags for bucket_name.
-		`
-			fmt.Println(help)*/
+	help.PrintWithResources("[resource]", resources, commands)
 }
 
 func (a *amp) header() {

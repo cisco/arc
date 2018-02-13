@@ -242,11 +242,6 @@ func (s *storage) Audit(flags ...string) error {
 }
 
 func (s *storage) Help() {
-	var header string = "\namp is a tool for managing account resources.\n\n" +
-		"Usage:\n\n" +
-		"  amp <account> %s <command>\n\n" +
-		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
-		"The commands are:\n\n"
 	commands := []help.Command{
 		{Name: route.Provision.String(), Desc: "update the storage"},
 		{Name: route.Audit.String(), Desc: "audit the storage"},
@@ -254,8 +249,5 @@ func (s *storage) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given storage"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	fmt.Printf(header, "storage")
-	for _, v := range commands {
-		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
-	}
+	help.Print("storage", commands)
 }
