@@ -1,9 +1,9 @@
 # Container Service CLI Design
 
-Two new commands will be added to the arc cli to provide management of containers with a datacenter.
+A command will be added to the arc cli to provide management of a container service with a datacenter.
 
 
-To run an arc command against all containers in a datacenter use the form
+To run an arc command against the container service in a datacenter use the form
 
 ```shell
 arc [dc_name] container [command]
