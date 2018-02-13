@@ -1,0 +1,11 @@
+pkg/config/arc.go
+pkg/config/container_service.go
+pkg/resource/arc.go
+pkg/resource/container_service.go
+pkg/provider/container_service.go
+pkg/mock/container_service_provider.go
+pkg/aws/container_service_provider.go
+pkg/arc/arc.go
+pkg/arc/container_service.go
+pkg/mock/container_service.go
+pkg/aws/container_service.go

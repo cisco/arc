@@ -25,13 +25,13 @@ The "provider" element is a json object that defines the cloud provider data. Th
 ## provider
 
 The provider element contains two elements, "vendor" and "data". The "vendor" element is a string indicating the cloud vendor to use.
-Currently only the "aws" and "mock" vendors are supported. The "data" element is a json oject comprised of key value pairs.
+Currently only the "aws" and "mock" vendors are supported. The "data" element is a json object comprised of key value pairs.
 These pairs differ depending on the vendor.
 
 
 ### aws vendor
 
-For an aws vendor, the following value are required:
+For an aws vendor, the following values are required:
 
 - **account** (string) _required_: The aws account name
 - **region**  (string) _required_: The aws region that this database service where this database service will reside

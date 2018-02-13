@@ -29,44 +29,26 @@ package mock
 import (
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
+	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type databaseService struct {
-	*config.DatabaseService
-	opt options
+func init() {
+	provider.RegisterContainerService("mock", newContainerServiceProvider)
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
-	}
-	if dbs.opt.err("dbs.New") {
-		return nil, err{"dbs.New"}
-	}
-	return dbs, nil
+type containerServiceProvider struct {
+	*config.Provider
 }
 
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return err{"dbs.Load"}
-	}
-	return nil
+func newContainerServiceProvider(cfg *config.ContainerService) (provider.ContainerService, error) {
+	log.Info("Initializing Mock Container Service Provider")
+
+	return &containerServiceProvider{
+		Provider: cfg.Provider,
+	}, nil
 }
 
-func (dbs *databaseService) Audit(flags ...string) error {
-	msg.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return err{"dbs.Audit"}
-	}
-	return nil
-}
-
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
-	msg.Detail("...")
+func (p *containerServiceProvider) NewContainerService(cfg *config.ContainerService) (resource.ProviderContainerService, error) {
+	return newContainerService(cfg, p)
 }

@@ -51,6 +51,9 @@ type Arc interface {
 	// DatabaseService provides access to Arc's child database service.
 	DatabaseService() DatabaseService
 
+	// ContainerService provides access to Arc's child container service.
+	ContainerService() ContainerService
+
 	// Dns provides access to Arc's child dns service.
 	Dns() Dns
 }

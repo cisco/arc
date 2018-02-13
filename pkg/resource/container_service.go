@@ -24,12 +24,49 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package resource
 
-type dberr struct {
-	string
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
+// StaticContainerService provides the interface to the static portion of the
+// container service. This information is provided via config file and is implemented
+// by config.ContainerService.
+type StaticContainerService interface {
+	config.Printer
+
+	// Name of the container service.
+	Name() string
 }
 
-func (e dberr) Error() string {
-	return "mock " + e.string + " failed"
+// DynamicContainerService provides access to the dynamic portion of the container service.
+type DynamicContainerService interface {
+	Loader
+	Creator
+	Destroyer
+	Provisioner
+	Auditor
+	Informer
+}
+
+// ProviderContainerService provides a resource interface for the provider supplied container service.
+type ProviderContainerService interface {
+	DynamicContainerService
+}
+
+// ContainerService provides the resource interface used for the container service
+// object implemented in the arc package.
+type ContainerService interface {
+	route.Router
+	StaticContainerService
+	DynamicContainerService
+	Helper
+
+	// Arc provides access to DataCenter's parent.
+	Arc() Arc
+
+	// ProviderContainerSerivces allows access to the provider's container service object.
+	ProviderContainerService() ProviderContainerService
 }

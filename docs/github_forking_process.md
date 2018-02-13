@@ -49,7 +49,7 @@ general form "Issue #N: ..." where N is the issue number of the problem being wo
 git commit -m "Issue #N: ..."
 ```
 
-This pushes the commited changes in your workspace to your account.
+This pushes the committed changes in your workspace to your account.
 If you have setup a personal travis-ci build, this will kickoff it off.
 ```shell
 git push origin [development_branch]

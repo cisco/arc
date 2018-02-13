@@ -22,3 +22,4 @@ Currently only AWS is supported as a cloud provider.
 ## Design
 
 - [Database Service Design](docs/design/database_service/design.md)
+- [Container Service Design](docs/design/container_service/design.md)

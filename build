@@ -122,6 +122,7 @@ function main() {
   install_deps
   check_spelling ./pkg
   check_spelling ./cmd
+  check_spelling ./docs
   check_format ./pkg
   check_format ./cmd
   vet

@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Copyright (c) 2018, Cisco Systems
+# All rights reserved. See LICENSE file.
+#
+set -xe
+export ARC_ROOT="$PWD/container_service"
+
+# This is expected to fail.
+arc cs_new_fail container config && exit 1 || exit 0

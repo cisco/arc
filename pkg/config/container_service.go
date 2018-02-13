@@ -24,49 +24,27 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package config
 
-import (
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/msg"
-	"github.com/cisco/arc/pkg/resource"
-)
+import "github.com/cisco/arc/pkg/msg"
 
-type databaseService struct {
-	*config.DatabaseService
-	opt options
+// The configuration of the container_service object.
+type ContainerService struct {
+	Provider *Provider `json:"provider"`
+	Name_    string    `json:"name"`
 }
 
-func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider) (resource.ProviderDatabaseService, error) {
-	log.Info("Initializing Mock Database Service")
-	dbs := &databaseService{
-		DatabaseService: cfg,
-		opt:             options{p.Provider.Data},
-	}
-	if dbs.opt.err("dbs.New") {
-		return nil, err{"dbs.New"}
-	}
-	return dbs, nil
+// Name of the container service.
+func (c *ContainerService) Name() string {
+	return c.Name_
 }
 
-func (dbs *databaseService) Load() error {
-	log.Info("Loading Mock Database Service")
-	if dbs.opt.err("dbs.Load") {
-		return err{"dbs.Load"}
+// Print provides a user friendly way to view the configuration of the container service.
+func (c *ContainerService) Print() {
+	msg.Info("Container Service Config")
+	msg.Detail("%-20s\t%s", "name", c.Name())
+	msg.IndentInc()
+	if c.Provider != nil {
+		c.Provider.Print()
 	}
-	return nil
-}
-
-func (dbs *databaseService) Audit(flags ...string) error {
-	msg.Info("Auditing Mock DatabaseService")
-	if dbs.opt.err("dbs.Audit") {
-		return err{"dbs.Audit"}
-	}
-	return nil
-}
-
-func (dbs *databaseService) Info() {
-	msg.Info("Mock DatabaseService")
-	msg.Detail("...")
 }

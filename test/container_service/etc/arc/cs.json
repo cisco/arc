@@ -1,0 +1,10 @@
+{
+  "name": "cs",
+  "title": "mock container service",
+
+  "provider": { "vendor": "mock" },
+
+  "container_service": {
+    "name": "test-container-service"
+  }
+}

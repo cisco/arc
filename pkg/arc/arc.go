@@ -44,9 +44,10 @@ import (
 type arc struct {
 	*resource.Resources
 	*config.Arc
-	datacenter      *dataCenter
-	databaseService *databaseService
-	dns             *dns
+	datacenter       *dataCenter
+	databaseService  *databaseService
+	containerService *containerService
+	dns              *dns
 }
 
 // New is the constructor for an arc object. It returns a non-nil error upon failure.
@@ -74,6 +75,14 @@ func New(cfg *config.Arc) (*arc, error) {
 	}
 	if a.databaseService != nil {
 		a.Append(a.databaseService)
+	}
+
+	a.containerService, err = newContainerService(cfg.ContainerService, a)
+	if err != nil {
+		return nil, err
+	}
+	if a.containerService != nil {
+		a.Append(a.containerService)
 	}
 
 	a.dns, err = newDns(cfg.Dns, a)
@@ -158,6 +167,15 @@ func (a *arc) DatabaseService() resource.DatabaseService {
 	return a.databaseService
 }
 
+// Container satisfies the resource.Arc interface and provides access to
+// arc's container service object.
+func (a *arc) ContainerService() resource.ContainerService {
+	if a.containerService == nil {
+		return nil
+	}
+	return a.containerService
+}
+
 // Dns satisfies the resource.Arc interface and provides access
 // to arc's dns service object.
 func (a *arc) Dns() resource.Dns {
@@ -189,6 +207,12 @@ func (a *arc) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return a.databaseService.Route(req.Pop())
+	case "container":
+		if a.containerService == nil {
+			msg.Error("ContainerService not defined in the config file")
+			return route.FAIL
+		}
+		return a.containerService.Route(req.Pop())
 	case "dns":
 		if a.dns == nil {
 			msg.Error("Dns not defined in the config file")
@@ -242,6 +266,7 @@ func Help() {
 		{Name: "instance 'name'", Desc: "manage named instance"},
 		{Name: "db", Desc: "manage database service"},
 		{Name: "db 'name'", Desc: "manage named database service"},
+		{Name: "container", Desc: "manage container service"},
 		{Name: "dns", Desc: "manage dns"},
 		{Name: route.Config.String(), Desc: "show the arc configuration for the given datacenter"},
 		{Name: route.Info.String(), Desc: "show information about allocated arc resources"},
