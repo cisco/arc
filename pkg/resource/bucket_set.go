@@ -33,18 +33,18 @@ import (
 
 type StaticBucketSet interface {
 	Name() string
-	Buckets() *config.Buckets
+	Buckets() []*config.Bucket
+	config.Printer
 }
 
 // DynamicBucketReplicationSet provides the interface to the dynamic portion of the bucket replication set.
 type DynamicBucketSet interface {
-	Auditor
 	Creator
 	Destroyer
 	Provisioner
-
-	// Info prints out the bucket's information to the console.
-	Info()
+	Auditor
+	Informer
+	Helper
 }
 
 // BucketReplicationSet provides the resource interface used for the common bucket replication set
@@ -55,5 +55,5 @@ type BucketSet interface {
 	StaticBucketSet
 	DynamicBucketSet
 
-	BucketSets() BucketSets
+	Storage() Storage
 }

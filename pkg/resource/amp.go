@@ -26,11 +26,14 @@
 
 package resource
 
+import "github.com/cisco/arc/pkg/config"
+
 // StaticAmp provides the interface to the static portion of the
 // amp resource tree. This information is provided via config file
 // and is implemented config.Amp.
 type StaticAmp interface {
 	Name() string
+	SecurityTags() config.SecurityTags
 }
 
 // Amp provides the resource interface used for the common amp object
@@ -44,6 +47,6 @@ type Amp interface {
 	// Run is the entry point for arc.
 	Run() (int, error)
 
-	// Account provides access to Amp's child account.
-	Account() Account
+	// Storage provides access to Amp's child account.
+	Storage() Storage
 }

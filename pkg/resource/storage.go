@@ -26,12 +26,17 @@
 
 package resource
 
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 type StaticStorage interface {
+	config.Printer
 }
 
 type DynamicStorage interface {
-	// Audit identifies any buckets that have been deployed but are not in the configuration.
-	Audit(flags ...string) error
+	Auditor
 }
 
 // Storage provides the resource interface used for the common storage
@@ -39,14 +44,20 @@ type DynamicStorage interface {
 // access its parent object.
 
 type Storage interface {
-	Resource
+	route.Router
+	Informer
 	StaticStorage
 	DynamicStorage
 
-	// Account provides access to Storage's parent object.
-	Account() Account
-	// Bucket provides access to Storage's children Buckets.
-	Buckets() Buckets
+	// Amp provides access to Storage's parent object.
+	Amp() Amp
+
+	// FindBucket returns the bucket with the given name.
+	FindBucket(string) Bucket
+
+	// FindBucketSet returns the bucket set with the given name.
+	FindBucketSet(string) BucketSet
+
 	// ProviderStorage provides access to the provider storage object.
 	ProviderStorage() ProviderStorage
 }

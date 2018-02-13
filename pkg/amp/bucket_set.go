@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -38,28 +39,30 @@ import (
 )
 
 type bucketSet struct {
-	*resource.Resources
 	*config.BucketSet
-	bucketSets resource.BucketSets
+	storage *storage
 
-	buckets *buckets
+	buckets []*bucket
 }
 
-func newBucketSet(bs *bucketSets, prov provider.Account, cfg *config.BucketSet) (*bucketSet, error) {
+func newBucketSet(cfg *config.BucketSet, s *storage, prov provider.Storage) (*bucketSet, error) {
 	log.Debug("Initializing Bucket Set, %q", cfg.Name())
 	b := &bucketSet{
-		BucketSet:  cfg,
-		bucketSets: bs,
+		BucketSet: cfg,
 	}
 
-	bkts, err := newBuckets(bs.Storage().(*storage), prov, cfg.Buckets())
-	if err != nil {
-		return nil, err
+	for _, conf := range cfg.Buckets() {
+		bucket, err := newBucket(conf, s, prov)
+		if err != nil {
+			return nil, err
+		}
+		b.buckets = append(b.buckets, bucket)
 	}
-
-	b.buckets = bkts
-	b.Append(bkts)
 	return b, nil
+}
+
+func (b *bucketSet) Storage() resource.Storage {
+	return b.storage
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -93,17 +96,31 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Audit:
+		if err := b.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Info:
 		b.Info()
 		return route.OK
+	case route.Config:
+		b.Print()
+		return route.OK
+	case route.Help:
+		b.Help()
+		return route.OK
+	default:
+		b.Help()
+		return route.FAIL
 	}
-	return b.RouteInOrder(req)
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
 // It delegates the call to the provider's bucket.
 func (b *bucketSet) Created() bool {
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if bkt.Created() == false {
 			return false
 		}
@@ -114,7 +131,7 @@ func (b *bucketSet) Created() bool {
 // Destroyed satisfies the embedded resource.Resource interaface in resource.Bucket.
 // It delegates the call to the provider's bucket.
 func (b *bucketSet) Destroyed() bool {
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if bkt.Destroyed() == false {
 			return false
 		}
@@ -122,15 +139,11 @@ func (b *bucketSet) Destroyed() bool {
 	return true
 }
 
-func (b *bucketSet) BucketSets() resource.BucketSets {
-	return b.bucketSets
-}
-
 func (b *bucketSet) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Audit(flags...); err != nil {
 			return err
 		}
@@ -143,12 +156,12 @@ func (b *bucketSet) Create(flags ...string) error {
 		msg.Detail("Bucket Set exists, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Create(flags...); err != nil {
 			return err
 		}
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.EnableReplication(); err != nil {
 			return err
 		}
@@ -161,7 +174,7 @@ func (b *bucketSet) Destroy(flags ...string) error {
 		msg.Detail("Bucket Set does not exist, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Destroy(flags...); err != nil {
 			return err
 		}
@@ -174,7 +187,7 @@ func (b *bucketSet) Provision(flags ...string) error {
 		msg.Detail("Bucket Set does not exist, skipping...")
 		return nil
 	}
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		if err := bkt.Provision(flags...); err != nil {
 			return err
 		}
@@ -189,8 +202,29 @@ func (b *bucketSet) Info() {
 	msg.Info("Bucket Set")
 	msg.Detail("%-20s\t%s", "name", b.Name())
 	msg.IndentInc()
-	for _, bkt := range b.buckets.buckets {
+	for _, bkt := range b.buckets {
 		bkt.Info()
 	}
 	msg.IndentDec()
+}
+
+func (b *bucketSet) Help() {
+	var header string = "\namp is a tool for managing account resources.\n\n" +
+		"Usage:\n\n" +
+		"  amp <account> %s <command>\n\n" +
+		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
+		"The commands are:\n\n"
+	commands := []help.Command{
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create bucket set %s", b.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy bucket set %s", b.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update the tags for buckets in  %s", b.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit bucket set %s", b.Name())},
+		{Name: route.Info.String(), Desc: "show information about allocated bucket set"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given bucket set"},
+		{Name: route.Help.String(), Desc: "show this help"},
+	}
+	fmt.Printf(header, "bucket")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
 }

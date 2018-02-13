@@ -29,14 +29,21 @@ package config
 type BucketSets []*BucketSet
 
 type BucketSet struct {
-	Name_    string   `json:"bucket_set"`
-	Buckets_ *Buckets `json:"buckets"`
+	Name_    string    `json:"bucket_set"`
+	Buckets_ []*Bucket `json:"buckets"`
 }
 
 func (b *BucketSet) Name() string {
 	return b.Name_
 }
 
-func (b *BucketSet) Buckets() *Buckets {
+func (b *BucketSet) Buckets() []*Bucket {
 	return b.Buckets_
+}
+
+func (b *BucketSet) PrintLocal() {
+
+}
+
+func (b *BucketSet) Print() {
 }

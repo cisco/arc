@@ -42,7 +42,7 @@ import (
 
 type bucket struct {
 	*config.Bucket
-	provider *accountProvider
+	provider *storageProvider
 	s3       *s3.S3
 
 	storage *storage
@@ -52,7 +52,7 @@ type bucket struct {
 	arn    *arn
 }
 
-func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *accountProvider) (resource.ProviderBucket, error) {
+func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *storageProvider) (resource.ProviderBucket, error) {
 	log.Debug("Initializing AWS Bucket %q", cfg.Name())
 
 	b := &bucket{
@@ -206,6 +206,9 @@ func (b *bucket) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
+	if err := b.Load(); err != nil {
+		return err
+	}
 	msg.Detail("Bucket created: %s", b.Name())
 	err = b.enableVersioning()
 	if err != nil {
@@ -219,6 +222,26 @@ func (b *bucket) Create(flags ...string) error {
 	return nil
 }
 
+func (b *bucket) Load() error {
+	if b.bucket != nil {
+		log.Debug("Skipping Bucket load, cached...")
+		return nil
+	}
+	params := &s3.ListBucketsInput{}
+	resp, err := b.s3.ListBuckets(params)
+	if err != nil {
+		return err
+	}
+	for _, bucket := range resp.Buckets {
+		if aws.StringValue(bucket.Name) == b.Name() {
+			b.bucket = bucket
+		}
+	}
+	if b.bucket == nil {
+		return fmt.Errorf("Could not find bucket on AWS")
+	}
+	return nil
+}
 func (b *bucket) Destroy(flags ...string) error {
 	msg.Info("Bucket Deletion: %s", b.Name())
 	msg.Detail("Bucket Region: %s", b.Region())
@@ -230,6 +253,7 @@ func (b *bucket) Destroy(flags ...string) error {
 		return err
 	}
 	msg.Detail("Bucket deleted: %s", b.Name())
+	b.clear()
 	return nil
 }
 

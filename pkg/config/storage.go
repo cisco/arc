@@ -26,7 +26,22 @@
 
 package config
 
+import "github.com/cisco/arc/pkg/msg"
+
 type Storage struct {
-	Buckets    *Buckets    `json:"buckets"`
-	BucketSets *BucketSets `json:"bucket_sets"`
+	Buckets    []*Bucket    `json:"buckets"`
+	BucketSets []*BucketSet `json:"bucket_sets"`
+}
+
+// Print provides a user friendly way to view the entire storage configuration.
+func (s *Storage) Print() {
+	msg.Info("Storage Config")
+	msg.IndentInc()
+	for _, b := range s.Buckets {
+		b.Print()
+	}
+	for _, bs := range s.BucketSets {
+		bs.Print()
+	}
+	msg.IndentDec()
 }

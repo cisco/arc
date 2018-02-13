@@ -35,22 +35,21 @@ type StaticBucket interface {
 	Name() string
 	Region() string
 	SecurityTags() config.SecurityTags
+	config.Printer
 }
 
 // DynamicBucket provides the interface to the dynamic portion of the bucket.
 type DynamicBucket interface {
-	Auditor
+	Loader
 	Creator
 	Destroyer
-	Provisioner
+	Auditor
+	Informer
 	// SetTags sets the tags for the bucket.
 	SetTags(map[string]string) error
 
 	// EnableReplication enables cross region bucket replication - requires role and destination in json file.
 	EnableReplication() error
-
-	// Info prints out the bucket's information to the console.
-	Info()
 }
 
 // Bucket provides the resource interface used for the common storage
@@ -60,12 +59,13 @@ type Bucket interface {
 	route.Router
 	StaticBucket
 	DynamicBucket
+	Helper
+	Provisioner
 
 	Storage() Storage
 	ProviderBucket() ProviderBucket
 }
 
 type ProviderBucket interface {
-	route.Router
 	DynamicBucket
 }

@@ -34,6 +34,7 @@ import (
 
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/env"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
@@ -43,14 +44,14 @@ import (
 type amp struct {
 	*resource.Resources
 	*config.Amp
-	account *account
+	storage *storage
 }
 
 func New(cfg *config.Amp) (*amp, error) {
 	log.Info("Initializing Amp: %q", cfg.Name())
 
-	if cfg.Account == nil {
-		return nil, fmt.Errorf("The account element is missing from the amp configuration.")
+	if cfg.Storage == nil {
+		return nil, fmt.Errorf("The storage element is missing from the amp configuration.")
 	}
 
 	a := &amp{
@@ -59,10 +60,11 @@ func New(cfg *config.Amp) (*amp, error) {
 	a.header()
 	var err error
 
-	a.account, err = newAccount(a, cfg.Account)
+	a.storage, err = newStorage(a, cfg.Storage)
 	if err != nil {
 		return nil, err
 	}
+	a.Append(a.storage)
 	return a, nil
 }
 
@@ -109,8 +111,8 @@ func (a *amp) Run() (int, error) {
 	return 0, nil
 }
 
-func (a *amp) Account() resource.Account {
-	return a.account
+func (a *amp) Storage() resource.Storage {
+	return a.storage
 }
 
 func (a *amp) Route(req *route.Request) route.Response {
@@ -121,64 +123,120 @@ func (a *amp) Route(req *route.Request) route.Response {
 	case "":
 		break
 	case "storage":
-		return a.account.storage.Route(req.Pop())
+		return a.storage.Route(req.Pop())
 	case "bucket", "bucket_set":
-		return a.account.storage.Route(req)
+		return a.storage.Route(req)
+	case "key_management":
+		// return a.account.keyManagement.Route(req.Pop())
+	case "key", "encryption_key":
+		// return a.account.keyManagement.Route(req)
+	default:
+		Help()
+		return route.FAIL
+	}
+
+	// Skip if the test flag is set
+	if req.TestFlag() {
+		msg.Detail("Test. Skipping...")
+		return route.OK
+	}
+
+	switch req.Command() {
+	case route.Load:
+		return a.storage.Route(req)
+	case route.Info:
+	case route.Config:
+	case route.Audit:
+	case route.Help:
+		Help()
+	default:
+		Help()
+		return route.FAIL
 	}
 	return route.OK
 }
 
 func Help() {
-	help := `
-  The following are all available usages of amp:
-    amp <account> storage info
-      prints out the information for all the buckets
-      for the account.
-    
-    amp <account> storage config
-      amp prints outs all the information for every bucket associated with
-      the account from the corresponding json file.
-    
-    amp <account> storage audit
-      amp checks for the following:
-        -buckets that exist on the provider but don't exist in the corresponding json file.
-        -buckets that exist in the json file but are not created with the provider.
-    
-    amp <account> bucket <bucket_name> info
-      prints out the provider information for bucket_name.
-    
-    amp <account> storage bucket <bucket_name> info
-      prints out the information for bucket_name.
-    
-    amp <account> bucket <bucket_name> config
-      prints out all the information for bucket_name
-    
-    amp <account> storage bucket <bucket_name> config
-      prints out all the information for bucket_name
-    
-    amp <account> bucket <bucket_name> create
-      creates a bucket for bucket_name on the account using the
-      configuration for it found in json file corresponding
-      to the account.
-    
-    amp <account> storage bucket <bucket_name> create
-      creates a bucket for bucket_name on the account using the
-      configuration for it found in json file corresponding
-      to the account.
-    
-    amp <account> bucket <bucket_name> delete
-      deletes the bucket bucket_name.
-    
-    amp <account> storage bucket <bucket_name> delete
-      deletes the bucket bucket_name.
-    
-    amp <account> storage update
-      updates the tags on the buckets.
 
-    amp <account> storage bucket <bucket_name> update
-      updates the tags for bucket_name.
+	header := `
+	
+amp is a tool for managing account resources.
+
+Usage:
+
+  amp <account> <resource> <command>
+
+  The account configuration files are found in /etc/arc/[account].json.
+
+  The resources are:
 `
-	fmt.Println(help)
+	resources := []help.Command{
+		{Name: "storage", Desc: "manage storage"},
+		{Name: "bucket 'name'", Desc: "manage named bucket"},
+		{Name: "bucket_set 'name'", Desc: "manage named bucket"},
+	}
+	fmt.Printf(header)
+	for _, v := range resources {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
+	commands := []help.Command{
+		{Name: route.Info.String(), Desc: "show information about allocation amp resources"},
+		{Name: route.Config.String(), Desc: "show the amp configuration for the given account"},
+		{Name: route.Help.String(), Desc: "show this help"},
+	}
+	fmt.Printf("The commands are:\n\n")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
+	/*
+			amp <account> storage info
+		      prints out the information for all the buckets
+		      for the account.
+
+		    amp <account> storage config
+		      amp prints outs all the information for every bucket associated with
+		      the account from the corresponding json file.
+
+		    amp <account> storage audit
+		      amp checks for the following:
+		        -buckets that exist on the provider but don't exist in the corresponding json file.
+		        -buckets that exist in the json file but are not created with the provider.
+
+		    amp <account> bucket <bucket_name> info
+		      prints out the provider information for bucket_name.
+
+		    amp <account> storage bucket <bucket_name> info
+		      prints out the information for bucket_name.
+
+		    amp <account> bucket <bucket_name> config
+		      prints out all the information for bucket_name
+
+		    amp <account> storage bucket <bucket_name> config
+		      prints out all the information for bucket_name
+
+		    amp <account> bucket <bucket_name> create
+		      creates a bucket for bucket_name on the account using the
+		      configuration for it found in json file corresponding
+		      to the account.
+
+		    amp <account> storage bucket <bucket_name> create
+		      creates a bucket for bucket_name on the account using the
+		      configuration for it found in json file corresponding
+		      to the account.
+
+		    amp <account> bucket <bucket_name> delete
+		      deletes the bucket bucket_name.
+
+		    amp <account> storage bucket <bucket_name> delete
+		      deletes the bucket bucket_name.
+
+		    amp <account> storage update
+		      updates the tags on the buckets.
+
+		    amp <account> storage bucket <bucket_name> update
+		      updates the tags for bucket_name.
+		`
+			fmt.Println(help)*/
 }
 
 func (a *amp) header() {

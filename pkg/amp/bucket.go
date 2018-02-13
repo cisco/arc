@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -39,11 +40,11 @@ import (
 
 type bucket struct {
 	*config.Bucket
-	storage        resource.Storage
+	storage        *storage
 	providerBucket resource.ProviderBucket
 }
 
-func newBucket(s *storage, prov provider.Account, cfg *config.Bucket) (*bucket, error) {
+func newBucket(cfg *config.Bucket, s *storage, prov provider.Storage) (*bucket, error) {
 	log.Debug("Initializing Bucket, %q", cfg.Name())
 	b := &bucket{
 		Bucket:  cfg,
@@ -83,14 +84,26 @@ func (b *bucket) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Audit:
+		if err := b.Audit(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Info:
 		b.Info()
 		return route.OK
 	case route.Config:
 		b.Print()
 		return route.OK
+	case route.Help:
+		b.Help()
+		return route.OK
+	default:
+		msg.Error("Internal Error: Unknown command " + req.Command().String())
+		b.Help()
+		return route.FAIL
 	}
-	return b.providerBucket.Route(req)
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -182,7 +195,7 @@ func (b *bucket) SetTags(t map[string]string) error {
 
 func (b *bucket) createSecurityTags() error {
 	tags := map[string]string{}
-	for k, v := range b.Storage().Account().SecurityTags() {
+	for k, v := range b.Storage().Amp().SecurityTags() {
 		tags[k] = v
 	}
 	for k, v := range b.SecurityTags() {
@@ -196,4 +209,29 @@ func (b *bucket) Info() {
 		return
 	}
 	b.ProviderBucket().Info()
+}
+
+func (b *bucket) Help() {
+	var header string = "\namp is a tool for managing account resources.\n\n" +
+		"Usage:\n\n" +
+		"  amp <account> %s <command>\n\n" +
+		"The account configuration files are found in /etc/arc/[account].json.\n\n" +
+		"The commands are:\n\n"
+	commands := []help.Command{
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create bucket %s", b.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy bucket %s", b.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update the tags for %s", b.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit bucket %s", b.Name())},
+		{Name: route.Info.String(), Desc: "show information about allocated bucket"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given bucket"},
+		{Name: route.Help.String(), Desc: "show this help"},
+	}
+	fmt.Printf(header, "bucket")
+	for _, v := range commands {
+		fmt.Printf("  %-18s %s\n", v.Name, v.Desc)
+	}
+}
+
+func (b *bucket) Load() error {
+	return b.providerBucket.Load()
 }

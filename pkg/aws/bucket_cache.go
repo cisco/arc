@@ -59,27 +59,20 @@ func newBucketCache(s *storage) (*bucketCache, error) {
 	// us-east-1 is being used here because it is the default region but plays no role in
 	// listing the buckets, it is dependent on the account that created the s.s3 object.
 	region := "us-east-1"
-	log.Debug("BP1")
 	v := s.s3[region]
-	for key, val := range s.s3 {
-		log.Debug("key = %q | val = %+v", key, val)
-	}
-	log.Debug("BP2")
 	resp, err := v.ListBuckets(params)
-	log.Debug("BP3")
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("BP4")
 
-	for _, r := range resp.Buckets {
-		if r.Name == nil {
+	for _, b := range resp.Buckets {
+		if b.Name == nil {
 			log.Verbose("Unnamed bucket")
-			c.unnamed = append(c.unnamed, r)
+			c.unnamed = append(c.unnamed, b)
 			continue
 		}
-		log.Debug("Caching %s", aws.StringValue(r.Name))
-		c.cache[aws.StringValue(r.Name)] = &bucketCacheEntry{deployed: r}
+		log.Debug("Caching %s", aws.StringValue(b.Name))
+		c.cache[aws.StringValue(b.Name)] = &bucketCacheEntry{deployed: b}
 	}
 
 	return c, nil
@@ -94,9 +87,9 @@ func (c *bucketCache) find(b *bucket) *s3.Bucket {
 	return e.deployed
 }
 
-func (c *bucketCache) remove(d *dnsRecord) {
-	log.Debug("Deleting %s from dnsCache", d.Id())
-	delete(c.cache, d.Id())
+func (c *bucketCache) remove(b *bucket) {
+	log.Debug("Deleting %s from bucketCache", b.Name())
+	delete(c.cache, b.Name())
 }
 
 func (c *bucketCache) audit(flags ...string) error {

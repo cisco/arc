@@ -24,64 +24,41 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package amp
+package provider
 
 import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/provider"
 	"github.com/cisco/arc/pkg/resource"
-	"github.com/cisco/arc/pkg/route"
 )
 
-type buckets struct {
-	*resource.Resources
-	buckets map[string]resource.Bucket
-	storage *storage
+// Storage is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type Storage interface {
+	NewStorage(cfg *config.Storage) (resource.ProviderStorage, error)
+	NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error)
 }
 
-func newBuckets(s *storage, prov provider.Account, cfg *config.Buckets) (*buckets, error) {
-	log.Debug("Initializing Buckets")
+// StorageCtor is the function signature for the provider's storage constructor.
+type StorageCtor func(*config.Amp) (Storage, error)
 
-	b := &buckets{
-		Resources: resource.NewResources(),
-		buckets:   map[string]resource.Bucket{},
-		storage:   s,
-	}
+var storCtors map[string]StorageCtor = map[string]StorageCtor{}
 
-	for _, conf := range *cfg {
-		if b.Find(conf.Name()) != nil {
-			return nil, fmt.Errorf("Bucket name %q must be unique, but it is used multiple times", conf.Name())
-		}
-		bucket, err := newBucket(s, prov, conf)
-		if err != nil {
-			return nil, err
-		}
-		b.buckets[conf.Name()] = bucket
-		b.Append(bucket)
-	}
-	return b, nil
+// RegisterStorage is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the amp package. This function is called in the
+// packages' init() function.
+func RegisterStorage(vendor string, ctor StorageCtor) {
+	storCtors[vendor] = ctor
 }
 
-func (b *buckets) Find(name string) resource.Bucket {
-	return b.buckets[name]
-}
-
-func (b *buckets) Route(req *route.Request) route.Response {
-	log.Route(req, "Buckets")
-	return b.RouteInOrder(req)
-}
-
-func (b *buckets) Audit(flags ...string) error {
-	if len(flags) == 0 || flags[0] == "" {
-		return fmt.Errorf("No flag set to find the audit object")
+// NewStorage is the provider agnostic constructor used by pkg/amp.
+func NewStorage(cfg *config.Amp) (Storage, error) {
+	vendor := cfg.Provider.Vendor
+	ctor := storCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}
-	for _, v := range b.buckets {
-		if err := v.Audit(flags...); err != nil {
-			return err
-		}
-	}
-	return nil
+	return ctor(cfg)
 }

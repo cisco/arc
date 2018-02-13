@@ -33,12 +33,15 @@ import (
 
 	"github.com/cisco/arc/pkg/env"
 	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/msg"
 )
 
 type Amp struct {
 	Name_         string         `json:"name"`
 	Notifications *Notifications `json:"notifications"`
-	Account       *Account       `json:"account"`
+	Provider      *Provider      `json:"provider"`
+	SecurityTags_ SecurityTags   `json:"security_tags"`
+	Storage       *Storage       `json:"storage"`
 }
 
 func NewAmp(dc string) (*Amp, error) {
@@ -57,4 +60,28 @@ func NewAmp(dc string) (*Amp, error) {
 
 func (a *Amp) Name() string {
 	return a.Name_
+}
+
+func (a *Amp) SecurityTags() SecurityTags {
+	return a.SecurityTags_
+}
+
+func (a *Amp) PrintLocal() {
+	msg.Detail("%-20s\t%s", "name", a.Name())
+	if a.Provider != nil {
+		a.Provider.Print()
+	}
+	if a.SecurityTags_ != nil {
+		a.SecurityTags_.Print()
+	}
+}
+
+func (a *Amp) Print() {
+	msg.Info("Amp Config")
+	msg.IndentInc()
+	a.PrintLocal()
+	if a.Storage != nil {
+		a.Storage.Print()
+	}
+	msg.IndentDec()
 }

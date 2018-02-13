@@ -28,8 +28,6 @@ package config
 
 import "github.com/cisco/arc/pkg/msg"
 
-type Buckets []*Bucket
-
 type Bucket struct {
 	Name_         string       `json:"bucket"`
 	Region_       string       `json:"region"`
