@@ -40,12 +40,11 @@ type StaticBucket interface {
 
 // DynamicBucket provides the interface to the dynamic portion of the bucket.
 type DynamicBucket interface {
-	Informer
 	Loader
-	Auditor
-
 	Creator
 	Destroyer
+	Auditor
+	Informer
 	// SetTags sets the tags for the bucket.
 	SetTags(map[string]string) error
 

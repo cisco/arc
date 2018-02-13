@@ -30,14 +30,12 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/resource"
 )
 
 // Storage is an abstract factory. It provides the methods that will
 // create the provider resources. Vendor implementations will provide the
 // concrete implementations of these methods.
-
 type Storage interface {
 	NewStorage(cfg *config.Storage) (resource.ProviderStorage, error)
 	NewBucket(b resource.Bucket, cfg *config.Bucket) (resource.ProviderBucket, error)
@@ -59,9 +57,6 @@ func RegisterStorage(vendor string, ctor StorageCtor) {
 func NewStorage(cfg *config.Amp) (Storage, error) {
 	vendor := cfg.Provider.Vendor
 	ctor := storCtors[vendor]
-	for k, v := range storCtors {
-		log.Debug("%q | %+v", k, v)
-	}
 	if ctor == nil {
 		return nil, fmt.Errorf("Unknown vendor %q", vendor)
 	}

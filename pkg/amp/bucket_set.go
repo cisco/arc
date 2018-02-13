@@ -112,7 +112,6 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 		b.Help()
 		return route.OK
 	default:
-		msg.Error("Internal Error: Unknown command " + req.Command().String())
 		b.Help()
 		return route.FAIL
 	}

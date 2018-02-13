@@ -37,15 +37,11 @@ type Storage struct {
 func (s *Storage) Print() {
 	msg.Info("Storage Config")
 	msg.IndentInc()
-	if s.Buckets != nil {
-		for _, b := range s.Buckets {
-			b.Print()
-		}
+	for _, b := range s.Buckets {
+		b.Print()
 	}
-	if s.BucketSets != nil {
-		for _, bs := range s.BucketSets {
-			bs.Print()
-		}
+	for _, bs := range s.BucketSets {
+		bs.Print()
 	}
 	msg.IndentDec()
 }

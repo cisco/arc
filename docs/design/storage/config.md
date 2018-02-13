@@ -28,8 +28,8 @@ Since the storage can have multiple buckets, the buckets element is an array of 
 The bucket element represents a single bucket in the storage. It has the following elements.
 - **bucket** (string) _required_: This is the name of the bucket. This name can be used on the cli to address this bucket.
 - **region** (string) _required_: This is the region that the bucket will be created on.
-- **role** (string) _optional_: This is the role used for cross region bucket replication.
-- **destination** (string) _optional_: This is the target bucket for replication.
+- **role** (string) _optional_: This is the role used for cross region bucket replication. This is required for bucket sets.
+- **destination** (string) _optional_: This is the target bucket for replication. This is required for bucket sets.
 
 ```
   {
@@ -40,7 +40,7 @@ The bucket element represents a single bucket in the storage. It has the followi
   }
 ```
 ## bucket sets
-Since the storage can have multiple bucket sets, the bucket_sets element
+Since the storage can have multiple bucket sets, the bucket_sets element in an array of bucket set elements.
 
 ### bucket set
 The bucket set element is a collection of buckets that must be created and destroyed together for the purpose of cross region bucket replication for all buckets in the bucket set. It has the following elements.
@@ -49,7 +49,7 @@ The bucket set element is a collection of buckets that must be created and destr
   - **bucket** (string) _required_: This is the name of the bucket. This name can be used on the cli to address this bucket.
   - **region** (string) _required_: This is the region that the bucket will be created on.
   - **role** (string) _required_: This is the role used for cross region bucket replication. This role must be the same for each bucket within the bucket set.
-  - **destination (string) _required_: This is the target bucket for replication.
+  - **destination** (string) _required_: This is the target bucket for replication.
 
 ```
   {
@@ -88,13 +88,13 @@ Here is an example of an account's storage that has one bucket "sample-bucket", 
         "bucket_set": "sample-replication-bucket-set",
         "buckets": [
           {
-            "bucket": "sample-replicated-bucket-us-east-1"
+            "bucket": "sample-replicated-bucket-us-east-1",
             "region": "us-east-1",
             "role": "S3_replication_Role_for_sample_bucket_set",
             "Destination": "sample-replicated-bucket-us-east-2"
           },
           {
-            "bucket": "sample-replicated-bucket-us-east-2"
+            "bucket": "sample-replicated-bucket-us-east-2",
             "region": "us-east-2",
             "role": "S3_replication_Role_for_sample_bucket_set",
             "Destination": "sample-replicated-bucket-us-east-1"
