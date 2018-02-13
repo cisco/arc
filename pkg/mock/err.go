@@ -26,10 +26,10 @@
 
 package mock
 
-type dberr struct {
+type err struct {
 	string
 }
 
-func (e dberr) Error() string {
+func (e err) Error() string {
 	return "mock " + e.string + " failed"
 }

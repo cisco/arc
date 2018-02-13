@@ -45,7 +45,7 @@ func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databa
 		opt:      options{p.Provider.Data},
 	}
 	if db.opt.err("db.New") {
-		return nil, dberr{"db.New"}
+		return nil, err{"db.New"}
 	}
 	return db, nil
 }
@@ -53,7 +53,7 @@ func newDatabase(cfg *config.Database, params resource.DatabaseParams, p *databa
 func (db *database) Load() error {
 	log.Info("Loading Mock Database %q", db.Name())
 	if db.opt.err("db.Load") {
-		return dberr{"db.Load"}
+		return err{"db.Load"}
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (db *database) Load() error {
 func (db *database) Create(flags ...string) error {
 	msg.Info("Creating Mock Database %q", db.Name())
 	if db.opt.err("db.Create") {
-		return dberr{"db.Create"}
+		return err{"db.Create"}
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func (db *database) Created() bool {
 func (db *database) Destroy(flags ...string) error {
 	msg.Info("Destroying Mock Database %q", db.Name())
 	if db.opt.err("db.Destroy") {
-		return dberr{"db.Destroy"}
+		return err{"db.Destroy"}
 	}
 	return nil
 }
@@ -91,7 +91,7 @@ func (db *database) Destroyed() bool {
 func (db *database) Provision(flags ...string) error {
 	msg.Info("Provisioning Mock Database %q", db.Name())
 	if db.opt.err("db.Provision") {
-		return dberr{"db.Provision"}
+		return err{"db.Provision"}
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ func (db *database) Provision(flags ...string) error {
 func (db *database) Audit(flags ...string) error {
 	msg.Info("Auditing Mock Database %q", db.Name())
 	if db.opt.err("db.Audit") {
-		return dberr{"db.Audit"}
+		return err{"db.Audit"}
 	}
 	return nil
 }

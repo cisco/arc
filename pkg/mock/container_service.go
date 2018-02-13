@@ -45,7 +45,7 @@ func newContainerService(cfg *config.ContainerService, p *containerServiceProvid
 		opt:              options{p.Provider.Data},
 	}
 	if cs.opt.err("cs.New") {
-		return nil, dberr{"cs.New"}
+		return nil, err{"cs.New"}
 	}
 	return cs, nil
 }
@@ -53,7 +53,7 @@ func newContainerService(cfg *config.ContainerService, p *containerServiceProvid
 func (cs *containerService) Load() error {
 	log.Info("Loading Mock Container Service")
 	if cs.opt.err("cs.Load") {
-		return dberr{"cs.Load"}
+		return err{"cs.Load"}
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (cs *containerService) Load() error {
 func (cs *containerService) Create(flags ...string) error {
 	msg.Info("Creating Mock ContainerService")
 	if cs.opt.err("cs.Create") {
-		return dberr{"cs.Create"}
+		return err{"cs.Create"}
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func (cs *containerService) Created() bool {
 func (cs *containerService) Destroy(flags ...string) error {
 	msg.Info("Destroying Mock ContainerService")
 	if cs.opt.err("cs.Destroy") {
-		return dberr{"cs.Destroy"}
+		return err{"cs.Destroy"}
 	}
 	return nil
 }
@@ -91,7 +91,7 @@ func (cs *containerService) Destroyed() bool {
 func (cs *containerService) Provision(flags ...string) error {
 	msg.Info("Provisioning Mock ContainerService")
 	if cs.opt.err("cs.Provision") {
-		return dberr{"cs.Provision"}
+		return err{"cs.Provision"}
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ func (cs *containerService) Provision(flags ...string) error {
 func (cs *containerService) Audit(flags ...string) error {
 	msg.Info("Auditing Mock ContainerService")
 	if cs.opt.err("cs.Audit") {
-		return dberr{"cs.Audit"}
+		return err{"cs.Audit"}
 	}
 	return nil
 }

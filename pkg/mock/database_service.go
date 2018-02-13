@@ -45,7 +45,7 @@ func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider)
 		opt:             options{p.Provider.Data},
 	}
 	if dbs.opt.err("dbs.New") {
-		return nil, dberr{"dbs.New"}
+		return nil, err{"dbs.New"}
 	}
 	return dbs, nil
 }
@@ -53,7 +53,7 @@ func newDatabaseService(cfg *config.DatabaseService, p *databaseServiceProvider)
 func (dbs *databaseService) Load() error {
 	log.Info("Loading Mock Database Service")
 	if dbs.opt.err("dbs.Load") {
-		return dberr{"dbs.Load"}
+		return err{"dbs.Load"}
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (dbs *databaseService) Load() error {
 func (dbs *databaseService) Audit(flags ...string) error {
 	msg.Info("Auditing Mock DatabaseService")
 	if dbs.opt.err("dbs.Audit") {
-		return dberr{"dbs.Audit"}
+		return err{"dbs.Audit"}
 	}
 	return nil
 }
