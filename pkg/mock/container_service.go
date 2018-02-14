@@ -108,3 +108,8 @@ func (cs *containerService) Info() {
 	msg.Info("Mock ContainerService")
 	msg.Detail("...")
 }
+
+func (cs *containerService) State() string {
+	msg.Info("State of Mock ContainerService")
+	return cs.opt.data["cs.State"]
+}

@@ -233,3 +233,8 @@ func (cs *containerService) Arc() resource.Arc {
 func (cs *containerService) ProviderContainerService() resource.ProviderContainerService {
 	return cs.providerContainerService
 }
+
+// State returnes the status of the container service.
+func (cs *containerService) State() string {
+	return cs.providerContainerService.State()
+}

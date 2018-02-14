@@ -53,13 +53,6 @@ func newContainerService(cfg *config.ContainerService, p *containerServiceProvid
 	}, nil
 }
 
-func (cs *containerService) State() string {
-	if cs.Destroyed() || cs.cluster.Status == nil {
-		return ""
-	}
-	return *cs.cluster.Status
-}
-
 func (cs *containerService) set(c *ecs.Cluster) {
 	if c == nil {
 		return
@@ -89,6 +82,10 @@ func (cs *containerService) Load() error {
 	}
 	cs.set(resp.Clusters[0])
 
+	if cs.State() == "INACTIVE" {
+		cs.clear()
+	}
+
 	return nil
 }
 
@@ -97,7 +94,14 @@ func (cs *containerService) Create(flags ...string) error {
 	if cs.Created() {
 		return nil
 	}
-	// TODO
+	params := &ecs.CreateClusterInput{
+		ClusterName: aws.String(cs.Name()),
+	}
+	resp, err := cs.ecs.CreateCluster(params)
+	if err != nil {
+		return err
+	}
+	cs.set(resp.Cluster)
 	return nil
 }
 
@@ -110,7 +114,14 @@ func (cs *containerService) Destroy(flags ...string) error {
 	if cs.Destroyed() {
 		return nil
 	}
-	// TODO
+	params := &ecs.DeleteClusterInput{
+		Cluster: aws.String(cs.Name()),
+	}
+	_, err := cs.ecs.DeleteCluster(params)
+	if err != nil {
+		return err
+	}
+	cs.clear()
 	return nil
 }
 
@@ -166,4 +177,11 @@ func (cs *containerService) Info() {
 			msg.Detail("%-40s\t%d", *s.Name, *s.Value)
 		}
 	}
+}
+
+func (cs *containerService) State() string {
+	if cs.Destroyed() || cs.cluster.Status == nil {
+		return ""
+	}
+	return *cs.cluster.Status
 }
