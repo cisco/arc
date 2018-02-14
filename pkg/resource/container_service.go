@@ -49,6 +49,9 @@ type DynamicContainerService interface {
 	Provisioner
 	Auditor
 	Informer
+
+	// State returns the status of the container service.
+	State() string
 }
 
 // ProviderContainerService provides a resource interface for the provider supplied container service.
