@@ -84,7 +84,7 @@ func (i *Instance) provisionSingleResource(req *route.Request) route.Response {
 		}
 		return route.OK
 	case req.Flag("users"):
-		if resp := i.PreProvision(req); resp != route.OK {
+		if resp := i.UserUpdate(req); resp != route.OK {
 			return resp
 		}
 		if resp := i.provisionAide(req); resp != route.OK {
@@ -104,6 +104,25 @@ func (i *Instance) provisionSingleResource(req *route.Request) route.Response {
 		return route.OK
 	}
 	return r
+}
+
+func (i *Instance) UserUpdate(req *route.Request) route.Response {
+	if resp := i.setupArc(req, "setup arc on pre-refactor instances", false); resp != route.OK {
+		return resp
+	}
+	if resp := i.configureUsers(req, false); resp != route.OK {
+		return resp
+	}
+	msg.Detail("Updating tags")
+	if err := i.updateTags(req); err != nil {
+		msg.Error(err.Error())
+		return route.FAIL
+	}
+	if err := i.createSecurityTags(); err != nil {
+		msg.Error(err.Error())
+		return route.FAIL
+	}
+	return route.OK
 }
 
 func (i *Instance) PreProvision(req *route.Request) route.Response {
