@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 
-	help.Init(appName)
+	help.Init(appName, "account")
 
 	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 4 {
 		amp.Help()

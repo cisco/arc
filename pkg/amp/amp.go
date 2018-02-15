@@ -157,17 +157,15 @@ func (a *amp) Route(req *route.Request) route.Response {
 }
 
 func Help() {
-	resources := []help.Resource{
+	commands := []help.Command{
 		{Name: "storage", Desc: "manage storage"},
 		{Name: "bucket 'name'", Desc: "manage named bucket"},
 		{Name: "bucket_set 'name'", Desc: "manage named bucket"},
-	}
-	commands := []help.Command{
 		{Name: route.Info.String(), Desc: "show information about allocation amp resources"},
 		{Name: route.Config.String(), Desc: "show the amp configuration for the given account"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.PrintWithResources("[resource]", resources, commands)
+	help.Print("", commands)
 }
 
 func (a *amp) header() {

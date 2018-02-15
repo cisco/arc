@@ -253,7 +253,7 @@ func (a *arc) Route(req *route.Request) route.Response {
 
 // Help provides the command line help for the arc command.
 func Help() {
-	resources := []help.Resource{
+	commands := []help.Command{
 		{Name: "network", Desc: "manage network"},
 		{Name: "subnet", Desc: "manage subnet groups"},
 		{Name: "subnet 'name'", Desc: "manage named subnet group"},
@@ -268,13 +268,11 @@ func Help() {
 		{Name: "db 'name'", Desc: "manage named database service"},
 		{Name: "container", Desc: "manage container service"},
 		{Name: "dns", Desc: "manage dns"},
-	}
-	commands := []help.Command{
 		{Name: route.Config.String(), Desc: "show the arc configuration for the given datacenter"},
 		{Name: route.Info.String(), Desc: "show information about allocated arc resources"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.PrintWithResources("[resource]", resources, commands)
+	help.Print("", commands)
 }
 
 func (a *arc) config() {

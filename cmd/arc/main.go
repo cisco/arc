@@ -53,7 +53,7 @@ func main() {
 		return
 	}
 
-	help.Init(appname)
+	help.Init(appname, "datacenter")
 
 	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 3 {
 		arc.Help()
