@@ -27,10 +27,10 @@
 package aws
 
 import (
-	// "fmt"
+	"fmt"
 
-	// "github.com/aws/aws-sdk-go/aws"
-	// "github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 
 	"github.com/cisco/arc/pkg/config"
@@ -40,19 +40,50 @@ import (
 )
 
 type keyManagementProvider struct {
-	kms *kms.KMS
+	name   string
+	number string
+	kms    *kms.KMS
 }
 
-func NewKeyManagementProvider(cfg *config.KeyManagement) (provider.KeyManagement, error) {
+func newKeyManagementProvider(cfg *config.Amp) (provider.KeyManagement, error) {
 	log.Debug("Initializing AWS Key Management Provider")
 
-	return nil, nil
+	name := cfg.Provider.Data["account"]
+	if name == "" {
+		return nil, fmt.Errorf("AWS Storage provider/data config requires an 'account' field, being the aws account name.")
+	}
+	number := cfg.Provider.Data["number"]
+	if number == "" {
+		return nil, fmt.Errorf("AWS Storage provider/data config requires a 'number' field, being the aws account number.")
+	}
+	k := &keyManagementProvider{
+		name:   name,
+		number: number,
+	}
+	opts := session.Options{
+		Config: aws.Config{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+			Region: aws.String(cfg.KeyManagement.Region()),
+		},
+		Profile:           name,
+		SharedConfigState: session.SharedConfigEnable,
+	}
+	sess, err := session.NewSessionWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+	k.kms = kms.New(sess)
+	return k, nil
 }
 
 func (p *keyManagementProvider) NewKeyManagement(cfg *config.KeyManagement) (resource.ProviderKeyManagement, error) {
 	return newKeyManagement(cfg, p.kms)
 }
 
-func (p *keyManagementProvider) NewEncyptionKeys(key resource.EncryptionKey, cfg *config.EncryptionKey) (resource.ProviderEncryptionKey, error) {
-	return newEncryptionKey(key, cfg, p)
+func (p *keyManagementProvider) NewEncryptionKey(k resource.EncryptionKey, cfg *config.EncryptionKey) (resource.ProviderEncryptionKey, error) {
+	return newEncryptionKey(k, cfg, p)
+}
+
+func init() {
+	provider.RegisterKeyManagement("aws", newKeyManagementProvider)
 }

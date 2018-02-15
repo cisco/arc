@@ -60,6 +60,9 @@ func newEncryptionKey(key resource.EncryptionKey, cfg *config.EncryptionKey, pro
 
 	return k, nil
 }
+func (k *encryptionKey) Load() error {
+	return nil
+}
 
 func (k *encryptionKey) Info() {
 	if k.encryptionKey == nil {

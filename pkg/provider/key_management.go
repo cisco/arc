@@ -27,11 +27,38 @@
 package provider
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/resource"
 )
 
+// KeyManagement is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
 type KeyManagement interface {
 	NewKeyManagement(cfg *config.KeyManagement) (resource.ProviderKeyManagement, error)
 	NewEncryptionKey(k resource.EncryptionKey, cfg *config.EncryptionKey) (resource.ProviderEncryptionKey, error)
+}
+
+// KeyManagementCtor is the function signature for the provider's key management constructor.
+type KeyManagementCtor func(*config.Amp) (KeyManagement, error)
+
+var keyMgmtCtors map[string]KeyManagementCtor = map[string]KeyManagementCtor{}
+
+//RegisterKeyManagement is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the amp package. This function is called in the
+// packages' init() fucntion.
+func RegisterKeyManagement(vendor string, ctor KeyManagementCtor) {
+	keyMgmtCtors[vendor] = ctor
+}
+
+// NewKeyManagement is the provider agnostic constructor used by pkg/amp.
+func NewKeyManagement(cfg *config.Amp) (KeyManagement, error) {
+	vendor := cfg.Provider.Vendor
+	ctor := keyMgmtCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
+	}
+	return ctor(cfg)
 }

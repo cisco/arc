@@ -61,6 +61,8 @@ func (b *Bucket) Print() {
 	msg.Detail("%-20s\t%s", "name", b.Name())
 	msg.Detail("%-20s\t%s", "region", b.Region())
 	msg.IndentInc()
-	b.SecurityTags().Print()
+	if b.SecurityTags() != nil {
+		b.SecurityTags().Print()
+	}
 	msg.IndentDec()
 }

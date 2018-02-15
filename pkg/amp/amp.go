@@ -44,7 +44,8 @@ import (
 type amp struct {
 	*resource.Resources
 	*config.Amp
-	storage *storage
+	storage       *storage
+	keyManagement *keyManagement
 }
 
 func New(cfg *config.Amp) (*amp, error) {
@@ -65,9 +66,18 @@ func New(cfg *config.Amp) (*amp, error) {
 		return nil, err
 	}
 	a.Append(a.storage)
+
+	a.keyManagement, err = newKeyManagement(a, cfg.KeyManagement)
+	if err != nil {
+		return nil, err
+	}
+	a.Append(a.keyManagement)
+
 	return a, nil
 }
 
+// Run starts amp processing. It returns 0 for success, 1 for failure.
+// Upon failure err might be set to a non-nil value.
 func (a *amp) Run() (int, error) {
 	u, err := user.Current()
 	if err != nil {
@@ -77,18 +87,18 @@ func (a *amp) Run() (int, error) {
 	// Create base request
 	req := route.NewRequest(a.Name(), u.Username, time.Now().UTC().String())
 
-	// Parse the request from thec ommand line.
+	// Parse the request from the command line.
 	req.Parse(os.Args[2:])
 	log.Info("Creating %s request for user %q", req, u.Username)
 
 	// Load the data from the provider unless there is a Load, Help or Config command.
 	switch req.Command() {
-	case route.None:
+	case route.None, route.Load:
 		// Invalid commands: issue a help command.
 		req.SetCommand(route.Help)
 		a.Route(req)
 		return 1, nil
-	case route.Help:
+	case route.Help, route.Config:
 		// Skip the loading for the help command since we aren't going to
 		// interact with the provider.
 		break
@@ -127,12 +137,9 @@ func (a *amp) Route(req *route.Request) route.Response {
 	case "bucket", "bucket_set":
 		return a.storage.Route(req)
 	case "key_management":
-		// return a.account.keyManagement.Route(req.Pop())
+		return a.keyManagement.Route(req.Pop())
 	case "key", "encryption_key":
-		// return a.account.keyManagement.Route(req)
-	default:
-		Help()
-		return route.FAIL
+		return a.keyManagement.Route(req)
 	}
 
 	// Skip if the test flag is set
@@ -145,11 +152,17 @@ func (a *amp) Route(req *route.Request) route.Response {
 	case route.Load:
 		return a.storage.Route(req)
 	case route.Info:
+		a.storage.Info()
+		a.keyManagement.Info()
+		return route.OK
 	case route.Config:
+		a.Print()
+		return route.OK
 	case route.Audit:
 	case route.Help:
 		Help()
 	default:
+		msg.Error("Error: amp/amp.go Unknown command " + req.Command().String())
 		Help()
 		return route.FAIL
 	}

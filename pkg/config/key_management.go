@@ -29,16 +29,12 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type KeyManagement struct {
-	Region_         string
-	EncryptionKeys_ *EncryptionKeys
+	Region_        string
+	EncryptionKeys []*EncryptionKey
 }
 
 func (k *KeyManagement) Region() string {
 	return k.Region_
-}
-
-func (k *KeyManagement) EncryptionKeys() *EncryptionKeys {
-	return k.EncryptionKeys_
 }
 
 func (k *KeyManagement) Print() {

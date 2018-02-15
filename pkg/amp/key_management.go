@@ -27,7 +27,11 @@
 package amp
 
 import (
+	"fmt"
+
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -39,43 +43,34 @@ type keyManagement struct {
 	*resource.Resources
 	*config.KeyManagement
 	amp                   *amp
-	encryptionKeys        *encryptionKeys
+	encryptionKeys        []*encryptionKey
 	providerKeyManagement resource.ProviderKeyManagement
 }
 
 // newKeyManagement is the constructor for a keyManagement object. It returns a non-nil error upon failure.
-func newKeyManagement(account *account, prov provider.KeyManagement, cfg *config.KeyManagement) (*keyManagement, error) {
+func newKeyManagement(amp *amp, cfg *config.KeyManagement) (*keyManagement, error) {
 	log.Debug("Initializing Key Management")
 
 	k := &keyManagement{
 		Resources:     resource.NewResources(),
 		KeyManagement: cfg,
-		account:       account,
+		amp:           amp,
 	}
 
-	var err error
+	prov, err := provider.NewKeyManagement(amp.Amp)
+	if err != nil {
+		return nil, err
+	}
 	k.providerKeyManagement, err = prov.NewKeyManagement(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	k.encryptionKeys, err = newEncryptionKeys(k, prov, cfg.EncryptionKeys())
-	if err != nil {
-		return nil, err
-	}
-	k.Append(k.encryptionKeys)
+	// for _, conf := range cfg.EncryptionKeys {
+
+	// }
 
 	return k, nil
-}
-
-// Account satisfies the resource.KeyManagement interface and provides access
-// to storage's parent.
-func (k *keyManagement) Account() resource.Account {
-	return k.account
-}
-
-func (k *keyManagement) ProviderKeyManagement() resource.ProviderKeyManagement {
-	return k.providerKeyManagement
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Storage.
@@ -89,7 +84,7 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 		break
 	case "key", "encryption_key":
 		req.Pop()
-		key := k.encryptionKeys.Find(req.Top())
+		key := k.FindEncryptionKey(req.Top())
 		if key == nil {
 			msg.Error("Unknown Encryption Key %q.", key)
 			return route.FAIL
@@ -104,42 +99,88 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 
 	// Commands that can be handled locally
 	switch req.Command() {
-	case route.Info:
-		k.info(req)
-		return route.OK
-	case route.Config:
-		k.config(req)
-		return route.OK
 	case route.Load:
 		return k.RouteInOrder(req)
-	case route.Provision:
-		return k.RouteInOrder(req)
+	case route.Audit:
+		if err := k.Audit("Encryption Key"); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
+	case route.Info:
+		k.Info()
+		return route.OK
+	case route.Config:
+		k.Config()
+		return route.OK
+	case route.Help:
+		k.Help()
+		return route.OK
 	default:
-		panic("Internal Error: Unknown command " + req.Command().String())
+		msg.Error("Error: amp/key_management.go Unknown command " + req.Command().String())
+		k.Help()
+		return route.FAIL
 	}
-	return route.FAIL
 }
 
-func (k *keyManagement) info(req *route.Request) {
+func (k *keyManagement) Config() {
 	if k.Destroyed() {
 		return
 	}
 	msg.Info("Key Management")
 	msg.IndentInc()
-	k.RouteInOrder(req)
-	msg.IndentDec()
-}
-
-func (k *keyManagement) config(req *route.Request) {
-	if k.Destroyed() {
-		return
-	}
-	msg.Info("Key Management")
-	msg.IndentInc()
-	k.RouteInOrder(req)
 	msg.IndentDec()
 }
 
 func (k *keyManagement) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find the audit object")
+	}
+	err := aaa.NewAudit(flags[0])
+	if err != nil {
+		return err
+	}
+	for _, key := range k.encryptionKeys {
+		if err := key.Audit(flags...); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (k *keyManagement) Info() {
+	msg.Info("Key Management")
+	msg.IndentInc()
+	msg.IndentDec()
+}
+
+func (k *keyManagement) Help() {
+	commands := []help.Command{
+		{Name: route.Audit.String(), Desc: "audit the storage"},
+		{Name: route.Info.String(), Desc: "show information about allocated storage"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given storage"},
+		{Name: route.Help.String(), Desc: "show this help"},
+	}
+	help.Print("key_management", commands)
+}
+
+// Amp satisfies the resource.KeyManagement interface and provides access
+// to keyManagement's parent.
+func (k *keyManagement) Amp() resource.Amp {
+	return k.amp
+}
+
+// FindEncryptionKey returns the  EncryptionKey with the given name
+func (k *keyManagement) FindEncryptionKey(name string) resource.EncryptionKey {
+	for _, key := range k.encryptionKeys {
+		if key.Name() == name {
+			return key
+		}
+	}
+	return nil
+}
+
+// ProviderStorage provides access to the provider KeyManagement object.
+func (k *keyManagement) ProviderKeyManagement() resource.ProviderKeyManagement {
+	return k.providerKeyManagement
 }

@@ -26,12 +26,19 @@
 
 package resource
 
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 type StaticKeyManagement interface {
+	Region() string
+	EncryptionKeys() []*config.EncryptionKey
+	config.Printer
 }
 
 type DynamicKeyManagement interface {
-	// Audit identifies any buckets that have been deployed but are not in the configuration.
-	Audit(flags ...string) error
+	Auditor
 }
 
 // Storage provides the resource interface used for the common storage
@@ -39,13 +46,19 @@ type DynamicKeyManagement interface {
 // access its parent object.
 
 type KeyManagement interface {
-	Resource
+	route.Router
 	StaticKeyManagement
 	DynamicKeyManagement
+	Informer
+	Helper
 
-	// Account provides access to Storage's parent object.
-	Account() Account
-	// ProviderStorage provides access to the provider storage object.
+	// Amp provides access to KeyManagement's parent object.
+	Amp() Amp
+
+	// FindEncryptionKey returns the  EncryptionKey with the given name
+	FindEncryptionKey(string) EncryptionKey
+
+	// ProviderStorage provides access to the provider KeyManagement object.
 	ProviderKeyManagement() ProviderKeyManagement
 }
 
