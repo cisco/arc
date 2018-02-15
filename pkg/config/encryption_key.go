@@ -28,8 +28,6 @@ package config
 
 import "github.com/cisco/arc/pkg/msg"
 
-type EncryptionKeys []*EncryptionKey
-
 type EncryptionKey struct {
 	Name_ string `json:"encryption_key"`
 }

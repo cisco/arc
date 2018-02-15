@@ -42,6 +42,7 @@ type Amp struct {
 	Provider      *Provider      `json:"provider"`
 	SecurityTags_ SecurityTags   `json:"security_tags"`
 	Storage       *Storage       `json:"storage"`
+	KeyManagement *KeyManagement `json:"key_management"`
 }
 
 func NewAmp(dc string) (*Amp, error) {

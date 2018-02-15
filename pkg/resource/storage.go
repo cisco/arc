@@ -45,9 +45,10 @@ type DynamicStorage interface {
 
 type Storage interface {
 	route.Router
-	Informer
 	StaticStorage
 	DynamicStorage
+	Informer
+	Helper
 
 	// Amp provides access to Storage's parent object.
 	Amp() Amp

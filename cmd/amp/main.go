@@ -49,7 +49,7 @@ func main() {
 		fmt.Printf("%s %s\n", appName, version)
 		return
 	}
-	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 4 {
+	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 3 {
 		amp.Help()
 		return
 	}

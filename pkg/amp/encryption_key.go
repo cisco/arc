@@ -43,11 +43,11 @@ type encryptionKey struct {
 	providerEncryptionKey resource.ProviderEncryptionKey
 }
 
-func newEncryptionKey(km *keyManagement, prov provider.Account, cfg *config.EncryptionKey) (*encryptionKey, error) {
+func newEncryptionKey(km *keyManagement, prov provider.KeyManagement, cfg *config.EncryptionKey) (*encryptionKey, error) {
 	log.Debug("Initializing Encryption Key, %q", cfg.Name())
 	k := &encryptionKey{
 		EncryptionKey: cfg,
-		keyManagement: km,
+		// keyManagement: km,
 	}
 
 	var err error
@@ -86,6 +86,10 @@ func (k *encryptionKey) Route(req *route.Request) route.Response {
 	default:
 		panic("Internal Error: Unknown command " + req.Command().String())
 	}
+}
+
+func (k *encryptionKey) Load() error {
+	return k.providerEncryptionKey.Load()
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
@@ -136,4 +140,8 @@ func (k *encryptionKey) Destroy(flags ...string) error {
 
 func (k *encryptionKey) Info() {
 	k.ProviderEncryptionKey().Info()
+}
+
+func (k *encryptionKey) Help() {
+
 }

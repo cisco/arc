@@ -34,12 +34,11 @@ type StaticEncryptionKey interface {
 
 // DynamicEncryptionKey provides the interface to the dynamic portion of the encryptionKey.
 type DynamicEncryptionKey interface {
-	Auditor
+	Loader
 	Creator
 	Destroyer
-
-	// Info prints out the bucket's information to the console.
-	Info()
+	Auditor
+	Informer
 }
 
 // Bucket provides the resource interface used for the common storage
@@ -49,8 +48,12 @@ type EncryptionKey interface {
 	route.Router
 	StaticEncryptionKey
 	DynamicEncryptionKey
+	Helper
 
+	// KeyManagement provides access to EncryptionKey's parent object.
 	KeyManagement() KeyManagement
+
+	//ProviderEncryptionKey provides access to the provider EncryptionKey object.
 	ProviderEncryptionKey() ProviderEncryptionKey
 }
 
