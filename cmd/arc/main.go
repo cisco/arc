@@ -38,6 +38,7 @@ import (
 	"github.com/cisco/arc/pkg/arc"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/env"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/servertypes"
@@ -51,6 +52,9 @@ func main() {
 		fmt.Printf("%s %s\n", appname, version)
 		return
 	}
+
+	help.Init(appname, "datacenter")
+
 	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 3 {
 		arc.Help()
 		return

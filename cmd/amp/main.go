@@ -38,6 +38,7 @@ import (
 	"github.com/cisco/arc/pkg/amp"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/env"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 )
@@ -49,6 +50,9 @@ func main() {
 		fmt.Printf("%s %s\n", appName, version)
 		return
 	}
+
+	help.Init(appName, "account")
+
 	if (len(os.Args) > 1 && os.Args[1] == "help") || len(os.Args) < 4 {
 		amp.Help()
 		return

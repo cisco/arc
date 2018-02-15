@@ -30,11 +30,21 @@ import (
 	"fmt"
 )
 
-var header string = "\narc is a tool for managing datacenter resources.\n\n" +
-	"Usage:\n\n" +
-	"  arc [datacenter]%s [command]\n\n" +
-	"The datacenter configuration files are found in /etc/arc/[datacenter].json.\n\n" +
-	"The commands are:\n\n"
+var header string
+
+func Init(appName string, configType string) {
+	header = "\n%s is a tool for managing %s resources.\n\n" +
+		"Usage:\n\n" +
+		"  %s [%s]%%s [command]\n\n" +
+		"The %s configuration files are found in /etc/arc/[%s].json.\n\n" +
+		"The commands are:\n\n"
+	header = fmt.Sprintf(header, appName, configType, appName, configType, configType, configType)
+}
+
+type Resource struct {
+	Name string
+	Desc string
+}
 
 type Command struct {
 	Name string
