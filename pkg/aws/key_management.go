@@ -59,5 +59,5 @@ func newKeyManagement(cfg *config.KeyManagement, kms *kms.KMS) (resource.Provide
 }
 
 func (k *keyManagement) Audit(flags ...string) error {
-	return nil
+	return k.encryptionKeyCache.audit(flags...)
 }

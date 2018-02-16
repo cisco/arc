@@ -30,7 +30,7 @@ import "github.com/cisco/arc/pkg/msg"
 
 type KeyManagement struct {
 	Region_        string
-	EncryptionKeys []*EncryptionKey
+	EncryptionKeys []*EncryptionKey `json:"encryption_keys"`
 }
 
 func (k *KeyManagement) Region() string {
@@ -39,4 +39,9 @@ func (k *KeyManagement) Region() string {
 
 func (k *KeyManagement) Print() {
 	msg.Info("Key Management Config")
+	msg.IndentInc()
+	for _, key := range k.EncryptionKeys {
+		key.Print()
+	}
+	msg.IndentDec()
 }

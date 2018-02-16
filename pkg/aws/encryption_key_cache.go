@@ -37,13 +37,13 @@ import (
 )
 
 type encryptionKeyCacheEntry struct {
-	deployed   *kms.KeyListEntry
+	deployed   *kms.AliasListEntry
 	configured *encryptionKey
 }
 
 type encryptionKeyCache struct {
 	cache   map[string]*encryptionKeyCacheEntry
-	unnamed []*kms.KeyListEntry
+	unnamed []*kms.AliasListEntry
 }
 
 func newEncryptionKeyCache(k *keyManagement) (*encryptionKeyCache, error) {
@@ -53,27 +53,27 @@ func newEncryptionKeyCache(k *keyManagement) (*encryptionKeyCache, error) {
 		cache: map[string]*encryptionKeyCacheEntry{},
 	}
 
-	params := &kms.ListKeysInput{}
+	params := &kms.ListAliasesInput{}
 
-	resp, err := k.kms.ListKeys(params)
+	resp, err := k.kms.ListAliases(params)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, k := range resp.Keys {
-		if k.KeyArn == nil {
+	for _, k := range resp.Aliases {
+		if k.AliasArn == nil {
 			log.Verbose("Unnamed encryption key")
 			c.unnamed = append(c.unnamed, k)
 			continue
 		}
-		log.Debug("Caching %s", aws.StringValue(k.KeyArn))
-		c.cache[aws.StringValue(k.KeyArn)] = &encryptionKeyCacheEntry{deployed: k}
+		log.Debug("Caching %s", aws.StringValue(k.AliasName))
+		c.cache[aws.StringValue(k.AliasArn)] = &encryptionKeyCacheEntry{deployed: k}
 	}
 
 	return c, nil
 }
 
-func (c *encryptionKeyCache) find(k *encryptionKey) *kms.KeyListEntry {
+func (c *encryptionKeyCache) find(k *encryptionKey) *kms.AliasListEntry {
 	e := c.cache[k.Name()]
 	if e == nil {
 		return nil
@@ -102,7 +102,7 @@ func (c *encryptionKeyCache) audit(flags ...string) error {
 	}
 	if c.unnamed != nil {
 		a.Audit(aaa.Deployed, "\r")
-		for i, _ := range c.unnamed {
+		for i := range c.unnamed {
 			m := fmt.Sprintf("Unnamed Encryption Key %d ", i+1)
 			a.Audit(aaa.Deployed, m)
 		}

@@ -37,6 +37,7 @@ type DynamicEncryptionKey interface {
 	Loader
 	Creator
 	Destroyer
+	Provisioner
 	Auditor
 	Informer
 }

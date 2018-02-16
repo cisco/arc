@@ -66,16 +66,20 @@ func newKeyManagement(amp *amp, cfg *config.KeyManagement) (*keyManagement, erro
 		return nil, err
 	}
 
-	// for _, conf := range cfg.EncryptionKeys {
-
-	// }
+	for _, conf := range cfg.EncryptionKeys {
+		key, err := newEncryptionKey(conf, k, prov)
+		if err != nil {
+			return nil, err
+		}
+		k.encryptionKeys = append(k.encryptionKeys, key)
+	}
 
 	return k, nil
 }
 
-// Route satisfies the embedded resource.Resource interface in resource.Storage.
-// Storage does not directly terminate a request so only handles load and info
-// requests from it's parent.  All other commands are routed to amp's children.
+// Route satisfies the embedded route.Router interface in resource.KeyManagement.
+// KeyManagement terminates Load, Audit, Info, and Config commands. All other
+// commands are routed to keyManagement's children.
 func (k *keyManagement) Route(req *route.Request) route.Response {
 	log.Route(req, "Key Management")
 
@@ -89,7 +93,7 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 			msg.Error("Unknown Encryption Key %q.", key)
 			return route.FAIL
 		}
-		key.Route(req)
+		return key.Route(req)
 	}
 	// Skip if the test flag is set
 	if req.TestFlag() {
@@ -101,6 +105,11 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 	switch req.Command() {
 	case route.Load:
 		return k.RouteInOrder(req)
+	case route.Provision:
+		if err := k.Provision(req.Flags().Get()...); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Audit:
 		if err := k.Audit("Encryption Key"); err != nil {
 			msg.Error(err.Error())
@@ -111,7 +120,7 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 		k.Info()
 		return route.OK
 	case route.Config:
-		k.Config()
+		k.Print()
 		return route.OK
 	case route.Help:
 		k.Help()
@@ -123,13 +132,13 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 	}
 }
 
-func (k *keyManagement) Config() {
-	if k.Destroyed() {
-		return
+func (k *keyManagement) Provision(flags ...string) error {
+	for _, key := range k.encryptionKeys {
+		if err := key.Provision(flags...); err != nil {
+			return err
+		}
 	}
-	msg.Info("Key Management")
-	msg.IndentInc()
-	msg.IndentDec()
+	return nil
 }
 
 func (k *keyManagement) Audit(flags ...string) error {
@@ -151,6 +160,9 @@ func (k *keyManagement) Audit(flags ...string) error {
 func (k *keyManagement) Info() {
 	msg.Info("Key Management")
 	msg.IndentInc()
+	for _, key := range k.encryptionKeys {
+		key.Info()
+	}
 	msg.IndentDec()
 }
 

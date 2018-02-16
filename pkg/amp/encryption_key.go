@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/provider"
@@ -43,11 +44,11 @@ type encryptionKey struct {
 	providerEncryptionKey resource.ProviderEncryptionKey
 }
 
-func newEncryptionKey(km *keyManagement, prov provider.KeyManagement, cfg *config.EncryptionKey) (*encryptionKey, error) {
+func newEncryptionKey(cfg *config.EncryptionKey, km *keyManagement, prov provider.KeyManagement) (*encryptionKey, error) {
 	log.Debug("Initializing Encryption Key, %q", cfg.Name())
 	k := &encryptionKey{
 		EncryptionKey: cfg,
-		// keyManagement: km,
+		keyManagement: km,
 	}
 
 	var err error
@@ -59,9 +60,9 @@ func newEncryptionKey(km *keyManagement, prov provider.KeyManagement, cfg *confi
 	return k, nil
 }
 
-// Route satisfies the embedded resource.Resource interface in resource.Bucket.
-// Bucket handles load, create, destroy, config and info requests by delegating them
-// to the providerBucket.
+// Route satisfies the embedded route.Router interface in resource.EncryptionKey.
+// EncryptionKey handles load, create, destroy, audit, config and info requests by delegating them
+// to the providerEncryptionKey.
 func (k *encryptionKey) Route(req *route.Request) route.Response {
 	log.Route(req, "Encryption Key %q", k.Name())
 	switch req.Command() {
@@ -74,6 +75,16 @@ func (k *encryptionKey) Route(req *route.Request) route.Response {
 	case route.Destroy:
 		if err := k.Destroy(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
+	case route.Provision:
+		if err := k.Provision(req.Flags().Get()...); err != nil {
+			return route.FAIL
+		}
+		return route.OK
+	case route.Audit:
+		if err := k.Audit("Encryption Key"); err != nil {
 			return route.FAIL
 		}
 		return route.OK
@@ -92,33 +103,6 @@ func (k *encryptionKey) Load() error {
 	return k.providerEncryptionKey.Load()
 }
 
-// Created satisfies the embedded resource.Resource interface in resource.Bucket.
-// It delegates the call to the provider's bucket.
-func (k *encryptionKey) Created() bool {
-	return k.providerEncryptionKey.Created()
-}
-
-// Destroyed satisfies the embedded resource.Resource interaface in resource.Bucket.
-// It delegates the call to the provider's bucket.
-func (k *encryptionKey) Destroyed() bool {
-	return k.providerEncryptionKey.Destroyed()
-}
-
-func (k *encryptionKey) KeyManagement() resource.KeyManagement {
-	return k.keyManagement
-}
-
-func (k *encryptionKey) ProviderEncryptionKey() resource.ProviderEncryptionKey {
-	return k.providerEncryptionKey
-}
-
-func (k *encryptionKey) Audit(flags ...string) error {
-	if len(flags) == 0 || flags[0] == "" {
-		return fmt.Errorf("No flag set to find the audit object")
-	}
-	return k.providerEncryptionKey.Audit(flags...)
-}
-
 func (k *encryptionKey) Create(flags ...string) error {
 	if k.Created() {
 		msg.Detail("Encryption Key exists, skipping...")
@@ -130,6 +114,12 @@ func (k *encryptionKey) Create(flags ...string) error {
 	return nil
 }
 
+// Created satisfies the embedded resource.Creator interface in resource.Bucket.
+// It delegates the call to the provider's encryptionKey.
+func (k *encryptionKey) Created() bool {
+	return k.providerEncryptionKey.Created()
+}
+
 func (k *encryptionKey) Destroy(flags ...string) error {
 	if k.Destroyed() {
 		msg.Detail("Encryption Key does not exist, skipping...")
@@ -138,10 +128,46 @@ func (k *encryptionKey) Destroy(flags ...string) error {
 	return k.ProviderEncryptionKey().Destroy(flags...)
 }
 
+// Destroyed satisfies the embedded resource.Destroyer interaface in resource.Bucket.
+// It delegates the call to the provider's encryptionKey.
+func (k *encryptionKey) Destroyed() bool {
+	return k.providerEncryptionKey.Destroyed()
+}
+
+func (k *encryptionKey) Provision(flags ...string) error {
+	if k.Destroyed() {
+		msg.Detail("Encryption Key does not exist, skipping...")
+		return nil
+	}
+	return k.ProviderEncryptionKey().Provision(flags...)
+}
+func (k *encryptionKey) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find the audit object")
+	}
+	return k.providerEncryptionKey.Audit(flags...)
+}
+
 func (k *encryptionKey) Info() {
 	k.ProviderEncryptionKey().Info()
 }
 
 func (k *encryptionKey) Help() {
+	commands := []help.Command{
+		{Name: route.Create.String(), Desc: fmt.Sprintf("create encryption key %s", k.Name())},
+		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy encryption key %s", k.Name())},
+		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit encrypption key %s", k.Name())},
+		{Name: route.Info.String(), Desc: "show information about allocated encryption key"},
+		{Name: route.Config.String(), Desc: "show the configuration for the given encryption key"},
+		{Name: route.Help.String(), Desc: "show this help"},
+	}
+	help.Print("encryption_key", commands)
+}
 
+func (k *encryptionKey) KeyManagement() resource.KeyManagement {
+	return k.keyManagement
+}
+
+func (k *encryptionKey) ProviderEncryptionKey() resource.ProviderEncryptionKey {
+	return k.providerEncryptionKey
 }

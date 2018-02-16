@@ -48,7 +48,7 @@ var keyMgmtCtors map[string]KeyManagementCtor = map[string]KeyManagementCtor{}
 
 //RegisterKeyManagement is used by a provider implementation to make the provider package
 // (i.e. pkg/aws or pkg/mock) available to the amp package. This function is called in the
-// packages' init() fucntion.
+// packages' init() function.
 func RegisterKeyManagement(vendor string, ctor KeyManagementCtor) {
 	keyMgmtCtors[vendor] = ctor
 }

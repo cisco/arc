@@ -33,7 +33,6 @@ import (
 
 type StaticKeyManagement interface {
 	Region() string
-	EncryptionKeys() []*config.EncryptionKey
 	config.Printer
 }
 
@@ -48,6 +47,7 @@ type DynamicKeyManagement interface {
 type KeyManagement interface {
 	route.Router
 	StaticKeyManagement
+	Provisioner
 	DynamicKeyManagement
 	Informer
 	Helper

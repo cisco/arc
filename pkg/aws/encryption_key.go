@@ -28,6 +28,7 @@ package aws
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -45,7 +46,7 @@ type encryptionKey struct {
 
 	keyManagement *keyManagement
 
-	encryptionKey *kms.KeyListEntry
+	encryptionKey *kms.AliasListEntry
 }
 
 func newEncryptionKey(key resource.EncryptionKey, cfg *config.EncryptionKey, prov *keyManagementProvider) (resource.ProviderEncryptionKey, error) {
@@ -65,12 +66,13 @@ func (k *encryptionKey) Load() error {
 }
 
 func (k *encryptionKey) Info() {
+	msg.Info("Enryption Key")
 	if k.encryptionKey == nil {
 		return
 	}
-	msg.Info("Enryption Key")
-	msg.Detail("%-20s\t%s", "Arn: ", aws.StringValue(k.encryptionKey.KeyArn))
-	msg.Detail("%-20s\t%s", "Id:", aws.StringValue(k.encryptionKey.KeyId))
+	msg.Detail("%-20s\t%s", "Alias Arn: ", aws.StringValue(k.encryptionKey.AliasArn))
+	msg.Detail("%-20s\t%s", "Alias Name: ", aws.StringValue(k.encryptionKey.AliasName))
+	msg.Detail("%-20s\t%s", "Id:", aws.StringValue(k.encryptionKey.TargetKeyId))
 }
 
 func (k *encryptionKey) Audit(flags ...string) error {
@@ -87,7 +89,7 @@ func (k *encryptionKey) Audit(flags ...string) error {
 	return nil
 }
 
-func (k *encryptionKey) set(encryptionKey *kms.KeyListEntry) {
+func (k *encryptionKey) set(encryptionKey *kms.AliasListEntry) {
 	k.encryptionKey = encryptionKey
 }
 
@@ -110,9 +112,25 @@ func (k *encryptionKey) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
-	key := &kms.KeyListEntry{
-		KeyArn: resp.KeyMetadata.Arn,
-		KeyId:  resp.KeyMetadata.KeyId,
+	keyArn := strings.Split(aws.StringValue(resp.KeyMetadata.Arn), "key")
+	arn := ""
+	if len(keyArn) != 0 && keyArn[0] != "" {
+		arn = keyArn[0] + "alias/" + k.Name()
+	}
+	aliasParams := &kms.CreateAliasInput{
+		AliasName:   aws.String("alias/" + k.Name()),
+		TargetKeyId: resp.KeyMetadata.KeyId,
+	}
+
+	_, err = k.kms.CreateAlias(aliasParams)
+	if err != nil {
+		return err
+	}
+
+	key := &kms.AliasListEntry{
+		AliasArn:    aws.String(arn),
+		AliasName:   aws.String("alias/" + k.Name()),
+		TargetKeyId: resp.KeyMetadata.KeyId,
 	}
 	k.set(key)
 	return nil
@@ -120,7 +138,35 @@ func (k *encryptionKey) Create(flags ...string) error {
 
 func (k *encryptionKey) Destroy(flags ...string) error {
 	msg.Info("Encryption Key Deletion: %s", k.Name())
+	params := &kms.ScheduleKeyDeletionInput{
+		KeyId:               k.encryptionKey.TargetKeyId,
+		PendingWindowInDays: aws.Int64(7),
+	}
+	_, err := k.kms.ScheduleKeyDeletion(params)
+	if err != nil {
+		return err
+	}
+
 	k.clear()
 	k.keyManagement.encryptionKeyCache.remove(k)
+	return nil
+}
+
+func (k *encryptionKey) Provision(flags ...string) error {
+	if err := k.updateAlias(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k *encryptionKey) updateAlias() error {
+	params := &kms.UpdateAliasInput{
+		AliasName:   aws.String(k.Name()),
+		TargetKeyId: k.encryptionKey.TargetKeyId,
+	}
+	_, err := k.kms.UpdateAlias(params)
+	if err != nil {
+		return err
+	}
 	return nil
 }
