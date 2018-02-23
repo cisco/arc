@@ -28,6 +28,7 @@ package aws
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -43,7 +44,7 @@ type encryptionKeyCacheEntry struct {
 
 type encryptionKeyCache struct {
 	cache   map[string]*encryptionKeyCacheEntry
-	unnamed []*kms.AliasListEntry
+	unnamed []*kms.KeyListEntry
 }
 
 func newEncryptionKeyCache(k *keyManagement) (*encryptionKeyCache, error) {
@@ -53,21 +54,25 @@ func newEncryptionKeyCache(k *keyManagement) (*encryptionKeyCache, error) {
 		cache: map[string]*encryptionKeyCacheEntry{},
 	}
 
-	params := &kms.ListAliasesInput{}
-
-	resp, err := k.kms.ListAliases(params)
+	aliasList, err := listAliases(k)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, k := range resp.Aliases {
-		if k.AliasArn == nil {
+	keyList, err := listKeys(k)
+	if err != nil {
+		return nil, err
+	}
+
+	for keyId, entry := range keyList {
+		if aliasList[keyId] == nil {
 			log.Verbose("Unnamed encryption key")
-			c.unnamed = append(c.unnamed, k)
-			continue
+			c.unnamed = append(c.unnamed, entry)
 		}
-		log.Debug("Caching %s", aws.StringValue(k.AliasName))
-		c.cache[aws.StringValue(k.AliasName)] = &encryptionKeyCacheEntry{deployed: k}
+	}
+
+	for _, entry := range aliasList {
+		c.cache[aws.StringValue(entry.AliasName)] = &encryptionKeyCacheEntry{deployed: entry}
 	}
 
 	return c, nil
@@ -96,16 +101,48 @@ func (c *encryptionKeyCache) audit(flags ...string) error {
 		return fmt.Errorf("Audit Object does not exist")
 	}
 	for k, v := range c.cache {
-		if v.configured == nil {
+		if v.configured == nil && !strings.Contains(aws.StringValue(v.deployed.AliasName), "aws") {
 			a.Audit(aaa.Deployed, "%s", k)
 		}
 	}
 	if c.unnamed != nil {
 		a.Audit(aaa.Deployed, "\r")
-		for i := range c.unnamed {
-			m := fmt.Sprintf("Unnamed Encryption Key %d ", i+1)
+		for _, v := range c.unnamed {
+			m := fmt.Sprintf("Unnamed Encryption Key %s ", aws.StringValue(v.KeyArn))
 			a.Audit(aaa.Deployed, m)
 		}
 	}
 	return nil
+}
+
+func listAliases(k *keyManagement) (map[string]*kms.AliasListEntry, error) {
+	aliasList := map[string]*kms.AliasListEntry{}
+	params := &kms.ListAliasesInput{}
+
+	resp, err := k.kms.ListAliases(params)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range resp.Aliases {
+		log.Debug("Caching %s", aws.StringValue(key.AliasName))
+		aliasList[aws.StringValue(key.TargetKeyId)] = key
+	}
+	return aliasList, nil
+}
+
+func listKeys(k *keyManagement) (map[string]*kms.KeyListEntry, error) {
+	keyList := map[string]*kms.KeyListEntry{}
+	params := &kms.ListKeysInput{}
+
+	resp, err := k.kms.ListKeys(params)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range resp.Keys {
+		keyList[aws.StringValue(key.KeyId)] = key
+	}
+
+	return keyList, nil
 }

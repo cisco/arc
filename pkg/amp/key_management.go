@@ -149,6 +149,11 @@ func (k *keyManagement) Audit(flags ...string) error {
 	if err != nil {
 		return err
 	}
+
+	if err = k.ProviderKeyManagement().Audit(flags...); err != nil {
+		return err
+	}
+
 	for _, key := range k.encryptionKeys {
 		if err := key.Audit(flags...); err != nil {
 			return err
