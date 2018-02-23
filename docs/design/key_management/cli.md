@@ -35,6 +35,7 @@ To run a command against a single encryption key in key_management use the form
 amp [account_name] encryption_key [key_name] [command] [flags]
 or
 amp [account_name] key [key_name] [command] [flags]
+```
 
 where "key_name" is the alias to the encryption key.
 
