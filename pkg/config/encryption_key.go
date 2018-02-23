@@ -29,14 +29,25 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type EncryptionKey struct {
-	Name_ string `json:"encryption_key"`
+	Name_                  string       `json:"encryption_key"`
+	DeletionPendingWindow_ int          `json:"deletion_pending_window"`
+	SecurityTags_          SecurityTags `json:"security_tags"`
 }
 
 func (k *EncryptionKey) Name() string {
 	return k.Name_
 }
 
+func (k *EncryptionKey) DeletionPendingWindow() int {
+	return k.DeletionPendingWindow_
+}
+
+func (k *EncryptionKey) SecurityTags() SecurityTags {
+	return k.SecurityTags_
+}
+
 func (k *EncryptionKey) Print() {
 	msg.Info("Bucket Config")
 	msg.Detail("%-20s\t%s", "name", k.Name())
+	msg.Detail("%-20s\t%d", "deletiong pending window", k.DeletionPendingWindow())
 }

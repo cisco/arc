@@ -65,16 +65,6 @@ func (k *encryptionKey) Load() error {
 	return nil
 }
 
-func (k *encryptionKey) Info() {
-	msg.Info("Enryption Key")
-	if k.encryptionKey == nil {
-		return
-	}
-	msg.Detail("%-20s\t%s", "Alias Arn: ", aws.StringValue(k.encryptionKey.AliasArn))
-	msg.Detail("%-20s\t%s", "Alias Name: ", aws.StringValue(k.encryptionKey.AliasName))
-	msg.Detail("%-20s\t%s", "Id:", aws.StringValue(k.encryptionKey.TargetKeyId))
-}
-
 func (k *encryptionKey) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find audit object")
@@ -140,7 +130,7 @@ func (k *encryptionKey) Destroy(flags ...string) error {
 	msg.Info("Encryption Key Deletion: %s", k.Name())
 	params := &kms.ScheduleKeyDeletionInput{
 		KeyId:               k.encryptionKey.TargetKeyId,
-		PendingWindowInDays: aws.Int64(7),
+		PendingWindowInDays: aws.Int64(int64(k.DeletionPendingWindow())),
 	}
 	_, err := k.kms.ScheduleKeyDeletion(params)
 	if err != nil {
@@ -161,10 +151,41 @@ func (k *encryptionKey) Provision(flags ...string) error {
 
 func (k *encryptionKey) updateAlias() error {
 	params := &kms.UpdateAliasInput{
-		AliasName:   aws.String(k.Name()),
+		AliasName:   aws.String("alias/" + k.Name()),
 		TargetKeyId: k.encryptionKey.TargetKeyId,
 	}
 	_, err := k.kms.UpdateAlias(params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k *encryptionKey) Info() {
+	msg.Info("Enryption Key")
+	if k.encryptionKey == nil {
+		return
+	}
+	msg.Detail("%-20s\t%s", "Alias Arn: ", aws.StringValue(k.encryptionKey.AliasArn))
+	msg.Detail("%-20s\t%s", "Alias Name: ", aws.StringValue(k.encryptionKey.AliasName))
+	msg.Detail("%-20s\t%s", "Id:", aws.StringValue(k.encryptionKey.TargetKeyId))
+}
+
+func (k *encryptionKey) SetTags(tags map[string]string) error {
+	tagSet := []*kms.Tag{}
+	for key, value := range tags {
+		tag := &kms.Tag{
+			TagKey:   aws.String(key),
+			TagValue: aws.String(value),
+		}
+		tagSet = append(tagSet, tag)
+	}
+
+	params := &kms.TagResourceInput{
+		KeyId: k.encryptionKey.TargetKeyId,
+		Tags:  tagSet,
+	}
+	_, err := k.kms.TagResource(params)
 	if err != nil {
 		return err
 	}

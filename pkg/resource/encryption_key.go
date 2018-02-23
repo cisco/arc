@@ -40,6 +40,9 @@ type DynamicEncryptionKey interface {
 	Provisioner
 	Auditor
 	Informer
+
+	// SetTags sets the tags for the bucket.
+	SetTags(map[string]string) error
 }
 
 // Bucket provides the resource interface used for the common storage

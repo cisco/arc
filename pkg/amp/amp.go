@@ -125,6 +125,10 @@ func (a *amp) Storage() resource.Storage {
 	return a.storage
 }
 
+func (a *amp) KeyManagement() resource.KeyManagement {
+	return a.keyManagement
+}
+
 func (a *amp) Route(req *route.Request) route.Response {
 	log.Route(req, "Amp")
 

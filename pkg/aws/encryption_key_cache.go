@@ -67,14 +67,14 @@ func newEncryptionKeyCache(k *keyManagement) (*encryptionKeyCache, error) {
 			continue
 		}
 		log.Debug("Caching %s", aws.StringValue(k.AliasName))
-		c.cache[aws.StringValue(k.AliasArn)] = &encryptionKeyCacheEntry{deployed: k}
+		c.cache[aws.StringValue(k.AliasName)] = &encryptionKeyCacheEntry{deployed: k}
 	}
 
 	return c, nil
 }
 
 func (c *encryptionKeyCache) find(k *encryptionKey) *kms.AliasListEntry {
-	e := c.cache[k.Name()]
+	e := c.cache["alias/"+k.Name()]
 	if e == nil {
 		return nil
 	}

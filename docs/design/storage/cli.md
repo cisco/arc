@@ -20,7 +20,7 @@ The commands available to storage are
 - **help**: Provides help with the storage command.
 
 
-For example, to run an audit command against the accoount in the fictional "example-integration" account, run the command
+For example, to run an audit command against the storage in the fictional "example-integration" account, run the command
 
 ```shell
 amp example-integration storage audit
@@ -43,7 +43,7 @@ The commands available to a bucket are
 - **create**: Creates the bucket. If the bucket already exists this command will do nothing.
 - **destroy**: Destroys the bucket. If the bucket does not exist this command will do nothing.
 - **update**: Updates the tags for this bucket. If the bucket does not exist this command will do nothing.
-- **audit**: Audit the bucket. The audit will compare the configuration of the and report if the run time buckets do not match.
+- **audit**: Audit the bucket. The audit will compare the configuration of the bucket and report if the run time buckets do not match.
 - **info**: Provides run time information for the bucket.
 - **config**: Provides configuration information for the bucket.
 - **help**: Provides help with the named bucket command.

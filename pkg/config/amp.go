@@ -84,5 +84,8 @@ func (a *Amp) Print() {
 	if a.Storage != nil {
 		a.Storage.Print()
 	}
+	if a.KeyManagement != nil {
+		a.KeyManagement.Print()
+	}
 	msg.IndentDec()
 }

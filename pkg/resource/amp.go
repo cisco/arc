@@ -47,6 +47,9 @@ type Amp interface {
 	// Run is the entry point for arc.
 	Run() (int, error)
 
-	// Storage provides access to Amp's child account.
+	// Storage provides access to Amp's child storage.
 	Storage() Storage
+
+	// KeyManagement provides access to Amp's child keyManagement
+	KeyManagement() KeyManagement
 }

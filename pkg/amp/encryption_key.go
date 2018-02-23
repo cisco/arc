@@ -28,6 +28,8 @@ package amp
 
 import (
 	"fmt"
+	"os/user"
+	"time"
 
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/help"
@@ -80,11 +82,13 @@ func (k *encryptionKey) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Provision:
 		if err := k.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
 	case route.Audit:
 		if err := k.Audit("Encryption Key"); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
@@ -109,6 +113,9 @@ func (k *encryptionKey) Create(flags ...string) error {
 		return nil
 	}
 	if err := k.providerEncryptionKey.Create(flags...); err != nil {
+		return err
+	}
+	if err := k.createSecurityTags(); err != nil {
 		return err
 	}
 	return nil
@@ -139,6 +146,9 @@ func (k *encryptionKey) Provision(flags ...string) error {
 		msg.Detail("Encryption Key does not exist, skipping...")
 		return nil
 	}
+	if err := k.createSecurityTags(); err != nil {
+		return err
+	}
 	return k.ProviderEncryptionKey().Provision(flags...)
 }
 func (k *encryptionKey) Audit(flags ...string) error {
@@ -150,6 +160,33 @@ func (k *encryptionKey) Audit(flags ...string) error {
 
 func (k *encryptionKey) Info() {
 	k.ProviderEncryptionKey().Info()
+}
+
+func (k *encryptionKey) SetTags(t map[string]string) error {
+	if k.providerEncryptionKey == nil {
+		return fmt.Errorf("providerEncryptionKey not created")
+	}
+	return k.providerEncryptionKey.SetTags(t)
+}
+
+func (k *encryptionKey) createSecurityTags() error {
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	tags := map[string]string{
+		"Name":          k.Name(),
+		"Created By":    u.Username,
+		"Last Modified": time.Now().UTC().String(),
+	}
+	for k, v := range k.KeyManagement().Amp().SecurityTags() {
+		tags[k] = v
+	}
+	for k, v := range k.SecurityTags() {
+		tags[k] = v
+	}
+	return k.SetTags(tags)
 }
 
 func (k *encryptionKey) Help() {
