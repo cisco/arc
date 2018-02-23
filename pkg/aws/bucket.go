@@ -107,20 +107,27 @@ func (b *bucket) enableVersioning() error {
 	return nil
 }
 
-func (b *bucket) enableEncryption() error {
+func (b *bucket) EnableEncryption(key resource.EncryptionKey) error {
 	log.Debug("Enabling Bucket Encryption")
-	/*
-		params := &s3.PutBucketEncryptionInput{
-			Bucket: aws.String(b.Name()),
-			ServerSideEncryptionConfiguration: &s3.ServerSideEncryptionConfiguration{
-				Rules: []*ServerSideEncryptionRule{
-					{
-						ApplyServerSideEncryptionByDefault: &ServerSideEncryptionByDefault{},
+	bucketKey := key.ProviderEncryptionKey().(*encryptionKey)
+	params := &s3.PutBucketEncryptionInput{
+		Bucket: aws.String(b.Name()),
+		ServerSideEncryptionConfiguration: &s3.ServerSideEncryptionConfiguration{
+			Rules: []*s3.ServerSideEncryptionRule{
+				{
+					ApplyServerSideEncryptionByDefault: &s3.ServerSideEncryptionByDefault{
+						KMSMasterKeyID: bucketKey.encryptionKey.TargetKeyId,
+						SSEAlgorithm:   aws.String("aws:kms"),
 					},
 				},
 			},
-		}
-	*/
+		},
+	}
+	_, err := b.s3.PutBucketEncryption(params)
+	if err != nil {
+		return err
+	}
+	msg.Detail("Bucket encryption: enabled")
 	return nil
 }
 
@@ -214,11 +221,8 @@ func (b *bucket) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
+	msg.Detail("Bucket versioning: enabled")
 
-	err = b.enableEncryption()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

@@ -68,4 +68,7 @@ type Bucket interface {
 
 type ProviderBucket interface {
 	DynamicBucket
+
+	// EnableEncryption error enables encryption on the buckets by default using a kms key created by amp.
+	EnableEncryption(EncryptionKey) error
 }

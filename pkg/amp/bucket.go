@@ -148,6 +148,9 @@ func (b *bucket) Create(flags ...string) error {
 	if err := b.createSecurityTags(); err != nil {
 		return err
 	}
+	if err := b.enableEncryption(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -174,13 +177,11 @@ func (b *bucket) Provision(flags ...string) error {
 	}
 	if tagsFlagSet {
 		if err := b.createSecurityTags(); err != nil {
-			msg.Error(err.Error())
 			return err
 		}
 		return nil
 	}
 	if err := b.createSecurityTags(); err != nil {
-		msg.Error(err.Error())
 		return err
 	}
 	return nil
@@ -226,4 +227,20 @@ func (b *bucket) Help() {
 
 func (b *bucket) Load() error {
 	return b.providerBucket.Load()
+}
+
+func (b *bucket) enableEncryption() error {
+	keyName := b.EncryptionKey()
+	if keyName == "" {
+		keyName = b.storage.EncryptionKey()
+	}
+	log.Debug("keyName = %s", keyName)
+	if keyName == "" {
+		return nil
+	}
+	key := b.Storage().Amp().KeyManagement().FindEncryptionKey(keyName)
+	if key != nil {
+		return b.ProviderBucket().EnableEncryption(key)
+	}
+	return nil
 }

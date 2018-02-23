@@ -29,11 +29,12 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type Bucket struct {
-	Name_         string       `json:"bucket"`
-	Region_       string       `json:"region"`
-	SecurityTags_ SecurityTags `json:"security_tags"`
-	Role_         string       `json:"role"`
-	Destination_  string       `json:"Destination"`
+	Name_          string       `json:"bucket"`
+	Region_        string       `json:"region"`
+	Role_          string       `json:"role"`
+	Destination_   string       `json:"Destination"`
+	EncryptionKey_ string       `json:"encryption_key"`
+	SecurityTags_  SecurityTags `json:"security_tags"`
 }
 
 func (b *Bucket) Name() string {
@@ -42,6 +43,10 @@ func (b *Bucket) Name() string {
 
 func (b *Bucket) Region() string {
 	return b.Region_
+}
+
+func (b *Bucket) EncryptionKey() string {
+	return b.EncryptionKey_
 }
 
 func (b *Bucket) SecurityTags() SecurityTags {
