@@ -49,7 +49,7 @@ function parse_args() {
 }
 
 function create_dhclient_conf() {
-  cat << EOF
+  cat > /etc/dhcp/dhclient.conf << EOF
 timeout 300;
 retry 60;
 supersede domain-search $1;
