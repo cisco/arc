@@ -48,6 +48,15 @@ function parse_args() {
   domains="$@"
 }
 
+function create_dhclient_conf() {
+  cat << EOF
+timeout 300;
+retry 60;
+supersede domain-search $1;
+prepend domain-name-servers 127.0.0.1;
+EOF
+}
+
 function setup_dhcp() {
   local dhcp="/etc/dhcp/dhclient.conf"
   if [[ "$ID" == "centos" && "$VERSION_ID" == "6" ]]; then
@@ -55,9 +64,6 @@ function setup_dhcp() {
   elif [[ "$ID" == "redhat" ]]; then
     dhcp="/etc/dhcp/dhclient-eth0.conf"
     touch "${dhcp}"
-  fi
-  if [[ ! -f $dhcp ]]; then
-    die "Cannot find dhcp config file: $dhcp"
   fi
 
   local d
@@ -70,13 +76,22 @@ function setup_dhcp() {
     fi
   done
 
+  if [[ ! -f $dhcp ]]; then
+    create_dhclient_conf "$dhcp_domains"
+    return
+  fi
+
   if egrep "^supersede domain-search .*" $dhcp >/dev/null 2>&1; then
     sed -i'.orig' "s/^supersede domain-search .*/supersede domain-search ${dhcp_domains};/" $dhcp
   else
     echo "supersede domain-search ${dhcp_domains};" >> $dhcp
   fi
   if [[ "$ID" == "centos" || "$ID" == "redhat" ]]; then
-    service network restart
+    if [[ $VERSION_ID > 6 ]]; then
+      /usr/bin/systemctl restart network.service
+    else
+      service network restart
+    fi
   else
     ifdown eth0 && ifup eth0
   fi
