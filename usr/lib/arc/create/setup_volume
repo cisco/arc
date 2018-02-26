@@ -48,10 +48,23 @@ function parse_args() {
   skip_format="$5"
 }
 
+function a2n() {
+  local -A n
+  n=([a]=0 [b]=1 [c]=2 [d]=3 [e]=4 [f]=5 [g]=6 [h]=7 [i]=8 [j]=9)
+  echo -n ${n[$1]}
+}
+
+function get_aws_nvme_device() {
+  aws_device="/dev/nvme$(a2n ${device/\/dev\/sd/})n1"
+  if [[ ! -b $aws_device ]]; then
+    die "Cannot find block device $aws_device"
+  fi
+}
+
 function get_aws_device() {
   aws_device="/dev/xvd${device/\/dev\/sd/}"
   if [[ ! -b $aws_device ]]; then
-    die "Cannot find block device $aws_device"
+    get_aws_nvme_device
   fi
 }
 
