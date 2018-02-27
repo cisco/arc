@@ -24,22 +24,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-declare ID="centos"
-declare VERSION_ID="6"
-if [[ -r /etc/os-release ]]; then
-  source /etc/os-release
-elif [[ -r /etc/system-release-cpe ]]; then
-  ID="$(awk -F: '{print $3}' /etc/system-release-cpe)"
-  VERSION_ID="$(awk -F: '{print $5}' /etc/system-release-cpe)"
-fi
+source "/usr/lib/arc/arc.sh"
 
 declare domains=""
-
-function die() {
-  printf "Error: %s\n" "$@"
-  exit 1
-}
 
 function parse_args() {
   if [[ $# -lt 1 ]]; then
@@ -53,12 +40,12 @@ function create_dhclient_conf() {
 timeout 300;
 retry 60;
 supersede domain-search $1;
-prepend domain-name-servers 127.0.0.1;
 EOF
 }
 
 function setup_dhcp() {
   local dhcp="/etc/dhcp/dhclient.conf"
+
   if [[ "$ID" == "centos" && "$VERSION_ID" == "6" ]]; then
     dhcp="/etc/dhcp/dhclient-eth0.conf"
   elif [[ "$ID" == "redhat" ]]; then
@@ -78,14 +65,12 @@ function setup_dhcp() {
 
   if [[ ! -f $dhcp ]]; then
     create_dhclient_conf "$dhcp_domains"
-    return
-  fi
-
-  if egrep "^supersede domain-search .*" $dhcp >/dev/null 2>&1; then
+  elif egrep "^supersede domain-search .*" $dhcp >/dev/null 2>&1; then
     sed -i'.orig' "s/^supersede domain-search .*/supersede domain-search ${dhcp_domains};/" $dhcp
   else
     echo "supersede domain-search ${dhcp_domains};" >> $dhcp
   fi
+
   if [[ "$ID" == "centos" || "$ID" == "redhat" ]]; then
     if [[ $VERSION_ID > 6 ]]; then
       /usr/bin/systemctl restart network.service
