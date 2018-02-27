@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,45 +24,24 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-import (
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
-)
+import "github.com/cisco/arc/pkg/msg"
 
-type StaticStorage interface {
-	config.Printer
+type KeyManagement struct {
+	Region_        string
+	EncryptionKeys []*EncryptionKey `json:"encryption_keys"`
 }
 
-type DynamicStorage interface {
-	Auditor
+func (k *KeyManagement) Region() string {
+	return k.Region_
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
-// access its parent object.
-
-type Storage interface {
-	route.Router
-	StaticStorage
-	DynamicStorage
-	Informer
-	Helper
-
-	// Amp provides access to Storage's parent object.
-	Amp() Amp
-
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
-
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
-}
-
-type ProviderStorage interface {
-	DynamicStorage
+func (k *KeyManagement) Print() {
+	msg.Info("Key Management Config")
+	msg.IndentInc()
+	for _, key := range k.EncryptionKeys {
+		key.Print()
+	}
+	msg.IndentDec()
 }

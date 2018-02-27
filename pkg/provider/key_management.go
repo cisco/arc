@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,45 +24,41 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package provider
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
+	"github.com/cisco/arc/pkg/resource"
 )
 
-type StaticStorage interface {
-	config.Printer
+// KeyManagement is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type KeyManagement interface {
+	NewKeyManagement(cfg *config.KeyManagement) (resource.ProviderKeyManagement, error)
+	NewEncryptionKey(k resource.EncryptionKey, cfg *config.EncryptionKey) (resource.ProviderEncryptionKey, error)
 }
 
-type DynamicStorage interface {
-	Auditor
+// KeyManagementCtor is the function signature for the provider's key management constructor.
+type KeyManagementCtor func(*config.Amp) (KeyManagement, error)
+
+var keyMgmtCtors map[string]KeyManagementCtor = map[string]KeyManagementCtor{}
+
+//RegisterKeyManagement is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the amp package. This function is called in the
+// packages' init() function.
+func RegisterKeyManagement(vendor string, ctor KeyManagementCtor) {
+	keyMgmtCtors[vendor] = ctor
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
-// access its parent object.
-
-type Storage interface {
-	route.Router
-	StaticStorage
-	DynamicStorage
-	Informer
-	Helper
-
-	// Amp provides access to Storage's parent object.
-	Amp() Amp
-
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
-
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
-}
-
-type ProviderStorage interface {
-	DynamicStorage
+// NewKeyManagement is the provider agnostic constructor used by pkg/amp.
+func NewKeyManagement(cfg *config.Amp) (KeyManagement, error) {
+	vendor := cfg.Provider.Vendor
+	ctor := keyMgmtCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
+	}
+	return ctor(cfg)
 }

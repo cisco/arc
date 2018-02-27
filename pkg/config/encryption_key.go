@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,45 +24,30 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-import (
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
-)
+import "github.com/cisco/arc/pkg/msg"
 
-type StaticStorage interface {
-	config.Printer
+type EncryptionKey struct {
+	Name_                  string       `json:"encryption_key"`
+	DeletionPendingWindow_ int          `json:"deletion_pending_window"`
+	SecurityTags_          SecurityTags `json:"security_tags"`
 }
 
-type DynamicStorage interface {
-	Auditor
+func (k *EncryptionKey) Name() string {
+	return k.Name_
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
-// access its parent object.
-
-type Storage interface {
-	route.Router
-	StaticStorage
-	DynamicStorage
-	Informer
-	Helper
-
-	// Amp provides access to Storage's parent object.
-	Amp() Amp
-
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
-
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
+func (k *EncryptionKey) DeletionPendingWindow() int {
+	return k.DeletionPendingWindow_
 }
 
-type ProviderStorage interface {
-	DynamicStorage
+func (k *EncryptionKey) SecurityTags() SecurityTags {
+	return k.SecurityTags_
+}
+
+func (k *EncryptionKey) Print() {
+	msg.Info("Bucket Config")
+	msg.Detail("%-20s\t%s", "name", k.Name())
+	msg.Detail("%-20s\t%d", "deletiong pending window", k.DeletionPendingWindow())
 }

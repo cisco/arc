@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,43 +26,41 @@
 
 package resource
 
-import (
-	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
-)
+import "github.com/cisco/arc/pkg/route"
 
-type StaticStorage interface {
-	config.Printer
+type StaticEncryptionKey interface {
+	Name() string
 }
 
-type DynamicStorage interface {
+// DynamicEncryptionKey provides the interface to the dynamic portion of the encryptionKey.
+type DynamicEncryptionKey interface {
+	Loader
+	Creator
+	Destroyer
+	Provisioner
 	Auditor
+	Informer
+
+	// SetTags sets the tags for the bucket.
+	SetTags(map[string]string) error
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
+// Bucket provides the resource interface used for the common storage
+// object implemented in the amp package. It contains an Storage method used to
 // access its parent object.
-
-type Storage interface {
+type EncryptionKey interface {
 	route.Router
-	StaticStorage
-	DynamicStorage
-	Informer
+	StaticEncryptionKey
+	DynamicEncryptionKey
 	Helper
 
-	// Amp provides access to Storage's parent object.
-	Amp() Amp
+	// KeyManagement provides access to EncryptionKey's parent object.
+	KeyManagement() KeyManagement
 
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
-
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
+	//ProviderEncryptionKey provides access to the provider EncryptionKey object.
+	ProviderEncryptionKey() ProviderEncryptionKey
 }
 
-type ProviderStorage interface {
-	DynamicStorage
+type ProviderEncryptionKey interface {
+	DynamicEncryptionKey
 }

@@ -42,6 +42,7 @@ type Amp struct {
 	Provider      *Provider      `json:"provider"`
 	SecurityTags_ SecurityTags   `json:"security_tags"`
 	Storage       *Storage       `json:"storage"`
+	KeyManagement *KeyManagement `json:"key_management"`
 }
 
 func NewAmp(dc string) (*Amp, error) {
@@ -82,6 +83,9 @@ func (a *Amp) Print() {
 	a.PrintLocal()
 	if a.Storage != nil {
 		a.Storage.Print()
+	}
+	if a.KeyManagement != nil {
+		a.KeyManagement.Print()
 	}
 	msg.IndentDec()
 }

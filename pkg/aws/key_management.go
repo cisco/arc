@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,45 +24,40 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package aws
 
 import (
+	"github.com/aws/aws-sdk-go/service/kms"
+
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/resource"
 )
 
-type StaticStorage interface {
-	config.Printer
+type keyManagement struct {
+	*config.KeyManagement
+	kms *kms.KMS
+
+	encryptionKeyCache *encryptionKeyCache
 }
 
-type DynamicStorage interface {
-	Auditor
+func newKeyManagement(cfg *config.KeyManagement, kms *kms.KMS) (resource.ProviderKeyManagement, error) {
+	log.Debug("Initializing AWS Key Management")
+
+	k := &keyManagement{
+		KeyManagement: cfg,
+		kms:           kms,
+	}
+
+	var err error
+	k.encryptionKeyCache, err = newEncryptionKeyCache(k)
+	if err != nil {
+		return nil, err
+	}
+
+	return k, nil
 }
 
-// Storage provides the resource interface used for the common storage
-// object implemented in the amp package. It contains an Amp method used to
-// access its parent object.
-
-type Storage interface {
-	route.Router
-	StaticStorage
-	DynamicStorage
-	Informer
-	Helper
-
-	// Amp provides access to Storage's parent object.
-	Amp() Amp
-
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
-
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
-}
-
-type ProviderStorage interface {
-	DynamicStorage
+func (k *keyManagement) Audit(flags ...string) error {
+	return k.encryptionKeyCache.audit(flags...)
 }

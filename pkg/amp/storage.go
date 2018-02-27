@@ -134,6 +134,10 @@ func (s *storage) Route(req *route.Request) route.Response {
 		break
 	case "bucket":
 		req.Pop()
+		if req.Top() == "" {
+			s.Help()
+			return route.FAIL
+		}
 		bucket := s.FindBucket(req.Top())
 		if bucket == nil {
 			msg.Error("Unknown bucket %q.", req.Top())
@@ -156,6 +160,9 @@ func (s *storage) Route(req *route.Request) route.Response {
 		}
 		req.Flags().Append("Bucket Set")
 		return bucketSet.Route(req)
+	default:
+		Help()
+		return route.FAIL
 	}
 
 	// Skip if the test flag is set
@@ -170,7 +177,7 @@ func (s *storage) Route(req *route.Request) route.Response {
 		s.Info()
 		return route.OK
 	case route.Config:
-		s.config(req)
+		s.Print()
 		return route.OK
 	case route.Load:
 		return s.RouteInOrder(req)
@@ -206,13 +213,6 @@ func (s *storage) Info() {
 		bs.Info()
 	}
 	msg.IndentDec()
-	msg.IndentDec()
-}
-
-func (s *storage) config(req *route.Request) {
-	msg.Info("Storage")
-	msg.IndentInc()
-	s.RouteInOrder(req)
 	msg.IndentDec()
 }
 

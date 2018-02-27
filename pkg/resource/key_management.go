@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -31,11 +31,12 @@ import (
 	"github.com/cisco/arc/pkg/route"
 )
 
-type StaticStorage interface {
+type StaticKeyManagement interface {
+	Region() string
 	config.Printer
 }
 
-type DynamicStorage interface {
+type DynamicKeyManagement interface {
 	Auditor
 }
 
@@ -43,26 +44,24 @@ type DynamicStorage interface {
 // object implemented in the amp package. It contains an Amp method used to
 // access its parent object.
 
-type Storage interface {
+type KeyManagement interface {
 	route.Router
-	StaticStorage
-	DynamicStorage
+	StaticKeyManagement
+	Provisioner
+	DynamicKeyManagement
 	Informer
 	Helper
 
-	// Amp provides access to Storage's parent object.
+	// Amp provides access to KeyManagement's parent object.
 	Amp() Amp
 
-	// FindBucket returns the bucket with the given name.
-	FindBucket(string) Bucket
+	// FindEncryptionKey returns the  EncryptionKey with the given name
+	FindEncryptionKey(string) EncryptionKey
 
-	// FindBucketSet returns the bucket set with the given name.
-	FindBucketSet(string) BucketSet
-
-	// ProviderStorage provides access to the provider storage object.
-	ProviderStorage() ProviderStorage
+	// ProviderStorage provides access to the provider KeyManagement object.
+	ProviderKeyManagement() ProviderKeyManagement
 }
 
-type ProviderStorage interface {
-	DynamicStorage
+type ProviderKeyManagement interface {
+	DynamicKeyManagement
 }
