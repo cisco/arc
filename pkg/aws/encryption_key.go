@@ -62,6 +62,24 @@ func newEncryptionKey(key resource.EncryptionKey, cfg *config.EncryptionKey, pro
 	return k, nil
 }
 func (k *encryptionKey) Load() error {
+	if k.encryptionKey != nil {
+		log.Debug("Skipping Key load, cached...")
+		return nil
+	}
+	params := &kms.ListAliasesInput{}
+	resp, err := k.kms.ListAliases(params)
+	if err != nil {
+		return err
+	}
+
+	for _, key := range resp.Aliases {
+		if aws.StringValue(key.AliasName) == k.Name() {
+			k.encryptionKey = key
+		}
+	}
+	if k.encryptionKey == nil {
+		return fmt.Errorf("Could not find the encryption key on AWS")
+	}
 	return nil
 }
 

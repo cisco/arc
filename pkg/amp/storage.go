@@ -134,11 +134,11 @@ func (s *storage) Route(req *route.Request) route.Response {
 		break
 	case "bucket":
 		req.Pop()
-		bucket := s.FindBucket(req.Top())
 		if req.Top() == "" {
 			s.Help()
 			return route.FAIL
 		}
+		bucket := s.FindBucket(req.Top())
 		if bucket == nil {
 			msg.Error("Unknown bucket %q.", req.Top())
 			return route.FAIL

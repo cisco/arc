@@ -107,6 +107,7 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 		return k.RouteInOrder(req)
 	case route.Provision:
 		if err := k.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK

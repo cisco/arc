@@ -31,6 +31,7 @@ import (
 	"os/user"
 	"time"
 
+	"github.com/cisco/arc/pkg/aaa"
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/help"
 	"github.com/cisco/arc/pkg/log"
@@ -87,7 +88,12 @@ func (k *encryptionKey) Route(req *route.Request) route.Response {
 		}
 		return route.OK
 	case route.Audit:
-		if err := k.Audit("Encryption Key"); err != nil {
+		err := aaa.NewAudit("Encryption Key")
+		if err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		if err = k.Audit("Encryption Key"); err != nil {
 			msg.Error(err.Error())
 			return route.FAIL
 		}
