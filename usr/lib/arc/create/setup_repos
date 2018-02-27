@@ -24,19 +24,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-declare ID="centos"
-declare VERSION_ID="6"
-if [[ -r /etc/os-release ]]; then
-  source /etc/os-release
-fi
+source "/usr/lib/arc/arc.sh"
 
 declare enabled="1"
-
-function die() {
-  printf "Error: %s\n" "$@"
-  exit 1
-}
 
 function parse_args() {
   if [ "$#" -ne 1 ]; then
