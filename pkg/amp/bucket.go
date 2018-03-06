@@ -241,7 +241,7 @@ func (b *bucket) Help() {
 func (b *bucket) enableReplication() error {
 	keyName := b.DestinationEncryptionKey()
 	if keyName == "" {
-		return b.providerBucket.EnableReplication(nil)
+		return nil
 	}
 	key := b.Storage().Amp().KeyManagement().FindEncryptionKey(keyName)
 	return b.providerBucket.EnableReplication(key)
