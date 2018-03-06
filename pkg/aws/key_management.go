@@ -36,12 +36,12 @@ import (
 
 type keyManagement struct {
 	*config.KeyManagement
-	kms *kms.KMS
+	kms map[string]*kms.KMS
 
 	encryptionKeyCache *encryptionKeyCache
 }
 
-func newKeyManagement(cfg *config.KeyManagement, kms *kms.KMS) (resource.ProviderKeyManagement, error) {
+func newKeyManagement(cfg *config.KeyManagement, kms map[string]*kms.KMS) (resource.ProviderKeyManagement, error) {
 	log.Debug("Initializing AWS Key Management")
 
 	k := &keyManagement{

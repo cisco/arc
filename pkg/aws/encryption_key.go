@@ -55,7 +55,7 @@ func newEncryptionKey(key resource.EncryptionKey, cfg *config.EncryptionKey, pro
 	k := &encryptionKey{
 		EncryptionKey: cfg,
 		keyManagement: key.KeyManagement().ProviderKeyManagement().(*keyManagement),
-		kms:           prov.kms,
+		kms:           prov.kms[cfg.Region()],
 	}
 	k.set(k.keyManagement.encryptionKeyCache.find(k))
 

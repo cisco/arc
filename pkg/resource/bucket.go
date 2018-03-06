@@ -47,9 +47,6 @@ type DynamicBucket interface {
 	Informer
 	// SetTags sets the tags for the bucket.
 	SetTags(map[string]string) error
-
-	// EnableReplication enables cross region bucket replication - requires role and destination in json file.
-	EnableReplication() error
 }
 
 // Bucket provides the resource interface used for the common storage
@@ -68,4 +65,10 @@ type Bucket interface {
 
 type ProviderBucket interface {
 	DynamicBucket
+
+	// EnableReplication enables cross region bucket replication - requires role and destination in json file.
+	EnableReplication(EncryptionKey) error
+
+	// EnableEncryption error enables encryption on the buckets by default using a kms key created by amp.
+	EnableEncryption(EncryptionKey) error
 }

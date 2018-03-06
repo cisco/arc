@@ -107,24 +107,31 @@ func (b *bucket) enableVersioning() error {
 	return nil
 }
 
-func (b *bucket) enableEncryption() error {
+func (b *bucket) EnableEncryption(key resource.EncryptionKey) error {
 	log.Debug("Enabling Bucket Encryption")
-	/*
-		params := &s3.PutBucketEncryptionInput{
-			Bucket: aws.String(b.Name()),
-			ServerSideEncryptionConfiguration: &s3.ServerSideEncryptionConfiguration{
-				Rules: []*ServerSideEncryptionRule{
-					{
-						ApplyServerSideEncryptionByDefault: &ServerSideEncryptionByDefault{},
+	bucketKey := key.ProviderEncryptionKey().(*encryptionKey)
+	params := &s3.PutBucketEncryptionInput{
+		Bucket: aws.String(b.Name()),
+		ServerSideEncryptionConfiguration: &s3.ServerSideEncryptionConfiguration{
+			Rules: []*s3.ServerSideEncryptionRule{
+				{
+					ApplyServerSideEncryptionByDefault: &s3.ServerSideEncryptionByDefault{
+						KMSMasterKeyID: bucketKey.encryptionKey.TargetKeyId,
+						SSEAlgorithm:   aws.String("aws:kms"),
 					},
 				},
 			},
-		}
-	*/
+		},
+	}
+	_, err := b.s3.PutBucketEncryption(params)
+	if err != nil {
+		return err
+	}
+	msg.Detail("Bucket encryption: enabled")
 	return nil
 }
 
-func (b *bucket) EnableReplication() error {
+func (b *bucket) EnableReplication(key resource.EncryptionKey) error {
 	log.Debug("Enabling Bucket Replication")
 	if b.Role() == "" || b.Destination() == "" {
 		return fmt.Errorf("No Role or Destination found for replication")
@@ -146,6 +153,19 @@ func (b *bucket) EnableReplication() error {
 				},
 			},
 		},
+	}
+
+	if key != nil {
+		log.Debug("Enabling Encrypted Bucket Replication")
+		params.ReplicationConfiguration.Rules[0].SourceSelectionCriteria = &s3.SourceSelectionCriteria{
+			SseKmsEncryptedObjects: &s3.SseKmsEncryptedObjects{
+				Status: aws.String("Enabled"),
+			},
+		}
+		bucketKey := key.ProviderEncryptionKey().(*encryptionKey)
+		params.ReplicationConfiguration.Rules[0].Destination.EncryptionConfiguration = &s3.EncryptionConfiguration{
+			ReplicaKmsKeyID: bucketKey.encryptionKey.AliasArn,
+		}
 	}
 
 	_, err := b.s3.PutBucketReplication(params)
@@ -214,11 +234,8 @@ func (b *bucket) Create(flags ...string) error {
 	if err != nil {
 		return err
 	}
+	msg.Detail("Bucket versioning: enabled")
 
-	err = b.enableEncryption()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

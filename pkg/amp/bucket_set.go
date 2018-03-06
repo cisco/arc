@@ -162,7 +162,7 @@ func (b *bucketSet) Create(flags ...string) error {
 		}
 	}
 	for _, bkt := range b.buckets {
-		if err := bkt.EnableReplication(); err != nil {
+		if err := bkt.enableReplication(); err != nil {
 			return err
 		}
 	}

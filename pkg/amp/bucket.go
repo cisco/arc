@@ -122,19 +122,12 @@ func (b *bucket) Storage() resource.Storage {
 	return b.storage
 }
 
-func (b *bucket) EnableReplication() error {
-	return b.providerBucket.EnableReplication()
-}
-
 func (b *bucket) ProviderBucket() resource.ProviderBucket {
 	return b.providerBucket
 }
 
-func (b *bucket) Audit(flags ...string) error {
-	if len(flags) == 0 || flags[0] == "" {
-		return fmt.Errorf("No flag set to find the audit object")
-	}
-	return b.providerBucket.Audit(flags...)
+func (b *bucket) Load() error {
+	return b.providerBucket.Load()
 }
 
 func (b *bucket) Create(flags ...string) error {
@@ -148,6 +141,9 @@ func (b *bucket) Create(flags ...string) error {
 	if err := b.createSecurityTags(); err != nil {
 		return err
 	}
+	if err := b.enableEncryption(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -159,28 +155,46 @@ func (b *bucket) Destroy(flags ...string) error {
 	return b.ProviderBucket().Destroy(flags...)
 }
 
+func (b *bucket) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find the audit object")
+	}
+	return b.providerBucket.Audit(flags...)
+}
+
 func (b *bucket) Provision(flags ...string) error {
 	if b.Destroyed() {
 		msg.Detail("Bucket does not exist, skipping...")
 		return nil
 	}
 	tagsFlagSet := false
+	encryptFlagSet := false
 	if len(flags) != 0 {
 		for _, v := range flags {
 			if v == "tags" {
 				tagsFlagSet = true
 			}
+			if v == "encrypt" {
+				encryptFlagSet = true
+			}
 		}
 	}
-	if tagsFlagSet {
-		if err := b.createSecurityTags(); err != nil {
-			msg.Error(err.Error())
+	if encryptFlagSet {
+		if err := b.enableEncryption(); err != nil {
 			return err
 		}
 		return nil
 	}
+	if tagsFlagSet {
+		if err := b.createSecurityTags(); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := b.enableEncryption(); err != nil {
+		return err
+	}
 	if err := b.createSecurityTags(); err != nil {
-		msg.Error(err.Error())
 		return err
 	}
 	return nil
@@ -224,6 +238,26 @@ func (b *bucket) Help() {
 	help.Print("bucket", commands)
 }
 
-func (b *bucket) Load() error {
-	return b.providerBucket.Load()
+func (b *bucket) enableReplication() error {
+	keyName := b.DestinationEncryptionKey()
+	if keyName == "" {
+		return nil
+	}
+	key := b.Storage().Amp().KeyManagement().FindEncryptionKey(keyName)
+	return b.providerBucket.EnableReplication(key)
+}
+
+func (b *bucket) enableEncryption() error {
+	keyName := b.EncryptionKey()
+	if keyName == "" {
+		keyName = b.storage.EncryptionKey()
+	}
+	if keyName == "" {
+		return nil
+	}
+	key := b.Storage().Amp().KeyManagement().FindEncryptionKey(keyName)
+	if key != nil {
+		return b.ProviderBucket().EnableEncryption(key)
+	}
+	return nil
 }

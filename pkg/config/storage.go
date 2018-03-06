@@ -29,14 +29,20 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type Storage struct {
-	Buckets    []*Bucket    `json:"buckets"`
-	BucketSets []*BucketSet `json:"bucket_sets"`
+	EncryptionKey_ string       `json:"encryption_key"`
+	Buckets        []*Bucket    `json:"buckets"`
+	BucketSets     []*BucketSet `json:"bucket_sets"`
+}
+
+func (s *Storage) EncryptionKey() string {
+	return s.EncryptionKey_
 }
 
 // Print provides a user friendly way to view the entire storage configuration.
 func (s *Storage) Print() {
 	msg.Info("Storage Config")
 	msg.IndentInc()
+	msg.Detail("%-20s\t%s", "encryption key", s.EncryptionKey)
 	for _, b := range s.Buckets {
 		b.Print()
 	}

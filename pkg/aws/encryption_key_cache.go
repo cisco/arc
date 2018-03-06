@@ -119,14 +119,16 @@ func listAliases(k *keyManagement) (map[string]*kms.AliasListEntry, error) {
 	aliasList := map[string]*kms.AliasListEntry{}
 	params := &kms.ListAliasesInput{}
 
-	resp, err := k.kms.ListAliases(params)
-	if err != nil {
-		return nil, err
-	}
+	for region, keyManagementService := range k.kms {
+		resp, err := keyManagementService.ListAliases(params)
+		if err != nil {
+			return nil, err
+		}
 
-	for _, key := range resp.Aliases {
-		log.Debug("Caching %s", aws.StringValue(key.AliasName))
-		aliasList[aws.StringValue(key.TargetKeyId)] = key
+		for _, key := range resp.Aliases {
+			log.Debug("Caching %s from %s", aws.StringValue(key.AliasName), region)
+			aliasList[aws.StringValue(key.TargetKeyId)] = key
+		}
 	}
 	return aliasList, nil
 }
@@ -135,13 +137,15 @@ func listKeys(k *keyManagement) (map[string]*kms.KeyListEntry, error) {
 	keyList := map[string]*kms.KeyListEntry{}
 	params := &kms.ListKeysInput{}
 
-	resp, err := k.kms.ListKeys(params)
-	if err != nil {
-		return nil, err
-	}
+	for _, keyManagementService := range k.kms {
+		resp, err := keyManagementService.ListKeys(params)
+		if err != nil {
+			return nil, err
+		}
 
-	for _, key := range resp.Keys {
-		keyList[aws.StringValue(key.KeyId)] = key
+		for _, key := range resp.Keys {
+			keyList[aws.StringValue(key.KeyId)] = key
+		}
 	}
 
 	return keyList, nil
