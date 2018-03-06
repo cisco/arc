@@ -26,6 +26,8 @@
 
 package config
 
+import "github.com/cisco/arc/pkg/msg"
+
 type BucketSets []*BucketSet
 
 type BucketSet struct {
@@ -42,8 +44,13 @@ func (b *BucketSet) Buckets() []*Bucket {
 }
 
 func (b *BucketSet) PrintLocal() {
-
+	msg.Info("Bucket Set Config")
+	msg.Detail("%-20s\t%s", "name", b.Name())
 }
 
 func (b *BucketSet) Print() {
+	b.PrintLocal()
+	for _, v := range b.Buckets() {
+		v.Print()
+	}
 }

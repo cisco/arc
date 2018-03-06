@@ -42,7 +42,7 @@ import (
 type keyManagementProvider struct {
 	name   string
 	number string
-	kms    *kms.KMS
+	kms    map[string]*kms.KMS
 }
 
 func newKeyManagementProvider(cfg *config.Amp) (provider.KeyManagement, error) {
@@ -56,23 +56,38 @@ func newKeyManagementProvider(cfg *config.Amp) (provider.KeyManagement, error) {
 	if number == "" {
 		return nil, fmt.Errorf("AWS Storage provider/data config requires a 'number' field, being the aws account number.")
 	}
+
+	regions := map[string]string{}
+
+	for _, key := range cfg.KeyManagement.EncryptionKeys {
+		if region := regions[key.Region()]; region == "" {
+			log.Debug("Region %q", region)
+			regions[key.Region()] = cfg.Provider.Data["account"]
+		}
+	}
+
 	k := &keyManagementProvider{
 		name:   name,
 		number: number,
 	}
-	opts := session.Options{
-		Config: aws.Config{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			Region: aws.String(cfg.KeyManagement.Region()),
-		},
-		Profile:           name,
-		SharedConfigState: session.SharedConfigEnable,
+
+	k.kms = map[string]*kms.KMS{}
+
+	for region := range regions {
+		opts := session.Options{
+			Config: aws.Config{
+				CredentialsChainVerboseErrors: aws.Bool(true),
+				Region: aws.String(region),
+			},
+			Profile:           name,
+			SharedConfigState: session.SharedConfigEnable,
+		}
+		sess, err := session.NewSessionWithOptions(opts)
+		if err != nil {
+			return nil, err
+		}
+		k.kms[region] = kms.New(sess)
 	}
-	sess, err := session.NewSessionWithOptions(opts)
-	if err != nil {
-		return nil, err
-	}
-	k.kms = kms.New(sess)
 	return k, nil
 }
 

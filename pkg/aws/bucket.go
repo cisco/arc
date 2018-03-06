@@ -131,7 +131,7 @@ func (b *bucket) EnableEncryption(key resource.EncryptionKey) error {
 	return nil
 }
 
-func (b *bucket) EnableReplication() error {
+func (b *bucket) EnableReplication(key resource.EncryptionKey) error {
 	log.Debug("Enabling Bucket Replication")
 	if b.Role() == "" || b.Destination() == "" {
 		return fmt.Errorf("No Role or Destination found for replication")
@@ -153,6 +153,19 @@ func (b *bucket) EnableReplication() error {
 				},
 			},
 		},
+	}
+
+	if key != nil {
+		log.Debug("Enabling Encrypted Bucket Replication")
+		params.ReplicationConfiguration.Rules[0].SourceSelectionCriteria = &s3.SourceSelectionCriteria{
+			SseKmsEncryptedObjects: &s3.SseKmsEncryptedObjects{
+				Status: aws.String("Enabled"),
+			},
+		}
+		bucketKey := key.ProviderEncryptionKey().(*encryptionKey)
+		params.ReplicationConfiguration.Rules[0].Destination.EncryptionConfiguration = &s3.EncryptionConfiguration{
+			ReplicaKmsKeyID: bucketKey.encryptionKey.AliasArn,
+		}
 	}
 
 	_, err := b.s3.PutBucketReplication(params)

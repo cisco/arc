@@ -29,12 +29,13 @@ package config
 import "github.com/cisco/arc/pkg/msg"
 
 type Bucket struct {
-	Name_          string       `json:"bucket"`
-	Region_        string       `json:"region"`
-	Role_          string       `json:"role"`
-	Destination_   string       `json:"Destination"`
-	EncryptionKey_ string       `json:"encryption_key"`
-	SecurityTags_  SecurityTags `json:"security_tags"`
+	Name_                     string       `json:"bucket"`
+	Region_                   string       `json:"region"`
+	EncryptionKey_            string       `json:"encryption_key"`
+	Role_                     string       `json:"role"`
+	Destination_              string       `json:"destination"`
+	DestinationEncryptionKey_ string       `json:"destination_encryption_key"`
+	SecurityTags_             SecurityTags `json:"security_tags"`
 }
 
 func (b *Bucket) Name() string {
@@ -61,10 +62,26 @@ func (b *Bucket) Destination() string {
 	return b.Destination_
 }
 
+func (b *Bucket) DestinationEncryptionKey() string {
+	return b.DestinationEncryptionKey_
+}
+
 func (b *Bucket) Print() {
 	msg.Info("Bucket Config")
 	msg.Detail("%-20s\t%s", "name", b.Name())
 	msg.Detail("%-20s\t%s", "region", b.Region())
+	if b.EncryptionKey() != "" {
+		msg.Detail("%-20s\t%s", "encryption key", b.EncryptionKey())
+	}
+	if b.Role() != "" {
+		msg.Detail("%-20s\t%s", "role", b.Role())
+	}
+	if b.Destination() != "" {
+		msg.Detail("%-20s\t%s", "destination", b.Destination())
+	}
+	if b.DestinationEncryptionKey() != "" {
+		msg.Detail("%-20s\t%s", "destination key", b.DestinationEncryptionKey())
+	}
 	msg.IndentInc()
 	if b.SecurityTags() != nil {
 		b.SecurityTags().Print()
