@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,33 +26,40 @@
 
 package resource
 
-import "github.com/cisco/arc/pkg/config"
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
-	SecurityTags() config.SecurityTags
+type StaticIdentityManagement interface {
+	config.Printer
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
+type DynamicIdentityManagement interface {
+	Auditor
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+// IdentityManagement provides the resource interface used for the common identity management
+// object implemented in the amp package. It contains an Amp method used to
+// access its parent object.
 
-	// IdentityManagement provides access to Amp's child identityManagement.
-	IdentityManagement() IdentityManagement
+type IdentityManagement interface {
+	route.Router
+	StaticIdentityManagement
+	DynamicIdentityManagement
+	Informer
+	Helper
 
-	// Storage provides access to Amp's child storage.
-	Storage() Storage
+	// Amp provides access to Iam's parent object.
+	Amp() Amp
 
-	// KeyManagement provides access to Amp's child keyManagement.
-	KeyManagement() KeyManagement
+	// FindPolicy returns the bucket with the given name.
+	FindPolicy(string) Policy
+
+	// ProviderIam provides access to the provider iam object.
+	ProviderIdentityManagement() ProviderIdentityManagement
+}
+
+type ProviderIdentityManagement interface {
+	DynamicIdentityManagement
 }

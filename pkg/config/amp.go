@@ -37,12 +37,13 @@ import (
 )
 
 type Amp struct {
-	Name_         string         `json:"name"`
-	Notifications *Notifications `json:"notifications"`
-	Provider      *Provider      `json:"provider"`
-	SecurityTags_ SecurityTags   `json:"security_tags"`
-	Storage       *Storage       `json:"storage"`
-	KeyManagement *KeyManagement `json:"key_management"`
+	Name_              string              `json:"name"`
+	Notifications      *Notifications      `json:"notifications"`
+	Provider           *Provider           `json:"provider"`
+	SecurityTags_      SecurityTags        `json:"security_tags"`
+	IdentityManagement *IdentityManagement `json:"identity_management"`
+	Storage            *Storage            `json:"storage"`
+	KeyManagement      *KeyManagement      `json:"key_management"`
 }
 
 func NewAmp(dc string) (*Amp, error) {

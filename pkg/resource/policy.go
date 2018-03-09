@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,33 +26,44 @@
 
 package resource
 
-import "github.com/cisco/arc/pkg/config"
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
+type StaticPolicy interface {
 	Name() string
-	SecurityTags() config.SecurityTags
+	Description() string
+	PolicyDocument() string
+	config.Printer
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
+// DynamicPolicy provides the interface to the dynamic portion of the policy.
+type DynamicPolicy interface {
+	Loader
+	Creator
+	Destroyer
+	Auditor
+	Informer
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+// Policy provides the resource interface used for the common policy
+// object implemented in the amp package. It contains an IdentityManagement method used to
+// access its parent object.
+type Policy interface {
+	route.Router
+	StaticPolicy
+	DynamicPolicy
+	Helper
+	Provisioner
 
-	// IdentityManagement provides access to Amp's child identityManagement.
+	// IdentityManagement provides access to Policy's parent object.
 	IdentityManagement() IdentityManagement
 
-	// Storage provides access to Amp's child storage.
-	Storage() Storage
+	// ProviderPolicy provides access to the provider policy object.
+	ProviderPolicy() ProviderPolicy
+}
 
-	// KeyManagement provides access to Amp's child keyManagement.
-	KeyManagement() KeyManagement
+type ProviderPolicy interface {
+	DynamicPolicy
 }
