@@ -55,7 +55,6 @@ type Policy interface {
 	StaticPolicy
 	DynamicPolicy
 	Helper
-	Provisioner
 
 	// IdentityManagement provides access to Policy's parent object.
 	IdentityManagement() IdentityManagement

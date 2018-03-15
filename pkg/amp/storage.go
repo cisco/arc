@@ -180,9 +180,15 @@ func (s *storage) Route(req *route.Request) route.Response {
 		s.Print()
 		return route.OK
 	case route.Load:
-		return s.RouteInOrder(req)
+		if err := s.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Provision:
-		return s.RouteInOrder(req)
+		if err := s.Provision(req.Flags().Get()...); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Audit:
 		if err := s.Audit("Bucket", "Bucket Set"); err != nil {
 			return route.FAIL
@@ -198,22 +204,32 @@ func (s *storage) Route(req *route.Request) route.Response {
 	}
 }
 
-func (s *storage) Info() {
-	msg.Info("Storage")
-	msg.IndentInc()
-	msg.Info("Buckets")
-	msg.IndentInc()
+func (s *storage) Load() error {
 	for _, b := range s.buckets {
-		b.Info()
+		if err := b.Load(); err != nil {
+			return err
+		}
 	}
-	msg.IndentDec()
-	msg.Info("Bucket Sets")
-	msg.IndentInc()
 	for _, bs := range s.bucketSets {
-		bs.Info()
+		if err := bs.Load(); err != nil {
+			return err
+		}
 	}
-	msg.IndentDec()
-	msg.IndentDec()
+	return nil
+}
+
+func (s *storage) Provision(flags ...string) error {
+	for _, b := range s.buckets {
+		if err := b.Provision(flags...); err != nil {
+			return err
+		}
+	}
+	for _, bs := range s.bucketSets {
+		if err := bs.Provision(flags...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *storage) Audit(flags ...string) error {
@@ -239,6 +255,24 @@ func (s *storage) Audit(flags ...string) error {
 		}
 	}
 	return nil
+}
+
+func (s *storage) Info() {
+	msg.Info("Storage")
+	msg.IndentInc()
+	msg.Info("Buckets")
+	msg.IndentInc()
+	for _, b := range s.buckets {
+		b.Info()
+	}
+	msg.IndentDec()
+	msg.Info("Bucket Sets")
+	msg.IndentInc()
+	for _, bs := range s.bucketSets {
+		bs.Info()
+	}
+	msg.IndentDec()
+	msg.IndentDec()
 }
 
 func (s *storage) Help() {

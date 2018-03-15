@@ -78,12 +78,6 @@ func (p *policy) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
-	case route.Provision:
-		if err := p.Provision(req.Flags().Get()...); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
-		}
-		return route.OK
 	case route.Audit:
 		if err := p.Audit(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
@@ -151,22 +145,6 @@ func (p *policy) Audit(flags ...string) error {
 		return fmt.Errorf("No flag set to find the audit object")
 	}
 	return p.ProviderPolicy().Audit(flags...)
-}
-
-func (p *policy) Provision(flags ...string) error {
-	if p.Destroyed() {
-		msg.Detail("Bucket does not exist, skipping...")
-		return nil
-	}
-	provisionFlags := map[string]bool{}
-	if len(flags) != 0 {
-		for _, v := range flags {
-			if provisionFlags[v] == false {
-				provisionFlags[v] = true
-			}
-		}
-	}
-	return nil
 }
 
 func (p *policy) Info() {

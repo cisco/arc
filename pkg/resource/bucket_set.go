@@ -53,6 +53,7 @@ type DynamicBucketSet interface {
 type BucketSet interface {
 	route.Router
 	StaticBucketSet
+	Loader
 	DynamicBucketSet
 
 	Storage() Storage

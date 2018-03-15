@@ -154,9 +154,9 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		}
 		return route.OK
 	case route.Provision:
-		if err := i.Provision(req.Flags().Get()...); err != nil {
-			return route.FAIL
-		}
+		// if err := i.Provision(req.Flags().Get()...); err != nil {
+		// return route.FAIL
+		// }
 		return route.OK
 	case route.Audit:
 		if err := i.Audit("Policy"); err != nil {
@@ -182,14 +182,12 @@ func (i *identityManagement) Load() error {
 	return nil
 }
 
+//This will be used for when roles are groups can be managed with amp
+/*
 func (i *identityManagement) Provision(flags ...string) error {
-	for _, p := range i.policies {
-		if err := p.Provision(flags...); err != nil {
-			return err
-		}
-	}
 	return nil
 }
+*/
 
 func (i *identityManagement) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {

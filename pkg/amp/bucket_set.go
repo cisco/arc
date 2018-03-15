@@ -117,6 +117,15 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 	}
 }
 
+func (b *bucketSet) Load() error {
+	for _, bkt := range b.buckets {
+		if err := bkt.Load(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.
 // It delegates the call to the provider's bucket.
 func (b *bucketSet) Created() bool {

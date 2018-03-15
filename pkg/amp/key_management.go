@@ -104,7 +104,10 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Load:
-		return k.RouteInOrder(req)
+		if err := k.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Provision:
 		if err := k.Provision(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
@@ -131,6 +134,15 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 		k.Help()
 		return route.FAIL
 	}
+}
+
+func (k *keyManagement) Load() error {
+	for _, key := range k.encryptionKeys {
+		if err := key.Load(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (k *keyManagement) Provision(flags ...string) error {

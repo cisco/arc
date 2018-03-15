@@ -1,0 +1,13 @@
+pkg/config/amp.go
+pkg/config/identity_management.go
+pkg/config/policy.go
+pkg/resource/amp.go
+pkg/resource/idenity_management.go
+pkg/resource/policy.go
+pkg/aws/identity_management_provider.go
+pkg/amp/amp.go
+pkg/amp/identity_management.go
+pkg/amp/policy.go
+pkg/aws/identity_management.go
+pkg/aws/policy.go
+pkg/aws/policy_cache.go

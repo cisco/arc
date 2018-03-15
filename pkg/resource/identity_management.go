@@ -46,6 +46,9 @@ type DynamicIdentityManagement interface {
 type IdentityManagement interface {
 	route.Router
 	StaticIdentityManagement
+	Loader
+	// Provisioner will be used at a later point when amp can manage roles and groups
+	// Provisioner
 	DynamicIdentityManagement
 	Informer
 	Helper
