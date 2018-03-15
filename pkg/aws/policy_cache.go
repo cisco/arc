@@ -54,21 +54,54 @@ func newPolicyCache(i *identityManagement) (*policyCache, error) {
 		cache: map[string]*policyCacheEntry{},
 	}
 
-	params := &iam.ListPoliciesInput{}
+	next := ""
+	for {
+		params := &iam.ListPoliciesInput{}
 
-	resp, err := i.iam.ListPolicies(params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, policy := range resp.Policies {
-		if policy.PolicyName == nil {
-			log.Verbose("Unnamed bucket")
-			c.unnamed = append(c.unnamed, policy)
-			continue
+		if next != "" {
+			params.Marker = aws.String(next)
 		}
-		log.Debug("Caching %s", aws.StringValue(policy.PolicyName))
-		c.cache[aws.StringValue(policy.PolicyName)] = &policyCacheEntry{deployed: policy}
+
+		resp, err := i.iam.ListPolicies(params)
+		if err != nil {
+			return nil, err
+		}
+		truncated := false
+		if resp.IsTruncated != nil {
+			truncated = *resp.IsTruncated
+		}
+		next = ""
+		if resp.Marker != nil {
+			next = *resp.Marker
+		}
+
+		for _, policy := range resp.Policies {
+			if policy.PolicyName == nil {
+				log.Verbose("Unnamed bucket")
+				c.unnamed = append(c.unnamed, policy)
+				continue
+			}
+			policyArn := strings.Split(*policy.Arn, ":")
+			if policyArn[4] == "aws" {
+				log.Debug("AWS Managed policy, skipping...")
+				continue
+			}
+			log.Debug("Caching %s", aws.StringValue(policy.PolicyName))
+			c.cache[aws.StringValue(policy.PolicyName)] = &policyCacheEntry{deployed: policy}
+		}
+		if truncated == false {
+			break
+		}
+		for _, p := range c.cache {
+			params := &iam.GetPolicyInput{
+				PolicyArn: p.deployed.Arn,
+			}
+			resp, err := i.iam.GetPolicy(params)
+			if err != nil {
+				return nil, err
+			}
+			p.deployed = resp.Policy
+		}
 	}
 
 	return c, nil

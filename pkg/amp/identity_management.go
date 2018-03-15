@@ -149,9 +149,15 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		i.Print()
 		return route.OK
 	case route.Load:
-		return i.RouteInOrder(req)
+		if err := i.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Provision:
-		return i.RouteInOrder(req)
+		if err := i.Provision(req.Flags().Get()...); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Audit:
 		if err := i.Audit("Policy"); err != nil {
 			return route.FAIL
@@ -165,6 +171,24 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		i.Help()
 		return route.FAIL
 	}
+}
+
+func (i *identityManagement) Load() error {
+	for _, p := range i.policies {
+		if err := p.Load(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (i *identityManagement) Provision(flags ...string) error {
+	for _, p := range i.policies {
+		if err := p.Provision(flags...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (i *identityManagement) Audit(flags ...string) error {
@@ -181,6 +205,7 @@ func (i *identityManagement) Audit(flags ...string) error {
 		return err
 	}
 	for _, p := range i.policies {
+		log.Debug("Audit of policy %q", p.Name())
 		if err := p.Audit("Policy"); err != nil {
 			return err
 		}

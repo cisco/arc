@@ -29,6 +29,7 @@ package aws
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -75,6 +76,21 @@ func (p *policy) Audit(flags ...string) error {
 	}
 	if p.policy == nil {
 		a.Audit(aaa.Configured, "%s", p.Name())
+		return nil
+	}
+	log.Debug("Deployed description %q", aws.StringValue(p.policy.Description))
+	log.Debug("Configed description %q", p.Description())
+	if p.policy.Description != nil && p.Description() != "" && strings.Compare(aws.StringValue(p.policy.Description), p.Description()) != 0 {
+		a.Audit(aaa.Mismatched, "Policy %q's description does not match configured description", aws.StringValue(p.policy.PolicyName))
+		return nil
+	}
+	if p.policy.Description != nil && p.Description() == "" {
+		a.Audit(aaa.Mismatched, "Policy %q has a deployed description but not a configured one", aws.StringValue(p.policy.PolicyName))
+		return nil
+	}
+	if p.policy.Description == nil && p.Description() != "" {
+		a.Audit(aaa.Mismatched, "Policy %q has a configured description but not a deployed one", aws.StringValue(p.policy.PolicyName))
+		return nil
 	}
 	return nil
 }
@@ -97,7 +113,7 @@ func (p *policy) Destroyed() bool {
 
 func (p *policy) Create(flags ...string) error {
 	msg.Info("Policy Creation: %s", p.Name())
-	file := fmt.Sprintf(env.Lookup("ROOT")+"/etc/arc/IAM_policies/IAM_policies/%s.json", p.PolicyDocument())
+	file := fmt.Sprintf(env.Lookup("ROOT")+"/etc/arc/policies/IAM_policies/%s.json", p.PolicyDocument())
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
@@ -126,6 +142,15 @@ func (p *policy) Load() error {
 		log.Debug("Skipping Policy load, cached...")
 		return nil
 	}
+	policyArn := newIamPolicy("", p.Name())
+	params := &iam.GetPolicyInput{
+		PolicyArn: aws.String(policyArn.String()),
+	}
+	resp, err := p.iam.GetPolicy(params)
+	if err != nil {
+		return err
+	}
+	p.policy = resp.Policy
 	if p.policy == nil {
 		return fmt.Errorf("Could not find policy on AWS")
 	}
