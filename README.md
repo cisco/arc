@@ -25,3 +25,4 @@ Currently only AWS is supported as a cloud provider.
 - [Storage Service Design](docs/design/storage/design.md)
 - [Container Service Design](docs/design/container_service/design.md)
 - [Key Management Service Design](docs/design/key_management/design.md)
+- [Identity Management Service Design](docs/design/identity_management/design.md)
