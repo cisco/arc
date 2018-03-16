@@ -57,13 +57,13 @@ func newEncryptionKey(key resource.EncryptionKey, cfg *config.EncryptionKey, pro
 		keyManagement: key.KeyManagement().ProviderKeyManagement().(*keyManagement),
 		kms:           prov.kms[cfg.Region()],
 	}
-	k.set(k.keyManagement.encryptionKeyCache.find(k))
 
 	return k, nil
 }
 func (k *encryptionKey) Load() error {
-	if k.encryptionKey != nil {
+	if key := k.keyManagement.encryptionKeyCache.find(k); key != nil {
 		log.Debug("Skipping Key load, cached...")
+		k.set(key)
 		return nil
 	}
 	params := &kms.ListAliasesInput{}
@@ -76,9 +76,6 @@ func (k *encryptionKey) Load() error {
 		if aws.StringValue(key.AliasName) == k.Name() {
 			k.encryptionKey = key
 		}
-	}
-	if k.encryptionKey == nil {
-		return fmt.Errorf("Could not find the encryption key on AWS")
 	}
 	return nil
 }

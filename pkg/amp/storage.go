@@ -181,16 +181,19 @@ func (s *storage) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Load:
 		if err := s.Load(); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
 	case route.Provision:
 		if err := s.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
 	case route.Audit:
 		if err := s.Audit("Bucket", "Bucket Set"); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK

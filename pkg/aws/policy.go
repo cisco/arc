@@ -61,7 +61,6 @@ func newPolicy(pol resource.Policy, cfg *config.Policy, prov *identityManagement
 		iam:                prov.iam,
 		identityManagement: pol.IdentityManagement().ProviderIdentityManagement().(*identityManagement),
 	}
-	p.set(p.identityManagement.policyCache.find(p))
 
 	return p, nil
 }
@@ -138,8 +137,9 @@ func (p *policy) Create(flags ...string) error {
 }
 
 func (p *policy) Load() error {
-	if p.Created() {
+	if policy := p.identityManagement.policyCache.find(p); policy != nil {
 		log.Debug("Skipping Policy load, cached...")
+		p.set(policy)
 		return nil
 	}
 	policyArn := newIamPolicy("", p.Name())
@@ -148,12 +148,13 @@ func (p *policy) Load() error {
 	}
 	resp, err := p.iam.GetPolicy(params)
 	if err != nil {
+		if strings.Contains(err.Error(), "NoSuchEntity") {
+			log.Debug("No Such Entity: Policy %q", policyArn.String())
+			return nil
+		}
 		return err
 	}
 	p.policy = resp.Policy
-	if p.policy == nil {
-		return fmt.Errorf("Could not find policy on AWS")
-	}
 	return nil
 }
 

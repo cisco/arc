@@ -66,19 +66,16 @@ func New(cfg *config.Amp) (*amp, error) {
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.identityManagement)
 
 	a.storage, err = newStorage(a, cfg.Storage)
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.storage)
 
 	a.keyManagement, err = newKeyManagement(a, cfg.KeyManagement)
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.keyManagement)
 
 	return a, nil
 }
@@ -169,7 +166,16 @@ func (a *amp) Route(req *route.Request) route.Response {
 
 	switch req.Command() {
 	case route.Load:
-		return a.storage.Route(req)
+		if resp := a.identityManagement.Route(req); resp != route.OK {
+			return resp
+		}
+		if resp := a.storage.Route(req); resp != route.OK {
+			return resp
+		}
+		if resp := a.keyManagement.Route(req); resp != route.OK {
+			return resp
+		}
+		return route.OK
 	case route.Info:
 		a.identityManagement.Info()
 		a.storage.Info()

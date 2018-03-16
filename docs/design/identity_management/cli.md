@@ -40,7 +40,7 @@ The commands available to a policy are
 
 - **create**: Creates the policy. If the policy already exists this command will do nothing.
 - **destroy**: Deletes the policy. If the policy does not exist this command will do nothing.
-- **audit**: Audits the policyy. This will compare the configuration policy and report if the run time policy does not match.
+- **audit**: Audits the policy. This will compare the configuration policy and report if the run time policy does not match.
 - **info**: Provides run time information for the policy.
 - **config**: Provides configuration information for the policy.
 - **help**: Provides help with the named policy command.

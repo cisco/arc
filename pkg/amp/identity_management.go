@@ -150,6 +150,7 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		return route.OK
 	case route.Load:
 		if err := i.Load(); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
@@ -226,11 +227,11 @@ func (i *identityManagement) Info() {
 
 func (i *identityManagement) Help() {
 	commands := []help.Command{
-		{Name: route.Provision.String(), Desc: "update identityManagement"},
+		// {Name: route.Provision.String(), Desc: "update identityManagement"},
 		{Name: route.Audit.String(), Desc: "audit identityManagement"},
 		{Name: route.Info.String(), Desc: "show information about allocated identityManagement"},
 		{Name: route.Config.String(), Desc: "show the configuration for the given identityManagement"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("iam", commands)
+	help.Print("identity_management", commands)
 }

@@ -160,7 +160,6 @@ func (p *policy) Help() {
 	commands := []help.Command{
 		{Name: route.Create.String(), Desc: fmt.Sprintf("create policy %s", p.Name())},
 		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy policy %s", p.Name())},
-		{Name: route.Provision.String(), Desc: fmt.Sprintf("update the policy for %s", p.Name())},
 		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit policy %s", p.Name())},
 		{Name: route.Info.String(), Desc: "show information about allocated policy"},
 		{Name: route.Config.String(), Desc: "show the configuration for the given policy"},
