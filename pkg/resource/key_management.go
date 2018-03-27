@@ -47,7 +47,6 @@ type DynamicKeyManagement interface {
 type KeyManagement interface {
 	route.Router
 	StaticKeyManagement
-	Loader
 	Provisioner
 	DynamicKeyManagement
 	Informer

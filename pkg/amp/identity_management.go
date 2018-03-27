@@ -149,9 +149,10 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		i.Print()
 		return route.OK
 	case route.Load:
-		if err := i.Load(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
+		for _, p := range i.policies {
+			if resp := p.Route(req); resp != route.OK {
+				return route.FAIL
+			}
 		}
 		return route.OK
 	case route.Provision:
@@ -172,15 +173,6 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		i.Help()
 		return route.FAIL
 	}
-}
-
-func (i *identityManagement) Load() error {
-	for _, p := range i.policies {
-		if err := p.Load(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 //This will be used for when roles are groups can be managed with amp

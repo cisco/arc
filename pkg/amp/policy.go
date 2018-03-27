@@ -66,6 +66,11 @@ func newPolicy(cfg *config.Policy, identityManagement *identityManagement, prov 
 func (p *policy) Route(req *route.Request) route.Response {
 	log.Route(req, "Policy %q", p.Name())
 	switch req.Command() {
+	case route.Load:
+		if err := p.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Create:
 		if err := p.Create(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())

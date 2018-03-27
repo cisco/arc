@@ -69,6 +69,12 @@ func newEncryptionKey(cfg *config.EncryptionKey, km *keyManagement, prov provide
 func (k *encryptionKey) Route(req *route.Request) route.Response {
 	log.Route(req, "Encryption Key %q", k.Name())
 	switch req.Command() {
+	case route.Load:
+		if err := k.Load(); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Create:
 		if err := k.Create(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
