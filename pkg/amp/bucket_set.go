@@ -96,6 +96,11 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Load:
+		if err := b.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Audit:
 		if err := b.Audit(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())

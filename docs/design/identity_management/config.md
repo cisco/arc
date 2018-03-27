@@ -1,8 +1,8 @@
 # Identity Management Configuration
 
-The key_management feature introduces the "key_management" section to the amp account configuration. The "key_management" object is peer to the other top level json objects like "storage" and "provider".
+The identity_management feature introduces the "identity_management" section to the amp account configuration. The "identity_management" object is peer to the other top level json objects like "storage" and "provider".
 
-## key management
+## identity management
 
 The "identity_management" section is a json object that contains two elements, the "region" element and the "policies" element. The "region" element is a string and the "policies" element is a json array of policies.
 

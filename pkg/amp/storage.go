@@ -180,9 +180,15 @@ func (s *storage) Route(req *route.Request) route.Response {
 		s.Print()
 		return route.OK
 	case route.Load:
-		if err := s.Load(); err != nil {
-			msg.Error(err.Error())
-			return route.FAIL
+		for _, b := range s.buckets {
+			if resp := b.Route(req); resp != route.OK {
+				return route.FAIL
+			}
+		}
+		for _, bs := range s.bucketSets {
+			if resp := bs.Route(req); resp != route.OK {
+				return route.FAIL
+			}
 		}
 		return route.OK
 	case route.Provision:
@@ -205,20 +211,6 @@ func (s *storage) Route(req *route.Request) route.Response {
 		s.Help()
 		return route.FAIL
 	}
-}
-
-func (s *storage) Load() error {
-	for _, b := range s.buckets {
-		if err := b.Load(); err != nil {
-			return err
-		}
-	}
-	for _, bs := range s.bucketSets {
-		if err := bs.Load(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *storage) Provision(flags ...string) error {
