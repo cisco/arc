@@ -44,8 +44,9 @@ import (
 type amp struct {
 	*resource.Resources
 	*config.Amp
-	storage       *storage
-	keyManagement *keyManagement
+	identityManagement *identityManagement
+	storage            *storage
+	keyManagement      *keyManagement
 }
 
 func New(cfg *config.Amp) (*amp, error) {
@@ -61,17 +62,20 @@ func New(cfg *config.Amp) (*amp, error) {
 	a.header()
 	var err error
 
+	a.identityManagement, err = newIdentityManagement(a, cfg.IdentityManagement)
+	if err != nil {
+		return nil, err
+	}
+
 	a.storage, err = newStorage(a, cfg.Storage)
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.storage)
 
 	a.keyManagement, err = newKeyManagement(a, cfg.KeyManagement)
 	if err != nil {
 		return nil, err
 	}
-	a.Append(a.keyManagement)
 
 	return a, nil
 }
@@ -121,6 +125,10 @@ func (a *amp) Run() (int, error) {
 	return 0, nil
 }
 
+func (a *amp) IdentityManagement() resource.IdentityManagement {
+	return a.identityManagement
+}
+
 func (a *amp) Storage() resource.Storage {
 	return a.storage
 }
@@ -144,6 +152,10 @@ func (a *amp) Route(req *route.Request) route.Response {
 		return a.keyManagement.Route(req.Pop())
 	case "key", "encryption_key":
 		return a.keyManagement.Route(req)
+	case "identity_management":
+		return a.identityManagement.Route(req.Pop())
+	case "policy":
+		return a.identityManagement.Route(req)
 	}
 
 	// Skip if the test flag is set
@@ -154,8 +166,18 @@ func (a *amp) Route(req *route.Request) route.Response {
 
 	switch req.Command() {
 	case route.Load:
-		return a.storage.Route(req)
+		if resp := a.identityManagement.Route(req); resp != route.OK {
+			return resp
+		}
+		if resp := a.storage.Route(req); resp != route.OK {
+			return resp
+		}
+		if resp := a.keyManagement.Route(req); resp != route.OK {
+			return resp
+		}
+		return route.OK
 	case route.Info:
+		a.identityManagement.Info()
 		a.storage.Info()
 		a.keyManagement.Info()
 		return route.OK
@@ -178,6 +200,11 @@ func Help() {
 		{Name: "storage", Desc: "manage storage"},
 		{Name: "bucket 'name'", Desc: "manage named bucket"},
 		{Name: "bucket_set 'name'", Desc: "manage named bucket"},
+		{Name: "key_management 'name'", Desc: "manage key management"},
+		{Name: "encryption_key 'name'", Desc: "manage named key"},
+		{Name: "key 'name'", Desc: "manage named key"},
+		{Name: "identity_management", Desc: "manage identity management"},
+		{Name: "policy 'name'", Desc: "manage named policy"},
 		{Name: route.Info.String(), Desc: "show information about allocation amp resources"},
 		{Name: route.Config.String(), Desc: "show the amp configuration for the given account"},
 		{Name: route.Help.String(), Desc: "show this help"},

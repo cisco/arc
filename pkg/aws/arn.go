@@ -35,6 +35,14 @@ type arn struct {
 	relativeId string
 }
 
+func newIamPolicy(ns string, policy string) *arn {
+	return &arn{
+		service:    "iam",
+		namespace:  ns,
+		relativeId: "policy/" + policy,
+	}
+}
+
 func newIamRole(ns string, role string) *arn {
 	return &arn{
 		service:    "iam",

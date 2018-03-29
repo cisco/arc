@@ -47,6 +47,7 @@ type Storage interface {
 	route.Router
 	StaticStorage
 	DynamicStorage
+	Provisioner
 	Informer
 	Helper
 

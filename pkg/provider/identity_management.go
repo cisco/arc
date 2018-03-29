@@ -24,37 +24,41 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package provider
 
 import (
+	"fmt"
+
 	"github.com/cisco/arc/pkg/config"
-	"github.com/cisco/arc/pkg/route"
+	"github.com/cisco/arc/pkg/resource"
 )
 
-type StaticBucketSet interface {
-	Name() string
-	Buckets() []*config.Bucket
-	config.Printer
+// IdentityManagement is an abstract factory. It provides the methods that will
+// create the provider resources. Vendor implementations will provide the
+// concrete implementations of these methods.
+type IdentityManagement interface {
+	NewIdentityManagement(cfg *config.IdentityManagement) (resource.ProviderIdentityManagement, error)
+	NewPolicy(pol resource.Policy, cfg *config.Policy) (resource.ProviderPolicy, error)
 }
 
-// DynamicBucketReplicationSet provides the interface to the dynamic portion of the bucket replication set.
-type DynamicBucketSet interface {
-	Creator
-	Destroyer
-	Provisioner
-	Auditor
-	Informer
-	Helper
+// IdentityManagementCtor is the function signature for the provider's identityManagement constructor.
+type IdentityManagementCtor func(*config.Amp) (IdentityManagement, error)
+
+var identityManagementCtors map[string]IdentityManagementCtor = map[string]IdentityManagementCtor{}
+
+// RegisterIdentityManagement is used by a provider implementation to make the provider package
+// (i.e. pkg/aws or pkg/mock) available to the amp package. This function is called in the
+// packages' init() function.
+func RegisterIdentityManagement(vendor string, ctor IdentityManagementCtor) {
+	identityManagementCtors[vendor] = ctor
 }
 
-// BucketReplicationSet provides the resource interface used for the common bucket replication set
-// object implemented in the amp package. It contains an Storage method used to
-// access its parent object.
-type BucketSet interface {
-	route.Router
-	StaticBucketSet
-	Loader
-	DynamicBucketSet
-
-	Storage() Storage
+// NewIdentityManagement is the provider agnostic constructor used by pkg/amp.
+func NewIdentityManagement(cfg *config.Amp) (IdentityManagement, error) {
+	vendor := cfg.Provider.Vendor
+	ctor := identityManagementCtors[vendor]
+	if ctor == nil {
+		return nil, fmt.Errorf("Unknown vendor %q", vendor)
+	}
+	return ctor(cfg)
 }

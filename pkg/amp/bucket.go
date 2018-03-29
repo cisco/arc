@@ -66,6 +66,11 @@ func newBucket(cfg *config.Bucket, s *storage, prov provider.Storage) (*bucket, 
 func (b *bucket) Route(req *route.Request) route.Response {
 	log.Route(req, "Bucket %q", b.Name())
 	switch req.Command() {
+	case route.Load:
+		if err := b.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Create:
 		if err := b.Create(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())

@@ -78,6 +78,11 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 	}
 
 	switch req.Command() {
+	case route.Load:
+		if err := b.Load(); err != nil {
+			return route.FAIL
+		}
+		return route.OK
 	case route.Create:
 		if err := b.Create(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
@@ -115,6 +120,15 @@ func (b *bucketSet) Route(req *route.Request) route.Response {
 		b.Help()
 		return route.FAIL
 	}
+}
+
+func (b *bucketSet) Load() error {
+	for _, bkt := range b.buckets {
+		if err := bkt.Load(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Created satisfies the embedded resource.Resource interface in resource.Bucket.

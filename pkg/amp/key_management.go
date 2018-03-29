@@ -104,7 +104,12 @@ func (k *keyManagement) Route(req *route.Request) route.Response {
 	// Commands that can be handled locally
 	switch req.Command() {
 	case route.Load:
-		return k.RouteInOrder(req)
+		for _, e := range k.encryptionKeys {
+			if resp := e.Route(req); resp != route.OK {
+				return route.FAIL
+			}
+		}
+		return route.OK
 	case route.Provision:
 		if err := k.Provision(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())

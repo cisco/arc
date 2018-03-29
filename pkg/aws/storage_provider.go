@@ -61,7 +61,7 @@ func newStorageProvider(cfg *config.Amp) (provider.Storage, error) {
 
 	for _, bucket := range cfg.Storage.Buckets {
 		if region := regions[bucket.Region()]; region == "" {
-			log.Debug("Region %q", region)
+			log.Debug("Region %q", bucket.Region())
 			regions[bucket.Region()] = cfg.Provider.Data["account"]
 		}
 	}

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,35 +24,25 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-import "github.com/cisco/arc/pkg/config"
+import "github.com/cisco/arc/pkg/msg"
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
-	SecurityTags() config.SecurityTags
+type IdentityManagement struct {
+	Region_  string    `json:"region"`
+	Policies []*Policy `json:"policies"`
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
+func (i *IdentityManagement) Region() string {
+	return i.Region_
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
-
-	// IdentityManagement provides access to Amp's child identityManagement.
-	IdentityManagement() IdentityManagement
-
-	// Storage provides access to Amp's child storage.
-	Storage() Storage
-
-	// KeyManagement provides access to Amp's child keyManagement.
-	KeyManagement() KeyManagement
+// Print provides a user friendly way to view the entire storage configuration.
+func (i *IdentityManagement) Print() {
+	msg.Info("Identity Management Config")
+	msg.IndentInc()
+	for _, p := range i.Policies {
+		p.Print()
+	}
+	msg.IndentDec()
 }

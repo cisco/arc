@@ -24,35 +24,31 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package config
 
-import "github.com/cisco/arc/pkg/config"
+import "github.com/cisco/arc/pkg/msg"
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
-	SecurityTags() config.SecurityTags
+type Policy struct {
+	Name_           string `json:"policy"`
+	Description_    string `json:"description"`
+	PolicyDocument_ string `json:"policy_document"`
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
+func (p *Policy) Name() string {
+	return p.Name_
+}
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+func (p *Policy) Description() string {
+	return p.Description_
+}
 
-	// IdentityManagement provides access to Amp's child identityManagement.
-	IdentityManagement() IdentityManagement
+func (p *Policy) PolicyDocument() string {
+	return p.PolicyDocument_
+}
 
-	// Storage provides access to Amp's child storage.
-	Storage() Storage
-
-	// KeyManagement provides access to Amp's child keyManagement.
-	KeyManagement() KeyManagement
+func (p *Policy) Print() {
+	msg.Info("Bucket Config")
+	msg.Detail("%-20s\t%s", "name", p.Name())
+	msg.Detail("%-20s\t%s", "description", p.Description())
+	msg.Detail("%-20s\t%s", "policy document", p.PolicyDocument())
 }

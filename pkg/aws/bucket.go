@@ -61,7 +61,6 @@ func newBucket(bkt resource.Bucket, cfg *config.Bucket, prov *storageProvider) (
 		storage:  bkt.Storage().ProviderStorage().(*storage),
 		s3:       prov.s3[cfg.Region()],
 	}
-	b.set(b.storage.bucketCache.find(b))
 	b.arn = newIamRole(prov.number, b.Role())
 
 	return b, nil
@@ -240,8 +239,9 @@ func (b *bucket) Create(flags ...string) error {
 }
 
 func (b *bucket) Load() error {
-	if b.bucket != nil {
+	if bucket := b.storage.bucketCache.find(b); bucket != nil {
 		log.Debug("Skipping Bucket load, cached...")
+		b.set(bucket)
 		return nil
 	}
 	params := &s3.ListBucketsInput{}
@@ -253,9 +253,6 @@ func (b *bucket) Load() error {
 		if aws.StringValue(bucket.Name) == b.Name() {
 			b.bucket = bucket
 		}
-	}
-	if b.bucket == nil {
-		return fmt.Errorf("Could not find bucket on AWS")
 	}
 	return nil
 }

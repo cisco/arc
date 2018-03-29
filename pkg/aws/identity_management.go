@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,35 +24,39 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package resource
+package aws
 
-import "github.com/cisco/arc/pkg/config"
+import (
+	"github.com/aws/aws-sdk-go/service/iam"
 
-// StaticAmp provides the interface to the static portion of the
-// amp resource tree. This information is provided via config file
-// and is implemented config.Amp.
-type StaticAmp interface {
-	Name() string
-	SecurityTags() config.SecurityTags
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/resource"
+)
+
+type identityManagement struct {
+	*config.IdentityManagement
+	iam *iam.IAM
+
+	policyCache *policyCache
 }
 
-// Amp provides the resource interface used for the common amp object
-// implemented in the amp package. It contains an Run method used to
-// start application processing. It also contains the Storage method
-// used to access the storage child.
-type Amp interface {
-	Resource
-	StaticAmp
+func newIdentityManagement(cfg *config.IdentityManagement, iam *iam.IAM) (resource.ProviderIdentityManagement, error) {
+	log.Debug("Initializing AWS Identity Management")
 
-	// Run is the entry point for arc.
-	Run() (int, error)
+	i := &identityManagement{
+		IdentityManagement: cfg,
+		iam:                iam,
+	}
 
-	// IdentityManagement provides access to Amp's child identityManagement.
-	IdentityManagement() IdentityManagement
+	var err error
+	i.policyCache, err = newPolicyCache(i)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
+}
 
-	// Storage provides access to Amp's child storage.
-	Storage() Storage
-
-	// KeyManagement provides access to Amp's child keyManagement.
-	KeyManagement() KeyManagement
+func (i *identityManagement) Audit(flags ...string) error {
+	return i.policyCache.audit(flags...)
 }

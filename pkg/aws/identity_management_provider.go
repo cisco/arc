@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -31,7 +31,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/cisco/arc/pkg/config"
 	"github.com/cisco/arc/pkg/log"
@@ -39,66 +39,58 @@ import (
 	"github.com/cisco/arc/pkg/resource"
 )
 
-type keyManagementProvider struct {
+type identityManagementProvider struct {
 	name   string
 	number string
-	kms    map[string]*kms.KMS
+	iam    *iam.IAM
 }
 
-func newKeyManagementProvider(cfg *config.Amp) (provider.KeyManagement, error) {
-	log.Debug("Initializing AWS Key Management Provider")
+func newIdentityManagementProvider(cfg *config.Amp) (provider.IdentityManagement, error) {
+	log.Debug("Initializing AWS IdentityManagement Provider")
 
 	name := cfg.Provider.Data["account"]
 	if name == "" {
-		return nil, fmt.Errorf("AWS Storage provider/data config requires an 'account' field, being the aws account name.")
+		return nil, fmt.Errorf("AWS Amp provider/data config requires an 'account' field, being the aws account name.")
 	}
 	number := cfg.Provider.Data["number"]
 	if number == "" {
-		return nil, fmt.Errorf("AWS Storage provider/data config requires a 'number' field, being the aws account number.")
+		return nil, fmt.Errorf("AWS Amp provider/data config requires a 'number' field, being the aws account number.")
+	}
+	region := cfg.IdentityManagement.Region()
+	if region == "" {
+		return nil, fmt.Errorf("AWS Amp identityManagement config requires a 'region' field, being the region for identityManagement to exist.")
 	}
 
-	regions := map[string]string{}
-
-	for _, key := range cfg.KeyManagement.EncryptionKeys {
-		if region := regions[key.Region()]; region == "" {
-			log.Debug("Region %q", key.Region())
-			regions[key.Region()] = cfg.Provider.Data["account"]
-		}
-	}
-
-	k := &keyManagementProvider{
+	p := &identityManagementProvider{
 		name:   name,
 		number: number,
 	}
 
-	k.kms = map[string]*kms.KMS{}
-
-	for region := range regions {
-		opts := session.Options{
-			Config: aws.Config{
-				CredentialsChainVerboseErrors: aws.Bool(true),
-				Region: aws.String(region),
-			},
-			Profile:           name,
-			SharedConfigState: session.SharedConfigEnable,
-		}
-		sess, err := session.NewSessionWithOptions(opts)
-		if err != nil {
-			return nil, err
-		}
-		k.kms[region] = kms.New(sess)
+	opts := session.Options{
+		Config: aws.Config{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+			Region: aws.String(region),
+		},
+		Profile:           name,
+		SharedConfigState: session.SharedConfigEnable,
 	}
-	return k, nil
+	sess, err := session.NewSessionWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+	p.iam = iam.New(sess)
+
+	return p, nil
 }
 
-func (p *keyManagementProvider) NewKeyManagement(cfg *config.KeyManagement) (resource.ProviderKeyManagement, error) {
-	return newKeyManagement(cfg, p.kms)
+func (p *identityManagementProvider) NewIdentityManagement(cfg *config.IdentityManagement) (resource.ProviderIdentityManagement, error) {
+	return newIdentityManagement(cfg, p.iam)
 }
 
-func (p *keyManagementProvider) NewEncryptionKey(k resource.EncryptionKey, cfg *config.EncryptionKey) (resource.ProviderEncryptionKey, error) {
-	return newEncryptionKey(k, cfg, p)
+func (p *identityManagementProvider) NewPolicy(pol resource.Policy, cfg *config.Policy) (resource.ProviderPolicy, error) {
+	return newPolicy(pol, cfg, p)
 }
 
 func init() {
-	provider.RegisterKeyManagement("aws", newKeyManagementProvider)
+	provider.RegisterIdentityManagement("aws", newIdentityManagementProvider)
 }
