@@ -46,6 +46,7 @@ type identityManagement struct {
 	*config.IdentityManagement
 	amp                        *amp
 	policies                   []*policy
+	roles                      []*role
 	providerIdentityManagement resource.ProviderIdentityManagement
 }
 
@@ -99,6 +100,16 @@ func (i *identityManagement) FindPolicy(name string) resource.Policy {
 	return nil
 }
 
+// FindRole returns the role with the given name.
+func (i *identityManagement) FindRole(name string) resource.Role {
+	for _, role := range i.roles {
+		if name == role.Name() {
+			return role
+		}
+	}
+	return nil
+}
+
 func (i *identityManagement) ProviderIdentityManagement() resource.ProviderIdentityManagement {
 	return i.providerIdentityManagement
 }
@@ -126,9 +137,25 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		}
 		if req.Command() == route.Audit {
 			aaa.NewAudit("Policy")
+			req.Flags().Append("Policy")
 		}
-		req.Flags().Append("Policy")
 		return policy.Route(req)
+	case "role":
+		req.Pop()
+		if req.Top() == "" {
+			i.Help()
+			return route.FAIL
+		}
+		role := i.FindRole(req.Top())
+		if role == nil {
+			msg.Error("Unknown role %q.", req.Top())
+			return route.FAIL
+		}
+		if req.Command() == route.Audit {
+			aaa.NewAudit("Role")
+			req.Flags().Append("Role")
+		}
+		role.Route(req)
 	default:
 		i.Help()
 		return route.FAIL
@@ -156,9 +183,9 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		}
 		return route.OK
 	case route.Provision:
-		// if err := i.Provision(req.Flags().Get()...); err != nil {
-		// return route.FAIL
-		// }
+		if err := i.Provision(req.Flags().Get()...); err != nil {
+			return route.FAIL
+		}
 		return route.OK
 	case route.Audit:
 		if err := i.Audit("Policy"); err != nil {
@@ -175,12 +202,9 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 	}
 }
 
-//This will be used for when roles are groups can be managed with amp
-/*
 func (i *identityManagement) Provision(flags ...string) error {
 	return nil
 }
-*/
 
 func (i *identityManagement) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {

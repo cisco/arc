@@ -122,8 +122,8 @@ func (p *dataCenterProvider) NewElasticIP(e resource.ElasticIP, i resource.Insta
 	return newElasticIP(i, p)
 }
 
-func (p *dataCenterProvider) NewRole(r resource.Role, name string, i resource.Instance) (resource.ProviderRole, error) {
-	return newRole(name, p, i)
+func (p *dataCenterProvider) NewRoleIdentifier(r resource.RoleIdentifier, name string, i resource.Instance) (resource.ProviderRoleIdentifier, error) {
+	return newRoleIdentifier(name, p, i)
 }
 
 func (p *dataCenterProvider) findById(s string) string {

@@ -78,7 +78,7 @@ func (i *Instance) provisionSingleResource(req *route.Request) route.Response {
 		}
 		return i.provisionAide(req)
 	case req.Flag("role"):
-		if err := i.role.Update(); err != nil {
+		if err := i.roleIdentifier.Update(); err != nil {
 			msg.Error(err.Error())
 			return route.FAIL
 		}
@@ -150,7 +150,7 @@ func (i *Instance) PreProvision(req *route.Request) route.Response {
 }
 
 func (i *Instance) Provision(req *route.Request) route.Response {
-	if err := i.role.Update(); err != nil {
+	if err := i.roleIdentifier.Update(); err != nil {
 		msg.Error(err.Error())
 		return route.FAIL
 	}

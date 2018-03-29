@@ -37,32 +37,32 @@ import (
 	"github.com/cisco/arc/pkg/log"
 )
 
-type policyCacheEntry struct {
-	deployed   *iam.Policy
-	configured *policy
+type roleCacheEntry struct {
+	deployed   *iam.Role
+	configured *role
 }
 
-type policyCache struct {
-	cache   map[string]*policyCacheEntry
-	unnamed []*iam.Policy
+type roleCache struct {
+	cache   map[string]*roleCacheEntry
+	unnamed []*iam.Role
 }
 
-func newPolicyCache(i *identityManagement) (*policyCache, error) {
-	log.Debug("Initializing AWS Policy Cache")
+func newRoleCache(i *identityManagement) (*roleCache, error) {
+	log.Debug("Initializing AWS Role Cache")
 
-	c := &policyCache{
-		cache: map[string]*policyCacheEntry{},
+	c := &roleCache{
+		cache: map[string]*roleCacheEntry{},
 	}
 
 	next := ""
 	for {
-		params := &iam.ListPoliciesInput{}
+		params := &iam.ListRolesInput{}
 
 		if next != "" {
 			params.Marker = aws.String(next)
 		}
 
-		resp, err := i.iam.ListPolicies(params)
+		resp, err := i.iam.ListRoles(params)
 		if err != nil {
 			return nil, err
 		}
@@ -75,53 +75,48 @@ func newPolicyCache(i *identityManagement) (*policyCache, error) {
 			next = *resp.Marker
 		}
 
-		for _, policy := range resp.Policies {
-			if policy.PolicyName == nil {
-				log.Verbose("Unnamed policy")
-				c.unnamed = append(c.unnamed, policy)
+		for _, role := range resp.Roles {
+			if role.RoleName == nil {
+				log.Verbose("Unnamed role")
+				c.unnamed = append(c.unnamed, role)
 				continue
 			}
-			policyArn := strings.Split(*policy.Arn, ":")
-			if policyArn[4] == "aws" {
-				log.Debug("AWS Managed policy, skipping...")
-				continue
-			}
-			log.Debug("Caching %s", aws.StringValue(policy.PolicyName))
-			c.cache[aws.StringValue(policy.PolicyName)] = &policyCacheEntry{deployed: policy}
+			log.Debug("Caching %s", aws.StringValue(role.RoleName))
+			c.cache[aws.StringValue(role.RoleName)] = &roleCacheEntry{deployed: role}
 		}
 		if truncated == false {
 			break
 		}
-		for _, p := range c.cache {
-			params := &iam.GetPolicyInput{
-				PolicyArn: p.deployed.Arn,
+		for _, r := range c.cache {
+			params := &iam.GetRoleInput{
+				RoleName: r.deployed.RoleName,
 			}
-			resp, err := i.iam.GetPolicy(params)
+			resp, err := i.iam.GetRole(params)
 			if err != nil {
 				return nil, err
 			}
-			p.deployed = resp.Policy
+			r.deployed = resp.Role
 		}
 	}
 
 	return c, nil
 }
 
-func (c *policyCache) find(p *policy) *iam.Policy {
-	e := c.cache[p.Name()]
+func (c *roleCache) find(r *role) *iam.Role {
+	e := c.cache[r.Name()]
 	if e == nil {
 		return nil
 	}
-	e.configured = p
+	e.configured = r
 	return e.deployed
 }
 
-func (c *policyCache) remove(p *policy) {
-	log.Debug("Deleting %s from policyCache", p.Name())
-	delete(c.cache, p.Name())
+func (c *roleCache) remove(r *role) {
+	log.Debug("Deleting %s from roleCache", r.Name())
+	delete(c.cache, r.Name())
 }
 
-func (c *policyCache) audit(flags ...string) error {
+func (c *roleCache) audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
 		return fmt.Errorf("No flag set to find audit object")
 	}
@@ -138,7 +133,7 @@ func (c *policyCache) audit(flags ...string) error {
 		a.Audit(aaa.Deployed, "\r")
 		for i, v := range c.unnamed {
 			u := "\t" + strings.Replace(fmt.Sprintf("%+v", v), "\n", "\n\t", -1)
-			m := fmt.Sprintf("Unnamed Policy %d - Policy ID: %q %s", i+1, *v.PolicyId, u)
+			m := fmt.Sprintf("Unnamed Policy %d - Policy ID: %q %s", i+1, *v.RoleId, u)
 			a.Audit(aaa.Deployed, m)
 		}
 	}

@@ -28,27 +28,29 @@ package config
 
 import "github.com/cisco/arc/pkg/msg"
 
-type Policy struct {
-	Name_           string `json:"policy"`
-	Description_    string `json:"description"`
-	PolicyDocument_ string `json:"policy_document"`
+type Role struct {
+	Name_        string   `json:"role"`
+	Description_ string   `json:"description"`
+	Policies_    []string `json:"policies"`
 }
 
-func (p *Policy) Name() string {
-	return p.Name_
+func (r *Role) Name() string {
+	return r.Name_
 }
 
-func (p *Policy) Description() string {
-	return p.Description_
+func (r *Role) Description() string {
+	return r.Description_
 }
 
-func (p *Policy) PolicyDocument() string {
-	return p.PolicyDocument_
+func (r *Role) Policies() []string {
+	return r.Policies_
 }
 
-func (p *Policy) Print() {
+func (r *Role) Print() {
 	msg.Info("Bucket Config")
-	msg.Detail("%-20s\t%s", "name", p.Name())
-	msg.Detail("%-20s\t%s", "description", p.Description())
-	msg.Detail("%-20s\t%s", "policy document", p.PolicyDocument())
+	msg.Detail("%-20s\t%s", "name", r.Name())
+	msg.Detail("%-20s\t%s", "description", r.Description())
+	for _, p := range r.Policies() {
+		msg.Detail("%-20s\t%s", "policy", p)
+	}
 }

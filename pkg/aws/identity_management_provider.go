@@ -87,6 +87,10 @@ func (p *identityManagementProvider) NewIdentityManagement(cfg *config.IdentityM
 	return newIdentityManagement(cfg, p.iam)
 }
 
+func (p *identityManagementProvider) NewRole(rl resource.Role, cfg *config.Role) (resource.ProviderRole, error) {
+	return newRole(rl, cfg, p)
+}
+
 func (p *identityManagementProvider) NewPolicy(pol resource.Policy, cfg *config.Policy) (resource.ProviderPolicy, error) {
 	return newPolicy(pol, cfg, p)
 }

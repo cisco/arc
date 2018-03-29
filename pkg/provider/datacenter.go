@@ -42,5 +42,5 @@ type DataCenter interface {
 	NewInstance(resource.Instance, *config.Instance) (resource.ProviderInstance, error)
 	NewVolume(resource.Compute, *config.Volume) (resource.ProviderVolume, error)
 	NewElasticIP(resource.ElasticIP, resource.Instance) (resource.ProviderElasticIP, error)
-	NewRole(resource.Role, string, resource.Instance) (resource.ProviderRole, error)
+	NewRoleIdentifier(resource.RoleIdentifier, string, resource.Instance) (resource.ProviderRoleIdentifier, error)
 }

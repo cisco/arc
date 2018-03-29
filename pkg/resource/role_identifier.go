@@ -24,63 +24,43 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package resource
 
-import (
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/resource"
-)
-
-type role struct {
-	*mock
-	name       string
-	id         string
-	instanceId string
+// StaticRoleIdentifier provides the interface to the static portion of the role identifier.
+type StaticRoleIdentifier interface {
+	Name() string
 }
 
-func newRole(name string, p *dataCenterProvider, in resource.Instance) (resource.ProviderRole, error) {
-	log.Info("Initializing mock role")
-	i := &role{
-		mock:       newMock("role", p.Provider),
-		name:       name,
-		id:         "0x1127beef",
-		instanceId: "0x1127beef",
-	}
-	return i, nil
+// DynamicRoleIdentifier provides the interface to the dynamic portion of the role identifier.
+type DynamicRoleIdentifier interface {
+	Loader
+	Attacher
+	Detacher
+
+	// Id returns the underlying role id.
+	Id() string
+
+	// InstanceId returns the id of the role's instance.
+	InstanceId() string
+
+	// Update changes the role to be what is currently in the config file.
+	Update() error
 }
 
-func (r *role) Id() string {
-	return r.id
+// RoleIdentifier provides the resource interface used for the common role identifier
+// object implemented in the arc package.
+type RoleIdentifier interface {
+	Resource
+	StaticRoleIdentifier
+	DynamicRoleIdentifier
+
+	ProviderRoleIdentifier() ProviderRoleIdentifier
 }
 
-func (r *role) InstanceId() string {
-	return r.instanceId
-}
-
-func (r *role) Attached() bool {
-	return true
-}
-
-func (r *role) Detached() bool {
-	return true
-}
-
-func (r *role) Load() error {
-	return nil
-}
-
-func (r *role) Attach() error {
-	return nil
-}
-
-func (r *role) Detach() error {
-	return nil
-}
-
-func (r *role) Destroy() error {
-	return nil
-}
-
-func (r *role) Update() error {
-	return nil
+// ProviderRoleIdentifier provides a resource interface for the provider supplied
+// role identifier. The common role identifier object delegates provider specific
+// behavior to the raw role.
+type ProviderRoleIdentifier interface {
+	Resource
+	DynamicRoleIdentifier
 }

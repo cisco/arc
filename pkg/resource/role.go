@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,41 +26,43 @@
 
 package resource
 
-// StaticRole provides the interface to the static portion of the role.
+import (
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/route"
+)
+
 type StaticRole interface {
 	Name() string
+	Description() string
+	config.Printer
 }
 
 // DynamicRole provides the interface to the dynamic portion of the role.
 type DynamicRole interface {
 	Loader
-	Attacher
-	Detacher
-
-	// Id returns the underlying role id.
-	Id() string
-
-	// InstanceId returns the id of the role's instance.
-	InstanceId() string
-
-	// Update changes the role to be what is currently in the config file.
-	Update() error
+	Creator
+	Destroyer
+	Auditor
+	Informer
 }
 
 // Role provides the resource interface used for the common role
-// object implemented in the arc package.
+// object implemented in the amp package. It contains an IdentityManagement method used to
+// access its parent object.
 type Role interface {
-	Resource
+	route.Router
 	StaticRole
+	Provisioner
 	DynamicRole
+	Helper
 
+	// IdentityManagement provides access to Role's parent object.
+	IdentityManagement() IdentityManagement
+
+	// ProviderRole provides access to the provider role object.
 	ProviderRole() ProviderRole
 }
 
-// ProviderRole provides a resource interface for the provider supplied
-// role. The common role object delegates provider specific
-// behavior to the raw role.
 type ProviderRole interface {
-	Resource
 	DynamicRole
 }

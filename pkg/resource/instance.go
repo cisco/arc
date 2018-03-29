@@ -137,7 +137,7 @@ type Instance interface {
 	ProviderVolumes() []ProviderVolume
 
 	// ProviderRole returns the role of the instance.
-	ProviderRole() ProviderRole
+	ProviderRoleIdentifier() ProviderRoleIdentifier
 
 	// Creator
 	PreCreate(req *route.Request) route.Response
