@@ -71,7 +71,7 @@ func main() {
 
 	cfg, err := config.NewAmp(os.Args[1])
 	if err != nil {
-		fmt.Printf(err.Error())
+		msg.Error(err.Error())
 		os.Exit(1)
 	}
 

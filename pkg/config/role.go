@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,63 +24,44 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package mock
+package config
 
-import (
-	"github.com/cisco/arc/pkg/log"
-	"github.com/cisco/arc/pkg/resource"
-)
+import "github.com/cisco/arc/pkg/msg"
 
-type role struct {
-	*mock
-	name       string
-	id         string
-	instanceId string
+type Role struct {
+	Name_              string   `json:"role"`
+	TrustRelationship_ string   `json:"trust_relationship"`
+	InstanceProfile_   string   `json:"instance_profile"`
+	Description_       string   `json:"description"`
+	Policies_          []string `json:"policies"`
 }
 
-func newRole(name string, p *dataCenterProvider, in resource.Instance) (resource.ProviderRole, error) {
-	log.Info("Initializing mock role")
-	i := &role{
-		mock:       newMock("role", p.Provider),
-		name:       name,
-		id:         "0x1127beef",
-		instanceId: "0x1127beef",
+func (r *Role) Name() string {
+	return r.Name_
+}
+
+func (r *Role) TrustRelationship() string {
+	return r.TrustRelationship_
+}
+
+func (r *Role) InstanceProfile() string {
+	return r.InstanceProfile_
+}
+
+func (r *Role) Description() string {
+	return r.Description_
+}
+
+func (r *Role) Policies() []string {
+	return r.Policies_
+}
+
+func (r *Role) Print() {
+	msg.Info("Role Config")
+	msg.Detail("%-20s\t%s", "name", r.Name())
+	msg.Detail("%-20s\t%s", "trust relationship", r.TrustRelationship())
+	msg.Detail("%-20s\t%s", "description", r.Description())
+	for _, p := range r.Policies() {
+		msg.Detail("%-20s\t%s", "policy", p)
 	}
-	return i, nil
-}
-
-func (r *role) Id() string {
-	return r.id
-}
-
-func (r *role) InstanceId() string {
-	return r.instanceId
-}
-
-func (r *role) Attached() bool {
-	return true
-}
-
-func (r *role) Detached() bool {
-	return true
-}
-
-func (r *role) Load() error {
-	return nil
-}
-
-func (r *role) Attach() error {
-	return nil
-}
-
-func (r *role) Detach() error {
-	return nil
-}
-
-func (r *role) Destroy() error {
-	return nil
-}
-
-func (r *role) Update() error {
-	return nil
 }

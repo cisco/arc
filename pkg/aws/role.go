@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017, Cisco Systems
+// Copyright (c) 2018, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -27,78 +27,114 @@
 package aws
 
 import (
-	"path/filepath"
+	"fmt"
+	"io/ioutil"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/cisco/arc/pkg/aaa"
+	"github.com/cisco/arc/pkg/config"
+	"github.com/cisco/arc/pkg/env"
 	"github.com/cisco/arc/pkg/log"
 	"github.com/cisco/arc/pkg/msg"
 	"github.com/cisco/arc/pkg/resource"
-	"github.com/cisco/arc/pkg/route"
 )
 
-// role implements the resource.ProviderRole interface.
 type role struct {
-	name     string
-	instance resource.Instance
-	ec2      *ec2.EC2
+	*config.Role
+	provider *identityManagementProvider
+	iam      *iam.IAM
 
-	id    string
-	state string
-	arn   string
-	role  *ec2.IamInstanceProfileSpecification
+	identityManagement *identityManagement
+
+	role             *iam.Role
+	instanceProfile  *iam.InstanceProfile
+	deployedPolicies []string
+	policies         []string
 }
 
-// newRole constructs the role.
-func newRole(name string, p *dataCenterProvider, in resource.Instance) (resource.ProviderRole, error) {
-	log.Info("Initializing role")
-	var s *ec2.IamInstanceProfileSpecification = nil
-	if name != "" {
-		s = &ec2.IamInstanceProfileSpecification{
-			Arn:  aws.String(newIamInstanceProfile(p.number, name).String()),
-			Name: aws.String(name),
-		}
-	}
+func newRole(rl resource.Role, cfg *config.Role, prov *identityManagementProvider) (resource.ProviderRole, error) {
+	log.Debug("Initializing AWS Role %q", cfg.Name())
 
 	r := &role{
-		name:     name,
-		instance: in,
-		ec2:      p.ec2,
-		role:     s,
+		Role:               cfg,
+		provider:           prov,
+		iam:                prov.iam,
+		identityManagement: rl.IdentityManagement().ProviderIdentityManagement().(*identityManagement),
 	}
+	for _, p := range r.Policies() {
+		policy := newIamPolicy(prov.number, p)
+		r.policies = append(r.policies, policy.String())
+	}
+
 	return r, nil
 }
 
-func (r *role) Route(req *route.Request) route.Response {
-	return route.OK
-}
-
 func (r *role) Load() error {
-	if r.InstanceId() == "" {
-		return nil
-	}
-
-	params := &ec2.DescribeIamInstanceProfileAssociationsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("instance-id"),
-				Values: []*string{aws.String(r.InstanceId())},
-			},
-		},
-	}
-	role, err := r.ec2.DescribeIamInstanceProfileAssociations(params)
-	if err != nil {
-		msg.Error(err.Error())
+	if err := r.loadPolicies(); err != nil {
 		return err
 	}
-	if role.IamInstanceProfileAssociations != nil {
-		r.set(role.IamInstanceProfileAssociations[0])
+	if role := r.identityManagement.roleCache.find(r); role != nil {
+		log.Debug("Skipping role load, cached...")
+		r.set(role)
 		return nil
 	}
-	r.state = "disassociated"
+	params := &iam.GetRoleInput{
+		RoleName: aws.String(r.Name()),
+	}
+	resp, err := r.iam.GetRole(params)
+	if err != nil {
+		if strings.Contains(err.Error(), "NoSuchEntity") {
+			log.Debug("No Such Entity: Role %q", r.Name())
+			return nil
+		}
+		return err
+	}
+	r.role = resp.Role
 	return nil
+}
+
+func (r *role) Audit(flags ...string) error {
+	if len(flags) == 0 || flags[0] == "" {
+		return fmt.Errorf("No flag set to find audit object")
+	}
+	a := aaa.AuditBuffer[flags[0]]
+	if a == nil {
+		return fmt.Errorf("Audit Object does not exist")
+	}
+	if r.role == nil {
+		a.Audit(aaa.Configured, "%s", r.Name())
+		return nil
+	}
+	// Mismatched Policies
+	for _, p := range r.roguePolicies() {
+		a.Audit(aaa.Mismatched, "Role %q's policy %q is deployed but not configured", r.Name(), p)
+	}
+
+	for _, p := range r.orphanedPolicies() {
+		a.Audit(aaa.Mismatched, "Role %q's policy %q is configured but not deployed", r.Name(), p)
+	}
+	// Mismatched Description
+	if r.role.Description != nil && r.Description() != "" && strings.Compare(aws.StringValue(r.role.Description), r.Description()) != 0 {
+		a.Audit(aaa.Mismatched, "Role %q's description does not match configured description", aws.StringValue(r.role.RoleName))
+	}
+	if r.role.Description != nil && r.Description() == "" {
+		a.Audit(aaa.Mismatched, "Role %q has a deployed description but not a configured one", aws.StringValue(r.role.RoleName))
+	}
+	if r.role.Description == nil && r.Description() != "" {
+		a.Audit(aaa.Mismatched, "Role %q has a configured description but not a deployed one", aws.StringValue(r.role.RoleName))
+	}
+	return nil
+}
+
+func (r *role) set(role *iam.Role) {
+	r.role = role
+}
+
+func (r *role) clear() {
+	r.role = nil
 }
 
 func (r *role) Created() bool {
@@ -109,98 +145,244 @@ func (r *role) Destroyed() bool {
 	return r.role == nil
 }
 
-func (r *role) Id() string {
-	return r.id
-}
-
-func (r *role) State() string {
-	return r.state
-}
-
-func (r *role) InstanceId() string {
-	return r.instance.Id()
-}
-
-func (r *role) Attached() bool {
-	return r.State() == "associated"
-}
-
-func (r *role) Detached() bool {
-	// The state could be associating, associated, disassociating, or disassociated
-	return r.State() != "associated"
-}
-
-func (r *role) Attach() error {
-	params := &ec2.AssociateIamInstanceProfileInput{
-		IamInstanceProfile: r.role,
-		InstanceId:         aws.String(r.InstanceId()),
-	}
-
-	role, err := r.ec2.AssociateIamInstanceProfile(params)
-	if err != nil {
+func (r *role) Create(flags ...string) error {
+	if err := r.createRole(flags...); err != nil {
 		return err
 	}
-	r.set(role.IamInstanceProfileAssociation)
-	msg.Detail("Role Attached: %s", r.name)
-	aaa.Accounting("Role created: %s, %s", r.name, r.Id())
+	if err := r.createInstanceProfile(); err != nil {
+		return err
+	}
+	if err := r.attachInstanceProfile(); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *role) Detach() error {
-	params := &ec2.DisassociateIamInstanceProfileInput{
-		AssociationId: aws.String(r.Id()),
+func (r *role) Destroy(flags ...string) error {
+	msg.Info("Role Deletion: %s", r.Name())
+	for _, p := range r.policies {
+		if err := r.detachPolicy(p); err != nil {
+			if strings.Contains(err.Error(), "NoSuchEntity") {
+				continue
+			}
+			return err
+		}
 	}
-
-	role, err := r.ec2.DisassociateIamInstanceProfile(params)
+	params := &iam.DeleteRoleInput{
+		RoleName: aws.String(r.Name()),
+	}
+	_, err := r.iam.DeleteRole(params)
 	if err != nil {
 		return err
 	}
-	r.state = *role.IamInstanceProfileAssociation.State
-	msg.Detail("Role Detached: %s", filepath.Base(r.arn))
-	aaa.Accounting("Role destroyed: %s, %s", filepath.Base(r.arn), r.Id())
+	msg.Detail("Role deleted: %s", r.Name())
+	r.clear()
 	return nil
 }
 
-func (r *role) Update() error {
+func (r *role) Provision(flags ...string) error {
+	msg.Info("Role Provision: %s", r.Name())
+	params := &iam.UpdateRoleDescriptionInput{
+		Description: aws.String(r.Description()),
+		RoleName:    aws.String(r.Name()),
+	}
+
+	_, err := r.iam.UpdateRoleDescription(params)
+	if err != nil {
+		return err
+	}
+
+	if err := r.updatePolicies(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *role) Info() {
+	if r.Destroyed() {
+		return
+	}
+	msg.Info("Role")
+	msg.Detail("%-20s\t%s", "name", aws.StringValue(r.role.RoleName))
+	msg.Detail("%-20s\t%+v", "role", r.role)
+}
+
+func (r *role) createRole(flags ...string) error {
+	msg.Info("Role Creation: %s", r.Name())
+	file := fmt.Sprintf(env.Lookup("ROOT")+"/etc/arc/policies/trust_relationships/%s.json", r.TrustRelationship())
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	params := &iam.CreateRoleInput{
+		AssumeRolePolicyDocument: aws.String(string(data)),
+		Description:              aws.String(r.Description()),
+		RoleName:                 aws.String(r.Name()),
+	}
+
+	resp, err := r.iam.CreateRole(params)
+	if err != nil {
+		return err
+	}
+	r.role = resp.Role
 	if err := r.Load(); err != nil {
 		return err
 	}
-
-	if filepath.Base(r.arn) == "." && r.name == "" {
-		return nil
+	msg.Detail("Role Created: %s", r.Name())
+	for _, p := range r.policies {
+		if err := r.attachPolicy(p); err != nil {
+			return err
+		}
 	}
-	if filepath.Base(r.arn) == r.name {
-		return nil
-	}
-
-	msg.Info("Role Update: %s", r.name)
-	if r.Detached() {
-		msg.Detail("Role does not exist... creating")
-		return r.Attach()
-	}
-	if r.Attached() && r.name == "" {
-		msg.Detail("Role no longer exists... removing")
-		return r.Detach()
-	}
-
-	params := &ec2.ReplaceIamInstanceProfileAssociationInput{
-		AssociationId: aws.String(r.Id()),
-		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-			Arn: r.role.Arn,
-		},
-	}
-	msg.Detail("Changing role from %s to %s", filepath.Base(r.arn), r.name)
-	role, err := r.ec2.ReplaceIamInstanceProfileAssociation(params)
-	if err != nil {
-		return err
-	}
-	r.set(role.IamInstanceProfileAssociation)
-	aaa.Accounting("Role replaced: %s, %s", r.name, r.Id())
 	return nil
 }
 
-func (r *role) set(role *ec2.IamInstanceProfileAssociation) {
-	r.state = *role.State
-	r.id = *role.AssociationId
-	r.arn = *role.IamInstanceProfile.Arn
+func (r *role) createInstanceProfile() error {
+	if r.InstanceProfile() == "" {
+		return nil
+	}
+	msg.Info("Instance Profile Creation: %s", r.InstanceProfile())
+	params := &iam.CreateInstanceProfileInput{
+		InstanceProfileName: aws.String(r.InstanceProfile()),
+	}
+
+	resp, err := r.iam.CreateInstanceProfile(params)
+	if err != nil {
+		return err
+	}
+	r.instanceProfile = resp.InstanceProfile
+	msg.Detail("Instance Profile Created: %s", r.InstanceProfile())
+	return nil
+}
+
+func (r *role) attachInstanceProfile() error {
+	if r.InstanceProfile() == "" {
+		return nil
+	}
+	msg.Info("Attaching Instance Profile %q", r.InstanceProfile())
+	params := &iam.AddRoleToInstanceProfileInput{
+		InstanceProfileName: aws.String(r.InstanceProfile()),
+		RoleName:            aws.String(r.Name()),
+	}
+
+	_, err := r.iam.AddRoleToInstanceProfile(params)
+	if err != nil {
+		return err
+	}
+	msg.Detail("Attached Instance Profile %q", r.InstanceProfile())
+	return nil
+}
+
+func (r *role) attachPolicy(policyArn string) error {
+	log.Debug("Attaching Policy %q", policyArn)
+	params := &iam.AttachRolePolicyInput{
+		PolicyArn: aws.String(policyArn),
+		RoleName:  aws.String(r.Name()),
+	}
+	_, err := r.iam.AttachRolePolicy(params)
+	if err != nil {
+		return err
+	}
+	log.Debug("Attached Policy %q", policyArn)
+	return nil
+}
+
+func (r *role) detachPolicy(policyArn string) error {
+	log.Debug("Detaching Policy %q", policyArn)
+	params := &iam.DetachRolePolicyInput{
+		PolicyArn: aws.String(policyArn),
+		RoleName:  aws.String(r.Name()),
+	}
+	_, err := r.iam.DetachRolePolicy(params)
+	if err != nil {
+		return err
+	}
+	log.Debug("Detached Policy %q", policyArn)
+	return nil
+}
+
+func (r *role) updatePolicies() error {
+	msg.Info("Updating Policies")
+
+	// detach any rogue policies
+	roguePolicies := r.roguePolicies()
+	for _, p := range roguePolicies {
+		if err := r.detachPolicy(p); err != nil {
+			return err
+		}
+	}
+	// attach any configured but not deployed policies
+	orphanedPolicies := r.orphanedPolicies()
+	for _, p := range orphanedPolicies {
+		if err := r.attachPolicy(p); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *role) loadPolicies() error {
+	next := ""
+	for {
+		params := &iam.ListAttachedRolePoliciesInput{
+			RoleName: aws.String(r.Name()),
+		}
+		if next != "" {
+			params.Marker = aws.String(next)
+		}
+		resp, err := r.iam.ListAttachedRolePolicies(params)
+		if err != nil {
+			return err
+		}
+		truncated := false
+		if resp.IsTruncated != nil {
+			truncated = *resp.IsTruncated
+		}
+		next = ""
+		if resp.Marker != nil {
+			next = *resp.Marker
+		}
+		for _, v := range resp.AttachedPolicies {
+			r.deployedPolicies = append(r.deployedPolicies, *v.PolicyArn)
+		}
+		if truncated == false {
+			break
+		}
+	}
+	return nil
+}
+
+func (r *role) roguePolicies() []string {
+	policies := []string{}
+	found := false
+	for _, ap := range r.deployedPolicies {
+		for _, cp := range r.policies {
+			if ap == cp {
+				found = true
+			}
+		}
+		if found == false {
+			policies = append(policies, ap)
+		}
+		found = false
+	}
+
+	return policies
+}
+
+func (r *role) orphanedPolicies() []string {
+	policies := []string{}
+	found := false
+	for _, cp := range r.policies {
+		for _, ap := range r.deployedPolicies {
+			if ap == cp {
+				found = true
+			}
+		}
+		if found == false {
+			policies = append(policies, cp)
+		}
+		found = false
+	}
+	return policies
 }

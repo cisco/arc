@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018, Cisco Systems
+// Copyright (c) 2017, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,31 +24,43 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package config
+package resource
 
-import "github.com/cisco/arc/pkg/msg"
-
-type Policy struct {
-	Name_           string `json:"policy"`
-	Description_    string `json:"description"`
-	PolicyDocument_ string `json:"policy_document"`
+// StaticRoleIdentifier provides the interface to the static portion of the role identifier.
+type StaticRoleIdentifier interface {
+	Name() string
 }
 
-func (p *Policy) Name() string {
-	return p.Name_
+// DynamicRoleIdentifier provides the interface to the dynamic portion of the role identifier.
+type DynamicRoleIdentifier interface {
+	Loader
+	Attacher
+	Detacher
+
+	// Id returns the underlying role id.
+	Id() string
+
+	// InstanceId returns the id of the role's instance.
+	InstanceId() string
+
+	// Update changes the role to be what is currently in the config file.
+	Update() error
 }
 
-func (p *Policy) Description() string {
-	return p.Description_
+// RoleIdentifier provides the resource interface used for the common role identifier
+// object implemented in the arc package.
+type RoleIdentifier interface {
+	Resource
+	StaticRoleIdentifier
+	DynamicRoleIdentifier
+
+	ProviderRoleIdentifier() ProviderRoleIdentifier
 }
 
-func (p *Policy) PolicyDocument() string {
-	return p.PolicyDocument_
-}
-
-func (p *Policy) Print() {
-	msg.Info("Bucket Config")
-	msg.Detail("%-20s\t%s", "name", p.Name())
-	msg.Detail("%-20s\t%s", "description", p.Description())
-	msg.Detail("%-20s\t%s", "policy document", p.PolicyDocument())
+// ProviderRoleIdentifier provides a resource interface for the provider supplied
+// role identifier. The common role identifier object delegates provider specific
+// behavior to the raw role.
+type ProviderRoleIdentifier interface {
+	Resource
+	DynamicRoleIdentifier
 }

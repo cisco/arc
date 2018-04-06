@@ -62,7 +62,7 @@ type Instance struct {
 	subnet           resource.Subnet
 	secgroups        []resource.SecurityGroup
 	keypair          resource.KeyPair
-	role             *role
+	roleIdentifier   *roleIdentifier
 	volumes          *volumes
 	eip              *elasticIP
 	dns              *dns
@@ -116,7 +116,7 @@ func NewDefaultInstance(
 	}
 
 	var err error
-	i.role, err = newRole(i, prov, cfg.Role())
+	i.roleIdentifier, err = newRoleIdentifier(i, prov, cfg.Role())
 	if err != nil {
 		return nil, err
 	}
@@ -356,8 +356,8 @@ func (i *Instance) ProviderVolumes() []resource.ProviderVolume {
 	return pv
 }
 
-func (i *Instance) ProviderRole() resource.ProviderRole {
-	r := i.role.ProviderRole()
+func (i *Instance) ProviderRoleIdentifier() resource.ProviderRoleIdentifier {
+	r := i.roleIdentifier.ProviderRoleIdentifier()
 	return r
 }
 
@@ -487,8 +487,8 @@ func (i *Instance) load(req *route.Request) route.Response {
 	}
 
 	// Load the role
-	if i.role.Name() != "" {
-		if err := i.role.Load(); err != nil {
+	if i.roleIdentifier.Name() != "" {
+		if err := i.roleIdentifier.Load(); err != nil {
 			msg.Error(err.Error())
 			return route.FAIL
 		}
@@ -569,8 +569,8 @@ func (i *Instance) info() {
 	if i.publicARecord != nil {
 		msg.Detail("%-20s\t%s", "public dns a record", i.publicARecord.Id())
 	}
-	if i.role.Name() != "" {
-		msg.Detail("%-20s\t%s", "role", i.role.Name())
+	if i.roleIdentifier.Name() != "" {
+		msg.Detail("%-20s\t%s", "role", i.roleIdentifier.Name())
 	}
 	if i.volumes != nil {
 		i.volumes.info()

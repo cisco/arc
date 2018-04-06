@@ -30,6 +30,7 @@ import "github.com/cisco/arc/pkg/msg"
 
 type IdentityManagement struct {
 	Region_  string    `json:"region"`
+	Roles    []*Role   `json:"roles"`
 	Policies []*Policy `json:"policies"`
 }
 
@@ -43,6 +44,9 @@ func (i *IdentityManagement) Print() {
 	msg.IndentInc()
 	for _, p := range i.Policies {
 		p.Print()
+	}
+	for _, r := range i.Roles {
+		r.Print()
 	}
 	msg.IndentDec()
 }

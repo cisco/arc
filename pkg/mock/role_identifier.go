@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018, Cisco Systems
+// Copyright (c) 2017, Cisco Systems
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -24,31 +24,63 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-package config
+package mock
 
-import "github.com/cisco/arc/pkg/msg"
+import (
+	"github.com/cisco/arc/pkg/log"
+	"github.com/cisco/arc/pkg/resource"
+)
 
-type Policy struct {
-	Name_           string `json:"policy"`
-	Description_    string `json:"description"`
-	PolicyDocument_ string `json:"policy_document"`
+type roleIdentifier struct {
+	*mock
+	name       string
+	id         string
+	instanceId string
 }
 
-func (p *Policy) Name() string {
-	return p.Name_
+func newRoleIdentifier(name string, p *dataCenterProvider, in resource.Instance) (resource.ProviderRoleIdentifier, error) {
+	log.Info("Initializing mock role identifier")
+	i := &roleIdentifier{
+		mock:       newMock("roleIdentifier", p.Provider),
+		name:       name,
+		id:         "0x1127beef",
+		instanceId: "0x1127beef",
+	}
+	return i, nil
 }
 
-func (p *Policy) Description() string {
-	return p.Description_
+func (r *roleIdentifier) Id() string {
+	return r.id
 }
 
-func (p *Policy) PolicyDocument() string {
-	return p.PolicyDocument_
+func (r *roleIdentifier) InstanceId() string {
+	return r.instanceId
 }
 
-func (p *Policy) Print() {
-	msg.Info("Bucket Config")
-	msg.Detail("%-20s\t%s", "name", p.Name())
-	msg.Detail("%-20s\t%s", "description", p.Description())
-	msg.Detail("%-20s\t%s", "policy document", p.PolicyDocument())
+func (r *roleIdentifier) Attached() bool {
+	return true
+}
+
+func (r *roleIdentifier) Detached() bool {
+	return true
+}
+
+func (r *roleIdentifier) Load() error {
+	return nil
+}
+
+func (r *roleIdentifier) Attach() error {
+	return nil
+}
+
+func (r *roleIdentifier) Detach() error {
+	return nil
+}
+
+func (r *roleIdentifier) Destroy() error {
+	return nil
+}
+
+func (r *roleIdentifier) Update() error {
+	return nil
 }

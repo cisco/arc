@@ -156,6 +156,8 @@ func (a *amp) Route(req *route.Request) route.Response {
 		return a.identityManagement.Route(req.Pop())
 	case "policy":
 		return a.identityManagement.Route(req)
+	case "role":
+		return a.identityManagement.Route(req)
 	}
 
 	// Skip if the test flag is set

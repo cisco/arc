@@ -52,13 +52,13 @@ type instance struct {
 	subnet    *subnet
 	secgroups []*securityGroup
 
-	id       string
-	imageId  string
-	keyname  string
-	role     *role
-	volumes  []*volume
-	instance *ec2.Instance
-	cached   bool
+	id             string
+	imageId        string
+	keyname        string
+	roleIdentifier *roleIdentifier
+	volumes        []*volume
+	instance       *ec2.Instance
+	cached         bool
 }
 
 // newInstance constructs the aws instance.

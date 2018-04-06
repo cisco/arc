@@ -46,6 +46,7 @@ type identityManagement struct {
 	*config.IdentityManagement
 	amp                        *amp
 	policies                   []*policy
+	roles                      []*role
 	providerIdentityManagement resource.ProviderIdentityManagement
 }
 
@@ -55,7 +56,10 @@ func newIdentityManagement(amp *amp, cfg *config.IdentityManagement) (*identityM
 
 	// Validate the config.IdentityManagement object.
 	if cfg.Policies == nil {
-		return nil, fmt.Errorf("The Policies element is missing from the iam configuration")
+		return nil, fmt.Errorf("The Policies element is missing from the identity_management configuration")
+	}
+	if cfg.Roles == nil {
+		return nil, fmt.Errorf("The Roles element is missing from the identity_management configuration")
 	}
 
 	i := &identityManagement{
@@ -80,6 +84,14 @@ func newIdentityManagement(amp *amp, cfg *config.IdentityManagement) (*identityM
 		i.policies = append(i.policies, policy)
 	}
 
+	for _, conf := range cfg.Roles {
+		role, err := newRole(conf, i, prov)
+		if err != nil {
+			return nil, err
+		}
+		i.roles = append(i.roles, role)
+	}
+
 	return i, nil
 }
 
@@ -94,6 +106,16 @@ func (i *identityManagement) FindPolicy(name string) resource.Policy {
 	for _, policy := range i.policies {
 		if name == policy.Name() {
 			return policy
+		}
+	}
+	return nil
+}
+
+// FindRole returns the role with the given name.
+func (i *identityManagement) FindRole(name string) resource.Role {
+	for _, role := range i.roles {
+		if name == role.Name() {
+			return role
 		}
 	}
 	return nil
@@ -126,9 +148,25 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 		}
 		if req.Command() == route.Audit {
 			aaa.NewAudit("Policy")
+			req.Flags().Append("Policy")
 		}
-		req.Flags().Append("Policy")
 		return policy.Route(req)
+	case "role":
+		req.Pop()
+		if req.Top() == "" {
+			i.Help()
+			return route.FAIL
+		}
+		role := i.FindRole(req.Top())
+		if role == nil {
+			msg.Error("Unknown role %q.", req.Top())
+			return route.FAIL
+		}
+		if req.Command() == route.Audit {
+			aaa.NewAudit("Role")
+			req.Flags().Append("Role")
+		}
+		return role.Route(req)
 	default:
 		i.Help()
 		return route.FAIL
@@ -154,14 +192,21 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 				return route.FAIL
 			}
 		}
+		for _, r := range i.roles {
+			if resp := r.Route(req); resp != route.OK {
+				return route.FAIL
+			}
+		}
 		return route.OK
 	case route.Provision:
-		// if err := i.Provision(req.Flags().Get()...); err != nil {
-		// return route.FAIL
-		// }
+		if err := i.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
 		return route.OK
 	case route.Audit:
-		if err := i.Audit("Policy"); err != nil {
+		if err := i.Audit("Policy", "Role"); err != nil {
+			msg.Error(err.Error())
 			return route.FAIL
 		}
 		return route.OK
@@ -175,12 +220,14 @@ func (i *identityManagement) Route(req *route.Request) route.Response {
 	}
 }
 
-//This will be used for when roles are groups can be managed with amp
-/*
 func (i *identityManagement) Provision(flags ...string) error {
+	for _, r := range i.roles {
+		if err := r.Provision(flags...); err != nil {
+			return err
+		}
+	}
 	return nil
 }
-*/
 
 func (i *identityManagement) Audit(flags ...string) error {
 	if len(flags) == 0 || flags[0] == "" {
@@ -192,12 +239,18 @@ func (i *identityManagement) Audit(flags ...string) error {
 			return err
 		}
 	}
-	if err := i.providerIdentityManagement.Audit("Policy"); err != nil {
+	if err := i.providerIdentityManagement.Audit(flags...); err != nil {
 		return err
 	}
 	for _, p := range i.policies {
 		log.Debug("Audit of policy %q", p.Name())
 		if err := p.Audit("Policy"); err != nil {
+			return err
+		}
+	}
+	for _, r := range i.roles {
+		log.Debug("Audit of role %q", r.Name())
+		if err := r.Audit("Role"); err != nil {
 			return err
 		}
 	}
@@ -213,13 +266,18 @@ func (i *identityManagement) Info() {
 		p.Info()
 	}
 	msg.IndentDec()
+	msg.Info("Roles")
+	msg.IndentInc()
+	for _, r := range i.roles {
+		r.Info()
+	}
 	msg.IndentDec()
-	log.Debug("Info complete")
+	msg.IndentDec()
 }
 
 func (i *identityManagement) Help() {
 	commands := []help.Command{
-		// {Name: route.Provision.String(), Desc: "update identityManagement"},
+		{Name: route.Provision.String(), Desc: "update identityManagement"},
 		{Name: route.Audit.String(), Desc: "audit identityManagement"},
 		{Name: route.Info.String(), Desc: "show information about allocated identityManagement"},
 		{Name: route.Config.String(), Desc: "show the configuration for the given identityManagement"},

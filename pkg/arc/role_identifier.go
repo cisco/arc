@@ -34,83 +34,83 @@ import (
 	"github.com/cisco/arc/pkg/route"
 )
 
-type role struct {
-	name         string
-	providerRole resource.ProviderRole
+type roleIdentifier struct {
+	name                   string
+	providerRoleIdentifier resource.ProviderRoleIdentifier
 }
 
-func newRole(in resource.Instance, prov provider.DataCenter, name string) (*role, error) {
-	log.Debug("Initializing Role '%s'", name)
+func newRoleIdentifier(in resource.Instance, prov provider.DataCenter, name string) (*roleIdentifier, error) {
+	log.Debug("Initializing Role Identifier '%s'", name)
 
-	r := &role{
+	r := &roleIdentifier{
 		name: name,
 	}
 
 	var err error
-	r.providerRole, err = prov.NewRole(r, name, in)
+	r.providerRoleIdentifier, err = prov.NewRoleIdentifier(r, name, in)
 	if err != nil {
 		return nil, err
 	}
 	return r, nil
 }
 
-func (r *role) Route(req *route.Request) route.Response {
+func (r *roleIdentifier) Route(req *route.Request) route.Response {
 	log.Route(req, "Role %q", r.Name())
 	return route.FAIL
 }
 
-func (r *role) Load() error {
-	return r.providerRole.Load()
+func (r *roleIdentifier) Load() error {
+	return r.providerRoleIdentifier.Load()
 }
 
-func (r *role) Created() bool {
-	return r.providerRole.Created()
+func (r *roleIdentifier) Created() bool {
+	return r.providerRoleIdentifier.Created()
 }
 
-func (r *role) Destroyed() bool {
-	return r.providerRole.Destroyed()
+func (r *roleIdentifier) Destroyed() bool {
+	return r.providerRoleIdentifier.Destroyed()
 }
 
-func (r *role) Name() string {
+func (r *roleIdentifier) Name() string {
 	return r.name
 }
 
-func (r *role) Id() string {
-	return r.providerRole.Id()
+func (r *roleIdentifier) Id() string {
+	return r.providerRoleIdentifier.Id()
 }
 
-func (r *role) InstanceId() string {
-	return r.providerRole.InstanceId()
+func (r *roleIdentifier) InstanceId() string {
+	return r.providerRoleIdentifier.InstanceId()
 }
 
-func (r *role) Attached() bool {
-	return r.providerRole.Attached()
+func (r *roleIdentifier) Attached() bool {
+	return r.providerRoleIdentifier.Attached()
 }
 
-func (r *role) Detached() bool {
-	return r.providerRole.Detached()
+func (r *roleIdentifier) Detached() bool {
+	return r.providerRoleIdentifier.Detached()
 }
 
-func (r *role) Detach() error {
+func (r *roleIdentifier) Detach() error {
 	if r.Name() == "" {
 		return nil
 	}
-	msg.Info("Role Detach: %s", r.Name())
-	return r.providerRole.Detach()
+	msg.Info("Role Identifier Detach: %s", r.Name())
+	return r.providerRoleIdentifier.Detach()
 }
 
-func (r *role) Attach() error {
+func (r *roleIdentifier) Attach() error {
 	if r.Name() == "" {
 		return nil
 	}
-	msg.Info("Role Attach: %s", r.Name())
-	return r.providerRole.Attach()
+	msg.Info("Role Identifier Attach: %s", r.Name())
+	return r.providerRoleIdentifier.Attach()
 }
 
-func (r *role) Update() error {
-	return r.providerRole.Update()
+func (r *roleIdentifier) Update() error {
+	return r.providerRoleIdentifier.Update()
 }
 
-func (r *role) ProviderRole() resource.ProviderRole {
-	return r.providerRole
+func (r *roleIdentifier) ProviderRoleIdentifier() resource.ProviderRoleIdentifier {
+	return r.providerRoleIdentifier
 }

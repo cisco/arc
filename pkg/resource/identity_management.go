@@ -46,8 +46,7 @@ type DynamicIdentityManagement interface {
 type IdentityManagement interface {
 	route.Router
 	StaticIdentityManagement
-	// Provisioner will be used at a later point when amp can manage roles and groups
-	// Provisioner
+	Provisioner
 	DynamicIdentityManagement
 	Informer
 	Helper
@@ -55,8 +54,11 @@ type IdentityManagement interface {
 	// Amp provides access to Iam's parent object.
 	Amp() Amp
 
-	// FindPolicy returns the bucket with the given name.
+	// FindPolicy returns the policy with the given name.
 	FindPolicy(string) Policy
+
+	// FindRole returns the role with the given name.
+	FindRole(string) Role
 
 	// ProviderIam provides access to the provider iam object.
 	ProviderIdentityManagement() ProviderIdentityManagement

@@ -88,5 +88,8 @@ func (a *Amp) Print() {
 	if a.KeyManagement != nil {
 		a.KeyManagement.Print()
 	}
+	if a.IdentityManagement != nil {
+		a.IdentityManagement.Print()
+	}
 	msg.IndentDec()
 }

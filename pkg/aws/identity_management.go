@@ -38,6 +38,7 @@ type identityManagement struct {
 	*config.IdentityManagement
 	iam *iam.IAM
 
+	roleCache   *roleCache
 	policyCache *policyCache
 }
 
@@ -50,6 +51,10 @@ func newIdentityManagement(cfg *config.IdentityManagement, iam *iam.IAM) (resour
 	}
 
 	var err error
+	i.roleCache, err = newRoleCache(i)
+	if err != nil {
+		return nil, err
+	}
 	i.policyCache, err = newPolicyCache(i)
 	if err != nil {
 		return nil, err
@@ -58,5 +63,11 @@ func newIdentityManagement(cfg *config.IdentityManagement, iam *iam.IAM) (resour
 }
 
 func (i *identityManagement) Audit(flags ...string) error {
-	return i.policyCache.audit(flags...)
+	if err := i.policyCache.audit("Policy"); err != nil {
+		return err
+	}
+	if err := i.roleCache.audit("Role"); err != nil {
+		return err
+	}
+	return nil
 }

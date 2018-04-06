@@ -64,7 +64,7 @@ func (i *Instance) Create(req *route.Request) route.Response {
 	if resp := i.providerInstance.Route(req); resp != route.OK {
 		return resp
 	}
-	if err := i.role.Attach(); err != nil {
+	if err := i.roleIdentifier.Attach(); err != nil {
 		msg.Error(err.Error())
 		return route.FAIL
 	}

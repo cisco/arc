@@ -38,6 +38,7 @@ import (
 // concrete implementations of these methods.
 type IdentityManagement interface {
 	NewIdentityManagement(cfg *config.IdentityManagement) (resource.ProviderIdentityManagement, error)
+	NewRole(rl resource.Role, cfg *config.Role) (resource.ProviderRole, error)
 	NewPolicy(pol resource.Policy, cfg *config.Policy) (resource.ProviderPolicy, error)
 }
 

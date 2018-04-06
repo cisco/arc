@@ -170,5 +170,5 @@ func (p *policy) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given policy"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("policy", commands)
+	help.Print("policy "+p.Name(), commands)
 }
