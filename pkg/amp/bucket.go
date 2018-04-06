@@ -240,7 +240,7 @@ func (b *bucket) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given bucket"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("bucket", commands)
+	help.Print("bucket "+b.Name(), commands)
 }
 
 func (b *bucket) enableReplication() error {

@@ -161,7 +161,7 @@ func (a *Audit) auditFormatBuffer(t auditType, b []string, appName string) strin
 func (a *Audit) auditFormat(appName string) string {
 	m := ""
 	switch appName {
-	case "arc":
+	case "arc", "amp":
 		m += a.message[0] + "\n> "
 		if len(a.deployedBuffer) == 0 && len(a.configuredBuffer) == 0 && len(a.mismatchedBuffer) == 0 {
 			m += "No Differences Found\n\n"
@@ -181,19 +181,6 @@ func (a *Audit) auditFormat(appName string) string {
 			m += v
 		}
 		m += "\n"
-		m += a.message[1]
-	case "amp":
-		m += a.message[0] + "\n> "
-		if len(a.deployedBuffer) == 0 && len(a.configuredBuffer) == 0 && len(a.mismatchedBuffer) == 0 {
-			m += "No Differences Found\n\n"
-			m += a.message[1]
-			return m
-		}
-		m += a.auditFormatBuffer(Deployed, a.deployedBuffer, appName) + "\n> "
-		m += a.auditFormatBuffer(Configured, a.configuredBuffer, appName) + "\n"
-		if len(m) > 7000 {
-			m = m[:7000] + "...\n\n"
-		}
 		m += a.message[1]
 	}
 	return m

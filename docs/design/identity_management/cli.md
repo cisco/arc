@@ -45,8 +45,35 @@ The commands available to a policy are
 - **config**: Provides configuration information for the policy.
 - **help**: Provides help with the named policy command.
 
-For example, to create an policy with the name "replication_policy" in the "example-integration" account, run the command
+For example, to create a policy with the name "replication_policy" in the "example-integration" account, run the command
 
 ```shell
 amp example-integration policy replication_policy create
+```
+
+
+## Named Role
+
+To run a command against a single role in identity_management use the form 
+
+```shell
+amp [account_name] role [role_name] [command] [flags]
+```
+
+where "role_name" is the name of the role.
+
+The commands available to a role are
+
+- **create**: Creates the role. If the role already exists this command will do nothing.
+- **destroy**: Deletes the role. If the role does not exist this command will do nothing.
+- **update**: Updates the description of the role as well as syncing the attached policies with the configured policies.
+- **audit**: Audit the role. This will compare the configuration role and report if the run time role does not match.
+- **info**: Provides run time information for the role.
+- **config**: Provides configuration information for the role.
+- **help**: Provides help with the name role command.
+
+For example, to create a role with the name "replication_role" in the "example-integration" account, run the command
+
+```shell
+amp example-integration role replication_role create
 ```

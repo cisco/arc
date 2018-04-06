@@ -42,6 +42,7 @@ type DynamicRole interface {
 	Loader
 	Creator
 	Destroyer
+	Provisioner
 	Auditor
 	Informer
 }
@@ -52,7 +53,6 @@ type DynamicRole interface {
 type Role interface {
 	route.Router
 	StaticRole
-	Provisioner
 	DynamicRole
 	Helper
 

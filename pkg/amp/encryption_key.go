@@ -210,7 +210,7 @@ func (k *encryptionKey) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given encryption key"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("encryption_key", commands)
+	help.Print("encryption_key "+k.Name(), commands)
 }
 
 func (k *encryptionKey) KeyManagement() resource.KeyManagement {

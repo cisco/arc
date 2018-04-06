@@ -157,7 +157,7 @@ func (r *roleIdentifier) Detach() error {
 	}
 	r.state = *role.IamInstanceProfileAssociation.State
 	msg.Detail("Role Detached: %s", filepath.Base(r.arn))
-	aaa.Accounting("Role detatched: %s, %s", filepath.Base(r.arn), r.Id())
+	aaa.Accounting("Role detached: %s, %s", filepath.Base(r.arn), r.Id())
 	return nil
 }
 

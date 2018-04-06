@@ -63,5 +63,11 @@ func newIdentityManagement(cfg *config.IdentityManagement, iam *iam.IAM) (resour
 }
 
 func (i *identityManagement) Audit(flags ...string) error {
-	return i.policyCache.audit(flags...)
+	if err := i.policyCache.audit("Policy"); err != nil {
+		return err
+	}
+	if err := i.roleCache.audit("Role"); err != nil {
+		return err
+	}
+	return nil
 }

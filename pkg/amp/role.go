@@ -83,6 +83,12 @@ func (r *role) Route(req *route.Request) route.Response {
 			return route.FAIL
 		}
 		return route.OK
+	case route.Provision:
+		if err := r.Provision(req.Flags().Get()...); err != nil {
+			msg.Error(err.Error())
+			return route.FAIL
+		}
+		return route.OK
 	case route.Audit:
 		if err := r.Audit(req.Flags().Get()...); err != nil {
 			msg.Error(err.Error())
@@ -126,8 +132,7 @@ func (r *role) ProviderRole() resource.ProviderRole {
 }
 
 func (r *role) Provision(flags ...string) error {
-	//TODO
-	return nil
+	return r.providerRole.Provision(flags...)
 }
 
 func (r *role) Load() error {
@@ -173,5 +178,5 @@ func (r *role) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given role"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("role", commands)
+	help.Print("role "+r.Name(), commands)
 }

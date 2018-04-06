@@ -232,5 +232,5 @@ func (b *bucketSet) Help() {
 		{Name: route.Config.String(), Desc: "show the configuration for the given bucket set"},
 		{Name: route.Help.String(), Desc: "show this help"},
 	}
-	help.Print("bucket_set", commands)
+	help.Print("bucket_set "+b.Name(), commands)
 }
