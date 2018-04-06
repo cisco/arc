@@ -70,7 +70,7 @@ The commands available to a role are
 - **audit**: Audit the role. This will compare the configuration role and report if the run time role does not match.
 - **info**: Provides run time information for the role.
 - **config**: Provides configuration information for the role.
-- **help**: Provides help with the name role command.
+- **help**: Provides help with the named role command.
 
 For example, to create a role with the name "replication_role" in the "example-integration" account, run the command
 

@@ -61,7 +61,7 @@ func newRole(cfg *config.Role, identityManagement *identityManagement, prov prov
 }
 
 // Route satisfies the embedded resource.Resource interface in resource.Role.
-// Bucket handles load, create, destroy, config and info requests by delegating them
+// Role handles load, create, destroy, provision, audit, config and info requests by delegating them
 // to the providerRole.
 func (r *role) Route(req *route.Request) route.Response {
 	log.Route(req, "Role %q", r.Name())
@@ -173,6 +173,7 @@ func (r *role) Help() {
 	commands := []help.Command{
 		{Name: route.Create.String(), Desc: fmt.Sprintf("create role %s", r.Name())},
 		{Name: route.Destroy.String(), Desc: fmt.Sprintf("destroy role %s", r.Name())},
+		{Name: route.Provision.String(), Desc: fmt.Sprintf("update role %s", r.Name())},
 		{Name: route.Audit.String(), Desc: fmt.Sprintf("audit role %s", r.Name())},
 		{Name: route.Info.String(), Desc: "show information about allocated role"},
 		{Name: route.Config.String(), Desc: "show the configuration for the given role"},
