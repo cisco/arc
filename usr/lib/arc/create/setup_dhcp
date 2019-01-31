@@ -78,7 +78,12 @@ function setup_dhcp() {
       service network restart
     fi
   else
-    ifdown eth0 && ifup eth0
+    MAJOR_VERSION=$(echo $VERSION_ID | tr "." "\n" | head -n 1)
+    if [[ $ID = "ubuntu" && $MAJOR_VERSION == "16" ]]; then
+      ifdown ens3 && ifup ens3
+    else 
+      ifdown eth0 && ifup eth0
+    fi
   fi
 }
 
